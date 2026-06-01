@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Users, UtensilsCrossed, BarChart3, ChevronRight } from "lucide-react";
+import { Users, UtensilsCrossed, ChevronRight } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import api from "@/lib/api";
 import Card from "@/components/ui/Card";
@@ -13,16 +14,24 @@ interface Stats {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // Verify admin access first; non-admins get a 403 and are sent to /dashboard
     api.get("/api/v1/admin/stats")
       .then((r) => setStats(r.data))
-      .catch(() => setError("Not authorised or failed to load stats."))
+      .catch((err) => {
+        if (err?.response?.status === 403 || err?.response?.status === 401) {
+          router.replace("/dashboard");
+        } else {
+          setError("Failed to load stats.");
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#0d0d0d]">
