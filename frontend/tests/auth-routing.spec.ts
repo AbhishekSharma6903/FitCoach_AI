@@ -3,8 +3,9 @@
  *
  * Cases covered:
  *  1. Unauthenticated user → redirected to /sign-in
- *  2. Returning user (profile exists) → lands on /dashboard
- *  3. New user (no profile) → lands on /onboarding, then /dashboard after submit
+ *  2. Admin user (profile exists) → / redirects to /admin
+ *  3. Admin user → /dashboard loads without redirecting
+ *  4. New user (no profile) → lands on /onboarding, then /dashboard after submit
  */
 import { test, expect, Page } from "@playwright/test";
 import { signInAs } from "./helpers/auth";
@@ -59,26 +60,25 @@ test("unauthenticated: /admin redirects to /sign-in", async ({ page }) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. RETURNING USER (profile already exists)
+// 2. ADMIN USER (RETURNING_USER_ID is the configured admin)
 // ─────────────────────────────────────────────────────────────────────────────
-test("returning user: / redirects to /dashboard (not /onboarding)", async ({ page }) => {
+test("admin user: / redirects to /admin", async ({ page }) => {
   restoreProfile();
   await signInAs(page, RETURNING_USER_ID);
 
   await page.goto("http://localhost:3000/", { waitUntil: "commit" });
-  await page.waitForURL("**/dashboard**", { timeout: 15000 });
+  await page.waitForURL("**/admin**", { timeout: 15000 });
 
-  // Stay on dashboard — no onboarding redirect
-  await page.waitForTimeout(3000);
-  expect(page.url()).toContain("/dashboard");
-  expect(page.url()).not.toContain("/onboarding");
+  await page.waitForTimeout(2000);
+  expect(page.url()).toContain("/admin");
+  expect(page.url()).not.toContain("/dashboard");
 });
 
-test("returning user: /dashboard loads without redirecting to /onboarding", async ({ page }) => {
+test("admin user: /dashboard loads without redirecting to /onboarding", async ({ page }) => {
   restoreProfile();
   await signInAs(page, RETURNING_USER_ID);
 
-  await page.goto("http://localhost:3000/dashboard", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:3000/dashboard", { waitUntil: "commit" });
   await page.waitForTimeout(3000);
 
   expect(page.url()).not.toContain("/onboarding");
