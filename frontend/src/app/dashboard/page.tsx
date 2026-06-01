@@ -18,17 +18,20 @@ import Button from "@/components/ui/Button";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { dashboard, isLoading, error } = useDashboard();
+  const { dashboard, isLoading, isValidating, error } = useDashboard();
   const { logWeight } = useWeightLog();
   const [weightInput, setWeightInput] = useState("");
   const [loggingWeight, setLoggingWeight] = useState(false);
 
-  // If the API returns 404/401 (no profile yet), send to onboarding
+  // Only redirect to onboarding when we have a confirmed error with no
+  // background revalidation in flight — prevents spurious redirects when SWR
+  // returns a stale cached error immediately after the onboarding wizard
+  // creates the profile and pushes to /dashboard.
   useEffect(() => {
-    if (!isLoading && error) {
+    if (!isLoading && !isValidating && error) {
       router.replace("/onboarding");
     }
-  }, [isLoading, error, router]);
+  }, [isLoading, isValidating, error, router]);
 
   async function handleLogWeight() {
     if (!weightInput || isNaN(Number(weightInput))) return;
@@ -41,13 +44,13 @@ export default function DashboardPage() {
     }
   }
 
-  if (isLoading || (!dashboard && !error)) return (
+  if (isLoading || (isValidating && !dashboard && !error) || (!dashboard && !error)) return (
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
       <Spinner className="w-8 h-8" />
     </div>
   );
 
-  if (error || !dashboard) return null; // redirect in progress
+  if (!isValidating && (error || !dashboard)) return null; // redirect in progress
 
   return (
     <div className="min-h-screen bg-[#0d0d0d]">
