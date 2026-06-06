@@ -56,17 +56,22 @@ cmd_start() {
   # 2. Postgres
   cyan "→ Starting Postgres (docker-compose)..."
   docker-compose -f "$ROOT/docker-compose.yml" up -d 2>&1 | grep -v "^time="
-  wait_for_url "http://localhost:5433" "Postgres" 20 || true  # port check optional
+  # Wait for the container to report healthy
+  printf "  Waiting for Postgres "
+  for i in $(seq 1 20); do
+    STATUS=$(docker inspect --format='{{.State.Health.Status}}' fitcoach_postgres 2>/dev/null)
+    [ "$STATUS" = "healthy" ] && printf ' ✓\n' && break
+    printf '.'; sleep 2
+  done
 
   # 3. Backend
   if lsof -i :8000 -sTCP:LISTEN &>/dev/null; then
     green "→ Backend already running on :8000"
   else
     cyan "→ Starting FastAPI backend..."
-    cd "$ROOT/backend"
-    source .venv/bin/activate 2>/dev/null || true
-    nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload \
-      > "$BACKEND_LOG" 2>&1 &
+    (cd "$ROOT/backend" && nohup "$ROOT/backend/venv/bin/uvicorn" \
+      app.main:app --host 0.0.0.0 --port 8000 --reload \
+      > "$BACKEND_LOG" 2>&1) &
     echo $! > "$BACKEND_PID_FILE"
     wait_for_url "http://localhost:8000/health" "backend" 30 \
       || { red "Backend failed to start. Check $BACKEND_LOG"; exit 1; }
@@ -77,8 +82,9 @@ cmd_start() {
     green "→ Frontend already running on :3000"
   else
     cyan "→ Starting Next.js frontend..."
-    cd "$ROOT/frontend"
-    nohup npm run dev > "$FRONTEND_LOG" 2>&1 &
+    NPM_BIN="$(command -v npm 2>/dev/null || ls "$HOME/.nvm/versions/node"/*/bin/npm 2>/dev/null | tail -1)"
+    (cd "$ROOT/frontend" && nohup "$NPM_BIN" run dev \
+      > "$FRONTEND_LOG" 2>&1) &
     echo $! > "$FRONTEND_PID_FILE"
     wait_for_url "http://localhost:3000/sign-in" "frontend" 60 \
       || { red "Frontend failed to start. Check $FRONTEND_LOG"; exit 1; }
