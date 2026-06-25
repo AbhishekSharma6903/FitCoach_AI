@@ -1,5 +1,4 @@
 "use client";
-import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { setApiTokenGetter } from "@/lib/api";
 
@@ -11,9 +10,9 @@ import { setApiTokenGetter } from "@/lib/api";
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
 
-  useEffect(() => {
-    setApiTokenGetter(getToken);
-  }, [getToken]);
+  // Register synchronously on every render so the token getter is available
+  // before SWR fires its first fetch (useEffect would be too late).
+  setApiTokenGetter(getToken);
 
   return <>{children}</>;
 }

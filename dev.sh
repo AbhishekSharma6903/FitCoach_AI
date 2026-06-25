@@ -39,16 +39,11 @@ wait_for_url() {
 cmd_start() {
   bold "=== Starting FitCoach AI ==="
 
-  # 1. Docker Desktop
+  # 1. Docker (Colima)
   if ! docker info &>/dev/null; then
-    cyan "→ Starting Docker Desktop..."
-    open -a Docker
-    printf "  Waiting for Docker daemon"
-    for i in $(seq 1 24); do
-      docker info &>/dev/null && printf ' ✓\n' && break
-      printf '.'; sleep 5
-    done
-    docker info &>/dev/null || { red "Docker failed to start. Aborting."; exit 1; }
+    cyan "→ Starting Colima..."
+    colima start
+    docker info &>/dev/null || { red "Colima failed to start. Aborting."; exit 1; }
   else
     green "→ Docker already running"
   fi
@@ -82,8 +77,11 @@ cmd_start() {
     green "→ Frontend already running on :3000"
   else
     cyan "→ Starting Next.js frontend..."
-    NPM_BIN="$(command -v npm 2>/dev/null || ls "$HOME/.nvm/versions/node"/*/bin/npm 2>/dev/null | tail -1)"
-    (cd "$ROOT/frontend" && nohup "$NPM_BIN" run dev \
+    if [ ! -f "$ROOT/frontend/node_modules/.bin/next" ]; then
+      cyan "  Installing frontend dependencies..."
+      (cd "$ROOT/frontend" && npm install) || { red "npm install failed"; exit 1; }
+    fi
+    (cd "$ROOT/frontend" && nohup node_modules/.bin/next dev \
       > "$FRONTEND_LOG" 2>&1) &
     echo $! > "$FRONTEND_PID_FILE"
     wait_for_url "http://localhost:3000/sign-in" "frontend" 60 \
