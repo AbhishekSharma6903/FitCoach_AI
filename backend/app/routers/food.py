@@ -101,7 +101,11 @@ def get_food_log(
         .all()
     )
 
-    food_names = {e.food_item_id: db.get(FoodItem, e.food_item_id).name for e in entries}
+    food_ids = [e.food_item_id for e in entries]
+    food_names = {
+        f.id: f.name
+        for f in db.query(FoodItem).filter(FoodItem.id.in_(food_ids)).all()
+    }
 
     entry_reads = [
         FoodLogRead(

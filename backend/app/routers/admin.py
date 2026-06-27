@@ -37,7 +37,6 @@ class AdminUserSummary(BaseModel):
     goal_weight_kg: Optional[float] = None
     diet_type: Optional[str] = None
     experience_level: Optional[str] = None
-    is_active: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -56,7 +55,7 @@ class AdminUserDetail(AdminUserSummary):
 
 
 class AdminUserPatch(BaseModel):
-    is_active: Optional[bool] = None
+    pass  # is_active requires a DB migration — placeholder until fix_user_is_active migration is applied
 
 
 class FoodItemCreate(BaseModel):

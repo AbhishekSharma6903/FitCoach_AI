@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     # e.g. ADMIN_USER_IDS=user_2abc123
     ADMIN_USER_IDS: str = ""
 
+    ALLOWED_ORIGINS: str = "http://localhost:3000"
+
     class Config:
         env_file = ".env"
 
