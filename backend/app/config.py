@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     DATABASE_URL: str
     DEV_USER_ID: str = "dev-user-001"  # kept for seed/testing only
+    DEV_MODE: bool = False             # set True to bypass Clerk in local dev
 
     # Clerk auth
     CLERK_SECRET_KEY: str = ""          # sk_live_... or sk_test_...

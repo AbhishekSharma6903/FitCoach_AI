@@ -7,6 +7,7 @@ import type { FoodItem } from "@/types/nutrition";
 
 interface Props {
   item: FoodItem | null;
+  logDate: string;  // YYYY-MM-DD — date to log the entry against
   onClose: () => void;
   onAdd: (payload: { food_item_id: number; log_date: string; meal_type: string; quantity_g: number }) => Promise<void>;
 }
@@ -18,7 +19,7 @@ const MEAL_OPTIONS = [
   { value: "snack", label: "Snack" },
 ];
 
-export default function AddFoodModal({ item, onClose, onAdd }: Props) {
+export default function AddFoodModal({ item, logDate, onClose, onAdd }: Props) {
   const [mealType, setMealType] = useState("lunch");
   const [quantity, setQuantity] = useState<number | "">(item?.serving_size_g ?? 100);
   const [loading, setLoading] = useState(false);
@@ -39,7 +40,7 @@ export default function AddFoodModal({ item, onClose, onAdd }: Props) {
     try {
       await onAdd({
         food_item_id: item!.id,
-        log_date: new Date().toISOString().split("T")[0],
+        log_date: logDate,
         meal_type: mealType,
         quantity_g: Number(quantity),
       });
