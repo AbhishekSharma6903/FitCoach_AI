@@ -22,7 +22,7 @@ class FoodItemRead(BaseModel):
 
 
 class FoodItemSearchResult(FoodItemRead):
-    score: float
+    is_custom: bool = False
 
 
 class FoodLogCreate(BaseModel):

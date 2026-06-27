@@ -59,7 +59,18 @@ cmd_start() {
     printf '.'; sleep 2
   done
 
-  # 3. Backend
+  # 3. DB migrations — always run before backend starts (idempotent, ~50ms if already up to date)
+  if [ ! -d "$ROOT/backend/venv" ]; then
+    cyan "→ Creating backend venv..."
+    python3 -m venv "$ROOT/backend/venv"
+    "$ROOT/backend/venv/bin/pip" install -q -r "$ROOT/backend/requirements.txt"
+  fi
+  cyan "→ Running DB migrations (alembic upgrade head)..."
+  (cd "$ROOT/backend" && "$ROOT/backend/venv/bin/alembic" upgrade head) \
+    || { red "Alembic migrations failed. Aborting."; exit 1; }
+  green "  Migrations up to date"
+
+  # 4. Backend
   if lsof -i :8000 -sTCP:LISTEN &>/dev/null; then
     green "→ Backend already running on :8000"
   else
