@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 // Routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -7,6 +8,11 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Dev mode: skip auth entirely when NEXT_PUBLIC_DEV_MODE=true
+  // The backend uses DEV_USER_ID=dev-user-001 for all requests in this mode
+  if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+    return NextResponse.next();
+  }
   if (!isPublicRoute(req)) {
     await auth.protect();
   }

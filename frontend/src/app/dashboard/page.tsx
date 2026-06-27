@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useWeightLog } from "@/hooks/useWeightLog";
 import Card from "@/components/ui/Card";
@@ -16,6 +15,15 @@ import WaterIntakePanel from "@/components/dashboard/WaterIntakePanel";
 import Spinner from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
 
+const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+
+// Loaded only in non-dev mode to avoid Clerk calls during development
+function ClerkUserButton() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { UserButton } = require("@clerk/nextjs");
+  return <UserButton />;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { dashboard, isLoading, isValidating, error } = useDashboard();
@@ -23,10 +31,6 @@ export default function DashboardPage() {
   const [weightInput, setWeightInput] = useState("");
   const [loggingWeight, setLoggingWeight] = useState(false);
 
-  // Only redirect to onboarding when we have a confirmed error with no
-  // background revalidation in flight — prevents spurious redirects when SWR
-  // returns a stale cached error immediately after the onboarding wizard
-  // creates the profile and pushes to /dashboard.
   useEffect(() => {
     if (!isLoading && !isValidating && error) {
       router.replace("/onboarding");
@@ -50,17 +54,21 @@ export default function DashboardPage() {
     </div>
   );
 
-  if (!isValidating && (error || !dashboard)) return null; // redirect in progress
+  if (!dashboard) return null; // redirect in progress
+
+  // dashboard is guaranteed non-null from here
+  const d = dashboard;
 
   return (
     <div className="min-h-screen bg-[#0d0d0d]">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+
         {/* Header */}
         <DailySummaryBanner
-          name={dashboard.user_name}
-          date={dashboard.today_date}
-          caloriesConsumed={dashboard.calories_consumed}
-          caloriesTarget={dashboard.calories_target}
+          name={d.user_name}
+          date={d.today_date}
+          caloriesConsumed={d.calories_consumed}
+          caloriesTarget={d.calories_target}
         />
 
         {/* Action bar */}
@@ -81,19 +89,25 @@ export default function DashboardPage() {
               {loggingWeight ? "..." : "Log"}
             </Button>
           </div>
-          <UserButton />
+          {/* Avatar → /profile */}
+          <Link href="/profile" className="p-1 rounded-lg text-gray-500 hover:text-gray-200 hover:bg-gray-800 transition-colors" title="Edit profile">
+            <span className="w-7 h-7 rounded-full bg-brand-500/20 text-brand-400 font-bold text-sm flex items-center justify-center">
+              {d.user_name?.[0]?.toUpperCase() ?? "?"}
+            </span>
+          </Link>
+          {!DEV_MODE && <ClerkUserButton />}
         </div>
 
         {/* Calories + Streak */}
         <div className="grid grid-cols-3 gap-4">
           <Card className="col-span-2 flex flex-col items-center justify-center py-6">
-            <CalorieRing consumed={dashboard.calories_consumed} target={dashboard.calories_target} />
+            <CalorieRing consumed={d.calories_consumed} target={d.calories_target} />
           </Card>
           <Card className="flex flex-col justify-center items-center gap-4">
-            <StreakCounter streak={dashboard.streak_days} />
-            {dashboard.bmi && (
+            <StreakCounter streak={d.streak_days} />
+            {d.bmi && (
               <div className="text-center">
-                <p className="text-2xl font-bold text-gray-100">{dashboard.bmi.toFixed(1)}</p>
+                <p className="text-2xl font-bold text-gray-100">{d.bmi.toFixed(1)}</p>
                 <p className="text-xs text-gray-500">BMI</p>
               </div>
             )}
@@ -103,23 +117,24 @@ export default function DashboardPage() {
         {/* Macros */}
         <Card>
           <h3 className="text-sm font-semibold text-gray-400 mb-4">Today&apos;s Macros</h3>
-          <MacroBarsGroup consumed={dashboard.macros_consumed} target={dashboard.macros_target} />
+          <MacroBarsGroup consumed={d.macros_consumed} target={d.macros_target} />
         </Card>
 
         {/* Milestone */}
-        {dashboard.next_milestone && <MilestoneCard milestone={dashboard.next_milestone} />}
+        {d.next_milestone && <MilestoneCard milestone={d.next_milestone} />}
 
         {/* Water Intake */}
         <WaterIntakePanel
-          initialTotal={dashboard.water.total_ml}
-          initialGoal={dashboard.water.goal_ml}
+          initialTotal={d.water.total_ml}
+          initialGoal={d.water.goal_ml}
         />
 
         {/* Weight Chart */}
         <Card>
           <h3 className="text-sm font-semibold text-gray-400 mb-3">Weight Progress</h3>
-          <WeightProgressChart entries={dashboard.weight_entries} goalWeight={dashboard.goal_weight_kg} />
+          <WeightProgressChart entries={d.weight_entries} goalWeight={d.goal_weight_kg} />
         </Card>
+
       </div>
     </div>
   );
