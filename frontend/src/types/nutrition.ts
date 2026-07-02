@@ -12,6 +12,7 @@ export interface FoodItem {
   sugar_g: number;
   is_veg: boolean;
   is_egg: boolean;
+  is_custom?: boolean;
   score?: number;
 }
 

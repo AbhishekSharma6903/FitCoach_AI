@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import AuthProvider from "@/components/AuthProvider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
-const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 export const metadata: Metadata = {
   title: "FitCoach AI",
@@ -12,20 +12,16 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const content = (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} bg-[#0d0d0d] text-gray-100 min-h-screen`}>
-        <AuthProvider>{children}</AuthProvider>
-      </body>
-    </html>
+  // Always wrap with ClerkProvider so Clerk components (SignIn, UserButton etc.) work.
+  // In DEV_MODE, the middleware skips auth and api.ts sends a dummy token —
+  // ClerkProvider itself is harmless without real keys.
+  return (
+    <ClerkProvider>
+      <html lang="en" className="dark">
+        <body className={`${inter.className} bg-[#0d0d0d] text-gray-100 min-h-screen`}>
+          <AuthProvider>{children}</AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
-
-  if (DEV_MODE) {
-    // Skip ClerkProvider entirely in dev mode — avoids network calls to Clerk
-    return content;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { ClerkProvider } = require("@clerk/nextjs");
-  return <ClerkProvider>{content}</ClerkProvider>;
 }

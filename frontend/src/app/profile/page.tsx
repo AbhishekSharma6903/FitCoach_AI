@@ -1,13 +1,12 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, CheckCircle2, LogOut, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, CheckCircle2, LogOut, RefreshCw, Camera, ChevronDown } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useDashboard } from "@/hooks/useDashboard";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-import Select from "@/components/ui/Select";
 import FormField from "@/components/ui/FormField";
 import Spinner from "@/components/ui/Spinner";
 import api from "@/lib/api";
@@ -38,14 +37,68 @@ const GOAL_OPTIONS = [
   { value: "52", label: "52 weeks (1 year)" },
 ];
 
-function StatBadge({ label, value, unit }: { label: string; value: string | number | null; unit?: string }) {
+function CustomSelect({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}) {
   return (
-    <div className="flex flex-col items-center gap-1 bg-gray-800 rounded-xl px-4 py-3 text-center min-w-[80px]">
-      <span className="text-lg font-bold text-gray-100">
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        className="w-full appearance-none bg-gray-800 border border-gray-700 text-gray-100 rounded-lg px-3 py-2.5 pr-9 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 transition-colors cursor-pointer"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value} className="bg-gray-800 text-gray-100">
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+        <ChevronDown size={15} className="text-gray-400" />
+      </div>
+    </div>
+  );
+}
+
+function StatBadge({
+  label,
+  value,
+  unit,
+  subtitle,
+  variant = "default",
+  color,
+}: {
+  label: string;
+  value: string | number | null;
+  unit?: string;
+  subtitle?: string;
+  variant?: "default" | "goal";
+  color?: string;
+}) {
+  return (
+    <div
+      className={`flex flex-col items-center gap-0.5 bg-gray-800 rounded-xl px-4 py-3 text-center min-w-[80px] ${
+        variant === "goal"
+          ? "border border-brand-500/60 ring-1 ring-brand-500/20"
+          : "border border-transparent"
+      }`}
+    >
+      <span className={`text-lg font-bold ${color ?? "text-gray-100"}`}>
         {value != null ? value : "—"}
         {unit && value != null && <span className="text-xs text-gray-400 ml-0.5">{unit}</span>}
       </span>
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className={`text-xs font-medium ${variant === "goal" ? "text-brand-400" : "text-gray-400"}`}>
+        {label}
+      </span>
+      {subtitle && (
+        <span className="text-[10px] text-gray-600 leading-tight">{subtitle}</span>
+      )}
     </div>
   );
 }
@@ -78,10 +131,10 @@ function SignOutButton() {
     <button
       onClick={handleSignOut}
       disabled={loading}
-      className="w-full flex items-center gap-3 py-3 px-1 text-red-400 hover:text-red-300 transition-colors group"
+      className="flex items-center gap-2 border border-red-800 text-red-400 hover:text-red-300 hover:border-red-700 rounded-lg px-4 py-2 transition-colors text-sm font-medium"
     >
-      <LogOut size={18} className="shrink-0" />
-      <span className="text-sm font-medium">Sign Out</span>
+      <LogOut size={16} className="shrink-0" />
+      <span>Sign Out</span>
     </button>
   );
 }
@@ -94,10 +147,10 @@ function ClerkSignOutButton() {
   return (
     <button
       onClick={() => signOut({ redirectUrl: "/sign-in" })}
-      className="w-full flex items-center gap-3 py-3 px-1 text-red-400 hover:text-red-300 transition-colors"
+      className="flex items-center gap-2 border border-red-800 text-red-400 hover:text-red-300 hover:border-red-700 rounded-lg px-4 py-2 transition-colors text-sm font-medium"
     >
-      <LogOut size={18} className="shrink-0" />
-      <span className="text-sm font-medium">Sign Out</span>
+      <LogOut size={16} className="shrink-0" />
+      <span>Sign Out</span>
     </button>
   );
 }
@@ -187,12 +240,23 @@ export default function ProfilePage() {
 
         {/* Identity card */}
         <div className="flex items-center gap-4 bg-gray-900 border border-gray-800 rounded-2xl px-5 py-4">
-          <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-xl shrink-0">
-            {profile.name[0].toUpperCase()}
+          {/* Avatar with camera overlay */}
+          <div className="relative shrink-0 group cursor-pointer">
+            <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center text-brand-400 font-bold text-2xl">
+              {profile.name[0].toUpperCase()}
+            </div>
+            {/* Hover overlay */}
+            <div className="absolute inset-0 rounded-full bg-black/55 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <Camera size={18} className="text-white" />
+            </div>
+            {/* Always-visible camera badge */}
+            <div className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-brand-500 border-2 border-gray-900 flex items-center justify-center shadow-md">
+              <Camera size={10} className="text-black" />
+            </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-100">{profile.name}</p>
-            <p className="text-xs text-gray-500 capitalize mt-0.5">
+            <p className="text-white text-2xl font-bold leading-tight truncate">{profile.name}</p>
+            <p className="text-gray-400 text-sm capitalize mt-0.5">
               {profile.age} yrs · {profile.gender} · {profile.height_cm} cm
             </p>
           </div>
@@ -202,12 +266,45 @@ export default function ProfilePage() {
         <Card padding="sm">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Your Stats</p>
           <div className="flex gap-2 flex-wrap">
-            <StatBadge label="BMI"    value={profile.bmi?.toFixed(1) ?? null} />
-            <StatBadge label="TDEE"   value={profile.tdee_kcal ? Math.round(profile.tdee_kcal) : null}              unit="kcal" />
-            <StatBadge label="Target" value={profile.target_calories_kcal ? Math.round(profile.target_calories_kcal) : null} unit="kcal" />
-            <StatBadge label="Protein" value={profile.protein_g ? Math.round(profile.protein_g) : null}             unit="g" />
-            <StatBadge label="Carbs"  value={profile.carbs_g ? Math.round(profile.carbs_g) : null}                  unit="g" />
-            <StatBadge label="Fat"    value={profile.fat_g ? Math.round(profile.fat_g) : null}                      unit="g" />
+            <StatBadge
+              label="BMI"
+              value={profile.bmi?.toFixed(1) ?? null}
+              subtitle="Body Index"
+            />
+            <StatBadge
+              label="Maintenance"
+              value={profile.tdee_kcal ? Math.round(profile.tdee_kcal) : null}
+              unit="kcal"
+              subtitle="TDEE"
+            />
+            <StatBadge
+              label="Your Goal"
+              value={profile.target_calories_kcal ? Math.round(profile.target_calories_kcal) : null}
+              unit="kcal"
+              subtitle="Daily Target"
+              variant="goal"
+            />
+            <StatBadge
+              label="Protein"
+              value={profile.protein_g ? Math.round(profile.protein_g) : null}
+              unit="g"
+              subtitle="Daily Target"
+              color="text-blue-400"
+            />
+            <StatBadge
+              label="Carbs"
+              value={profile.carbs_g ? Math.round(profile.carbs_g) : null}
+              unit="g"
+              subtitle="Daily Target"
+              color="text-amber-400"
+            />
+            <StatBadge
+              label="Fat"
+              value={profile.fat_g ? Math.round(profile.fat_g) : null}
+              unit="g"
+              subtitle="Daily Target"
+              color="text-orange-400"
+            />
           </div>
           {profile.bmi && (
             <p className={`text-xs mt-3 ${bmiClass}`}>
@@ -223,34 +320,65 @@ export default function ProfilePage() {
         {form && (
           <Card>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Update Goals</p>
-            <div className="space-y-4">
+
+            {/* Weight Goals section */}
+            <div className="mb-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-medium">Weight Goals</p>
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Current Weight (kg)">
-                  <Input type="number" step={0.1} min={30} max={300}
+                  <Input
+                    type="number"
+                    step={0.1}
+                    min={30}
+                    max={300}
                     value={form.current_weight_kg}
                     onChange={(e) => update("current_weight_kg", e.target.value)}
-                    placeholder="e.g. 72.5" />
+                    placeholder="e.g. 72.5"
+                  />
                 </FormField>
                 <FormField label="Goal Weight (kg)">
-                  <Input type="number" step={0.1} min={30} max={300}
+                  <Input
+                    type="number"
+                    step={0.1}
+                    min={30}
+                    max={300}
                     value={form.goal_weight_kg}
                     onChange={(e) => update("goal_weight_kg", e.target.value)}
-                    placeholder="e.g. 65.0" />
+                    placeholder="e.g. 65.0"
+                  />
                 </FormField>
               </div>
-              <FormField label="Timeline">
-                <Select options={GOAL_OPTIONS} value={form.time_to_reach_goal_weeks}
-                  onChange={(e) => update("time_to_reach_goal_weeks", e.target.value)} />
-              </FormField>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-800 mb-5" />
+
+            {/* Lifestyle section */}
+            <div className="space-y-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-medium">Lifestyle</p>
               <FormField label="Activity Level">
-                <Select options={ACTIVITY_OPTIONS} value={form.activity_level}
-                  onChange={(e) => update("activity_level", e.target.value)} />
+                <CustomSelect
+                  options={ACTIVITY_OPTIONS}
+                  value={form.activity_level}
+                  onChange={(e) => update("activity_level", e.target.value)}
+                />
               </FormField>
               <FormField label="Diet Type">
-                <Select options={DIET_OPTIONS} value={form.diet_type}
-                  onChange={(e) => update("diet_type", e.target.value)} />
+                <CustomSelect
+                  options={DIET_OPTIONS}
+                  value={form.diet_type}
+                  onChange={(e) => update("diet_type", e.target.value)}
+                />
+              </FormField>
+              <FormField label="Timeline">
+                <CustomSelect
+                  options={GOAL_OPTIONS}
+                  value={form.time_to_reach_goal_weeks}
+                  onChange={(e) => update("time_to_reach_goal_weeks", e.target.value)}
+                />
               </FormField>
             </div>
+
             {error && <p className="text-xs text-red-400 mt-3">{error}</p>}
             <div className="mt-5">
               <Button onClick={handleSave} disabled={saving} className="w-full flex items-center justify-center gap-2">
@@ -276,7 +404,9 @@ export default function ProfilePage() {
             </div>
             <span className="text-gray-700 text-sm">›</span>
           </Link>
-          <SignOutButton />
+          <div className="pt-3 px-1">
+            <SignOutButton />
+          </div>
         </Card>
 
         {/* Dev mode notice */}

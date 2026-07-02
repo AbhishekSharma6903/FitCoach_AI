@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import profile, food, weight, dashboard, water, admin
+from app.routers import profile, food, weight, dashboard, water, admin, dishes, workout
 from app.auth import get_current_user_id
 from app.config import settings
 
@@ -20,7 +20,9 @@ app.include_router(food.router, prefix="/api/v1/food", tags=["food"])
 app.include_router(weight.router, prefix="/api/v1/weight", tags=["weight"])
 app.include_router(water.router, prefix="/api/v1/water", tags=["water"])
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["dashboard"])
-app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(admin.router,    prefix="/api/v1/admin",   tags=["admin"])
+app.include_router(dishes.router,   prefix="/api/v1/dishes",  tags=["dishes"])
+app.include_router(workout.router,  prefix="/api/v1/workout", tags=["workout"])
 
 
 @app.get("/health")
