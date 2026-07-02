@@ -34,6 +34,8 @@ class DashboardRead(BaseModel):
     calories_consumed: float
     calories_target: float
     calories_remaining: float
+    calories_burned_today: float = 0.0
+    calories_net: float = 0.0
     macros_consumed: MacroSnapshot
     macros_target: MacroSnapshot
     streak_days: int

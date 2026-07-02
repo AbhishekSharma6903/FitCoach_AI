@@ -1,0 +1,65 @@
+{
+  "round": 2,
+  "summary": "Round 2: improved 11 files targeting top issues",
+  "fixes": [
+    {
+      "file": "frontend/src/app/dashboard/page.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/dashboard/CalorieRing.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/dashboard/MacroBar.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/dashboard/MacroBarsGroup.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/app/tracker/page.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/tracker/NutritionTotals.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/tracker/FoodLog.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/app/profile/page.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/app/dishes/page.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/dishes/DishBuilder.tsx",
+      "description": "UI improvements applied"
+    },
+    {
+      "file": "frontend/src/components/dishes/DishNutritionPreview.tsx",
+      "description": "UI improvements applied"
+    }
+  ],
+  "applied": [
+    "frontend/src/app/dashboard/page.tsx",
+    "frontend/src/components/dashboard/CalorieRing.tsx",
+    "frontend/src/components/dashboard/MacroBar.tsx",
+    "frontend/src/components/dashboard/MacroBarsGroup.tsx",
+    "frontend/src/app/tracker/page.tsx",
+    "frontend/src/components/tracker/NutritionTotals.tsx",
+    "frontend/src/components/tracker/FoodLog.tsx",
+    "frontend/src/app/profile/page.tsx",
+    "frontend/src/app/dishes/page.tsx",
+    "frontend/src/components/dishes/DishBuilder.tsx",
+    "frontend/src/components/dishes/DishNutritionPreview.tsx"
+  ],
+  "skipped": [],
+  "timestamp": "2026-06-29T22:31:30.301719"
+}

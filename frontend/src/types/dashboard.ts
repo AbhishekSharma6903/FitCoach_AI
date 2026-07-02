@@ -29,6 +29,8 @@ export interface DashboardData {
   calories_consumed: number;
   calories_target: number;
   calories_remaining: number;
+  calories_burned_today: number;
+  calories_net: number;
   macros_consumed: MacroSnapshot;
   macros_target: MacroSnapshot;
   streak_days: number;

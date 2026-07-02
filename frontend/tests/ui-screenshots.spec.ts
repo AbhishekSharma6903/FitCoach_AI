@@ -60,3 +60,22 @@ test("food search — type query", async ({ page }) => {
   await page.waitForTimeout(500);
   await shot(page, "07-food-search-paneer");
 });
+
+test("workout page", async ({ page }) => {
+  await page.goto("/workout");
+  await page.waitForLoadState("networkidle");
+  await shot(page, "11-workout");
+});
+
+test("dishes — create form with ingredients", async ({ page }) => {
+  await page.goto("/dishes");
+  await page.waitForLoadState("networkidle");
+  await page.click('button:has-text("New Dish")');
+  await page.waitForTimeout(300);
+  // Type dish name
+  await page.fill('input[placeholder*="My Poha"]', "Egg & Milk Breakfast");
+  // Search for egg
+  await page.fill('input[placeholder*="Search food"]', "egg whole");
+  await page.waitForTimeout(600);
+  await shot(page, "10-dishes-with-search");
+});

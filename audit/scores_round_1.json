@@ -1,0 +1,136 @@
+{
+  "pages": [
+    {
+      "name": "01-dashboard",
+      "score": 7.2,
+      "good": [
+        "Calorie ring with remaining/goal text creates a clear focal point",
+        "Green brand color used purposefully for positive metrics (remaining calories, streak)",
+        "Water intake section has good progressive disclosure with quick-add buttons",
+        "Weight progress chart with goal dashed line adds meaningful context"
+      ],
+      "bad": [
+        "BMI value (19.8) and 0-day streak are crammed into a small card with poor visual balance \u2014 streak '0' feels like an error state not a feature",
+        "Macro progress bars are nearly invisible at zero state \u2014 thin gray lines with no empty-bar contrast make the section feel broken",
+        "Next milestone card uses a dark green bg that is too close in value to the card bg, reducing legibility of '18 weeks away' tag",
+        "Dashboard cards have inconsistent internal padding \u2014 water intake section feels denser than the calorie ring card",
+        "Typography scale is flat \u2014 calorie '0' in the ring, macro labels, and section headers all feel similar in weight with no clear hierarchy jump"
+      ],
+      "improvements": [
+        "Increase calorie ring number to text-5xl font-black and use white for consumed, gray-400 for 'kcal' label to create a clear focal hierarchy",
+        "Add a visible track to macro bars (bg-gray-700 h-2 rounded-full) so zero state still shows the full goal bar as a container",
+        "Give the streak metric a dedicated icon treatment with a larger number (text-3xl) and add a motivational sub-label like 'Start today!'",
+        "Standardize card padding to p-5 across all dashboard cards for visual rhythm",
+        "Increase contrast on the milestone card badge '18 weeks away' to bg-green-900 text-green-300 for legibility"
+      ]
+    },
+    {
+      "name": "02-tracker-today",
+      "score": 6.8,
+      "good": [
+        "Date navigator with TODAY badge is clean and immediately scannable",
+        "Nutrition totals grid (Calories, Protein, Carbs, Fat, Fiber) is well-structured with goal denominators",
+        "Search bar placeholder text with Indian food examples (Dal Tadka, Roti, Rice) shows strong localization awareness",
+        "Dark card for totals creates good visual separation from the empty list area"
+      ],
+      "bad": [
+        "Empty state below totals card is just plain text with no illustration or CTA button \u2014 'No food logged today' feels abandoned",
+        "The totals card shows all zeros with no visual differentiation between values and goal denominators \u2014 they blend together",
+        "No meal grouping UI visible (Breakfast/Lunch/Dinner/Snacks) \u2014 flat food log architecture reduces usability for Indian multi-meal eating patterns",
+        "Settings gear icon top-right has no visible label or tooltip context \u2014 unclear what settings are available",
+        "Page has too much empty vertical space below the totals card which makes it feel unfinished on longer screens"
+      ],
+      "improvements": [
+        "Add an illustrated empty state with a bowl/plate icon and a prominent '+ Log your first meal' green CTA button inside the empty area",
+        "In the totals grid, style the consumed value as text-white text-xl font-bold and the goal as text-gray-500 text-sm to create clear reading hierarchy",
+        "Add collapsible meal sections (Breakfast, Lunch, Dinner, Snacks) with individual calorie subtotals even when empty",
+        "Add a recent foods or 'Quick Add' section below search to reduce friction for repeat Indian meals",
+        "Make denominator values text-gray-500 text-xs and consumed values text-white text-2xl font-semibold for stronger contrast"
+      ]
+    },
+    {
+      "name": "05-profile",
+      "score": 7.0,
+      "good": [
+        "Stats badges row (BMI, TDEE, Target, Protein, Carbs, Fat) provides a compact data-rich summary",
+        "BMI healthy weight indicator in green is a great positive reinforcement pattern",
+        "Form fields for goal update are logically grouped with clear labels",
+        "Dev Mode Active warning banner is visually distinct (orange border) without breaking the layout"
+      ],
+      "bad": [
+        "Identity card shows only initial avatar 'J' with no option to add a photo \u2014 feels placeholder-level for a fitness app",
+        "Stats badges have inconsistent unit formatting \u2014 '2393 kcal' and '2454 kcal' look nearly identical in size, making TDEE vs Target distinction confusing",
+        "The profile header (name, age, height) uses a single muted gray color for all metadata \u2014 no visual hierarchy between name and stats",
+        "Sign Out button is red text but has no border or background \u2014 it looks like a disabled link rather than a destructive action",
+        "Re-do Onboarding option is visually identical to Sign Out in weight, making its importance unclear",
+        "Form dropdowns (36 weeks, Moderate, Non-Vegetarian) have no visible focus states and low-contrast chevrons"
+      ],
+      "improvements": [
+        "Differentiate TDEE vs Target badges by labeling TDEE as 'Maintenance' and Target as 'Your Goal' with a green accent border on the Target badge",
+        "Make the name 'Jayaraj' text-white text-2xl font-bold and metadata text-gray-400 text-sm to establish hierarchy in the identity card",
+        "Give Sign Out a border border-red-800 text-red-400 rounded-lg px-4 py-2 treatment to signal destructive action without aggression",
+        "Add avatar upload affordance with a camera icon overlay on the initial circle",
+        "Style form selects with a visible bg-gray-800 border border-gray-700 focus:border-green-500 ring for consistent dark-mode form treatment"
+      ]
+    },
+    {
+      "name": "08-dishes-empty",
+      "score": 6.5,
+      "good": [
+        "Dish card design is clean with good information density \u2014 kcal/100g, macro color coding (P/C/F) works well",
+        "Veg badge with green color coding aligns with Indian dietary context perfectly",
+        "Edit and delete action icons on the card are positioned intuitively",
+        "Subtitle 'Custom dishes appear in food search when you log meals' explains the feature purpose well"
+      ],
+      "bad": [
+        "Despite being named '08-dishes-empty', the screenshot actually shows one dish \u2014 the empty state with just the subtitle text is underselling the feature's discoverability",
+        "The single dish card has no visual state for 'last used' or 'times logged' \u2014 lacks engagement hooks",
+        "No search or filter functionality visible for when dishes list grows \u2014 scalability concern",
+        "Card macro row (P/C/F colored dots) uses very small text that may be unreadable on mobile at actual device resolution",
+        "The page has excessive whitespace below the single card with no suggested next actions"
+      ],
+      "improvements": [
+        "Add a true empty state illustration (chef hat or bowl icon) with headline 'Create your first dish' and body text explaining the benefit for the zero-dish state",
+        "Add 'Last used: 2 days ago' or 'Logged 5 times' metadata to dish cards to increase engagement and utility",
+        "Increase macro label text to text-sm and add full labels on hover/tap (e.g., 'Protein: 13g' instead of just '13.0g P')",
+        "Add a subtle 'Add another dish' ghost button card at the end of the list to encourage content creation",
+        "Consider a 2-column grid layout on wider screens for better use of horizontal space"
+      ]
+    },
+    {
+      "name": "09-dishes-create",
+      "score": 6.9,
+      "good": [
+        "Green focus ring on the dish name input clearly signals active state",
+        "Two-phase UX (name first, then search ingredients) is logically structured",
+        "Cancel/Save button row with clear color differentiation (gray vs green) follows standard modal conventions",
+        "Placeholder examples in both fields reduce cognitive load"
+      ],
+      "bad": [
+        "The ingredient search area has a large empty void with just an icon and text \u2014 no visual indication of what an added ingredient will look like",
+        "No diet type selector (Veg/Non-Veg/Vegan) on the create form \u2014 but the list view shows a 'veg' badge, creating a data input gap",
+        "Save Dish button is active even when no ingredients are added \u2014 should be disabled with a tooltip explaining why",
+        "DISH NAME and INGREDIENTS labels are in all-caps small tracking text which reduces readability at small sizes",
+        "No serving size or total weight input visible \u2014 unclear how the per-100g calculation will be defined at creation time",
+        "Modal lacks a close (X) button in the top right corner \u2014 only Cancel at bottom, which requires scrolling on mobile"
+      ],
+      "improvements": [
+        "Add a Veg/Non-Veg/Vegan toggle (pill selector) below the dish name field to capture diet type at creation",
+        "Disable the Save Dish button (opacity-50 cursor-not-allowed) until at least one ingredient is added, with a tooltip 'Add at least one ingredient'",
+        "Add a preview of ingredient row (e.g., a ghost skeleton card) in the empty ingredient area to show users what to expect",
+        "Add a close X button (top-right, text-gray-400 hover:text-white) to the modal header for quick dismissal",
+        "Add a 'Total serving size' field with default 100g and allow custom input so users can define a full dish portion"
+      ]
+    }
+  ],
+  "overall": 6.9,
+  "top_fixes": [
+    "Add proper empty states with illustrations and CTA buttons across all zero-data screens (tracker, dishes) \u2014 current text-only empty states make the app feel unfinished and reduce feature discoverability",
+    "Establish a consistent typography scale: consumed/primary values should be text-2xl to text-4xl font-bold text-white, while labels and denominators should be text-xs to text-sm text-gray-400 \u2014 currently all text weights feel too similar",
+    "Make macro progress bars visible at zero state by adding a full-width track (bg-gray-700 rounded-full h-2) so the goal container is always visible, preventing the current 'broken' appearance",
+    "Add Indian meal structure (Breakfast/Lunch/Dinner/Snacks sections) to the food tracker \u2014 this is the highest-impact localization improvement for the target Indian user base and reduces cognitive load in logging",
+    "Add a Veg/Non-Veg/Vegan diet badge toggle to the dish creation form and ensure it propagates correctly to the dish card \u2014 the current gap between creation form and display card creates user trust issues around data accuracy"
+  ],
+  "round": 1,
+  "timestamp": "2026-06-29T22:20:12.862603"
+}

@@ -1,0 +1,139 @@
+{
+  "pages": [
+    {
+      "name": "01-dashboard",
+      "score": 7.2,
+      "good": [
+        "Calorie ring with centered KCAL value creates strong focal point and clear hierarchy",
+        "Green brand color used purposefully for remaining calories and streak elements",
+        "Water intake section with circular progress and quick-add buttons is highly functional",
+        "Weight progress chart with goal line dashed in green is contextually informative",
+        "Card-based layout with consistent bg-gray-900 creates clean sectioning"
+      ],
+      "bad": [
+        "BMI (19.8) and day streak (0) are displayed at same visual weight as primary calorie data \u2014 no hierarchy differentiation",
+        "Right panel with BMI and streak feels cramped and under-spaced compared to the dominant calorie card",
+        "Water intake quick-add buttons (150ml, 250ml, 500ml, 750ml) have identical styling with no visual differentiation for most common action",
+        "'Next milestone' card uses very similar dark green background that barely separates it from other cards \u2014 low contrast",
+        "Macros section shows all zeros with no skeleton/placeholder state \u2014 feels abandoned",
+        "Weight chart y-axis labels (57-61) are extremely small and low contrast, barely legible"
+      ],
+      "improvements": [
+        "Increase BMI value to text-2xl and add a colored pill badge (green for healthy) directly on the stat instead of plain text below",
+        "Add a subtle divider or increase padding between calorie ring card and BMI/streak card to reduce cramped feel \u2014 target min 16px gap",
+        "Highlight the 250ml Glass button with a slightly brighter border or scale-up to indicate most common serving",
+        "Increase weight chart label font size to at least 11px and use text-gray-400 for better legibility",
+        "Add a faint progress indicator or 'Log your first meal' micro-CTA inside the macros zeros to reduce empty feeling"
+      ]
+    },
+    {
+      "name": "02-tracker-today",
+      "score": 7.8,
+      "good": [
+        "Quick Add section with Indian meal presets (Dal Tadka, Roti, Idli) is an excellent localization touch and solves the blank-state problem proactively",
+        "Date navigator with back/forward arrows and TODAY badge is clean and highly usable",
+        "Macro breakdown (Protein/Carbs/Fat) with both current and goal values in the bottom summary bar is information-dense but readable",
+        "Empty state illustration with salad bowl and + icon plus CTA button is polished and encouraging",
+        "Search bar with contextual placeholder text (e.g. Dal Tadka, Roti, Rice...) reinforces Indian food context"
+      ],
+      "bad": [
+        "Quick Add cards have inconsistent emoji sizes relative to card size \u2014 some emojis appear small and misaligned vertically",
+        "Calorie count under Quick Add items (180 kcal, 70 kcal) uses same text-gray-400 as labels \u2014 calorie number should be more prominent",
+        "The nutrition totals bar at bottom shows 0g / 150g but the progress bars are all flat gray \u2014 no visual differentiation between protein/carbs/fat bar colors",
+        "Settings gear icon in top right has no tooltip or label \u2014 unclear what it controls",
+        "2000 kcal goal in the tracker differs from 2454 kcal shown in the dashboard \u2014 inconsistency creates confusion"
+      ],
+      "improvements": [
+        "Color-code the three macro progress bars: blue for protein, yellow/amber for carbs, orange for fat \u2014 matching dashboard macro colors",
+        "Make kcal values in Quick Add cards text-white font-semibold instead of gray to create secondary hierarchy within the card",
+        "Align calorie display: ensure food log page uses the same 2454 kcal goal as the dashboard, not 2000 kcal",
+        "Add a tooltip or label on the gear icon: 'Log Settings' \u2014 or replace with a more contextual icon like a filter",
+        "Add a meal-type segmentation (Breakfast / Lunch / Dinner / Snacks) above the empty state to give users structure before they log"
+      ]
+    },
+    {
+      "name": "05-profile",
+      "score": 7.0,
+      "good": [
+        "Stats badge row (BMI, Maintenance, Your Goal, Protein, Carbs, Fat) provides an at-a-glance summary \u2014 the green highlight on Your Goal badge is effective",
+        "Identity card with avatar initial, age, gender, height is clean and well-structured",
+        "BMI 19.8 \u2014 Healthy weight green inline label adds positive reinforcement",
+        "Form layout for Update Goals with clear field labels is functional and unambiguous",
+        "Dev Mode Active banner is clearly differentiated with green/red text \u2014 good developer UX"
+      ],
+      "bad": [
+        "Avatar is just a letter 'J' in a circle \u2014 no option to add photo creates a generic feel that reduces personal connection",
+        "Stats badges have no units on some values (184g Protein reads oddly \u2014 should clarify it is a daily target)",
+        "The goals form (Current Weight, Goal Weight, Timeline, Activity Level, Diet Type) is vertically long with no visual grouping or section labels between fields",
+        "Sign Out button uses red outline style but is positioned below Account section with insufficient separation from Re-do Onboarding \u2014 they could be accidentally confused",
+        "Dropdowns (Timeline, Activity Level, Diet Type) use default browser styling \u2014 inconsistent with the custom dark theme"
+      ],
+      "improvements": [
+        "Add a camera icon overlay on the avatar circle to hint at photo upload capability, even if future feature \u2014 increases perceived completeness",
+        "Group goals form fields into two visual sections: 'Weight Goals' (current/goal weight) and 'Lifestyle' (activity, diet, timeline) with small section headers in text-xs text-gray-500 uppercase",
+        "Replace native select dropdowns with custom-styled dark dropdowns matching bg-gray-800 border-gray-700 to maintain design consistency",
+        "Add subtitle text under each stat badge: e.g. 'Daily Target' under Protein/Carbs/Fat to clarify context",
+        "Increase vertical spacing between the Re-do Onboarding list item and Sign Out button to at least 24px, and consider moving Sign Out to a destructive zone at the very bottom with a separator"
+      ]
+    },
+    {
+      "name": "08-dishes-empty",
+      "score": 6.0,
+      "good": [
+        "Logged 5 times counter on the dish card provides useful engagement data",
+        "Veg/non-veg tag badge in green is a culturally relevant and visually clear affordance for Indian users",
+        "Macro breakdown (P/C/F) inline on the dish card is compact and informative",
+        "Add another dish dashed-border button is a clean affordance that implies the list pattern"
+      ],
+      "bad": [
+        "The page title says 'empty state (no dishes created yet)' but the screenshot actually shows one dish (meal 1) \u2014 the empty state design itself is not visible, making evaluation harder; the 'empty' concept is not communicated with an illustration or zero-state message",
+        "Edit and delete icons on the dish card are very small (approximately 16px) and closely spaced \u2014 touch targets too small for mobile, high misclick risk",
+        "The helper text 'Custom dishes appear in food search when you log meals' is low contrast and positioned below the fold \u2014 most users will miss this key piece of information",
+        "Dish card shows '202 kcal /100g' but the base quantity notation is unclear \u2014 users may not understand if this is per serving or per 100g",
+        "No search or filter functionality visible \u2014 becomes a usability problem as dish count grows"
+      ],
+      "improvements": [
+        "Increase edit/delete icon touch targets to minimum 44x44px by wrapping in a larger clickable area with p-3 padding",
+        "Move the 'Custom dishes appear in food search' helper text to a highlighted info card at the top of the page with an info icon \u2014 treat it as onboarding context",
+        "Clarify nutrition display: change '202 kcal /100g' to '202 kcal per serving (300g)' to remove ambiguity about the base unit",
+        "Add a search bar at the top of My Dishes page above the dish list to support future scalability",
+        "For true empty state: add a chef illustration or icon with heading 'No dishes yet' and subtext 'Create your first custom recipe' above the New Dish CTA"
+      ]
+    },
+    {
+      "name": "09-dishes-create",
+      "score": 6.8,
+      "good": [
+        "Green border focus state on the dish name input is clear and on-brand",
+        "Two-step mental model (name first, then search ingredients) is logical and reduces cognitive load",
+        "Chef hat icon placeholder in ingredients area is a nice empty-state micro-detail",
+        "Cancel/Save Dish button pair with contrasting styles (gray vs green) clearly communicates the primary action",
+        "Placeholder text examples (e.g. My Poha, Mom's Dal, Evening Smoothie) are culturally resonant and helpful"
+      ],
+      "bad": [
+        "Form is a floating card but has no visible modal overlay/backdrop \u2014 feels disconnected from the page context without a dimmed background",
+        "Ingredients section label 'INGREDIENTS \u2014 search and add' uses a long inline label that would be better as a label + subtitle separated",
+        "No diet type selector (Veg/Non-Veg) in the create form \u2014 but the dish list shows a veg badge, meaning this data is required but not collected here",
+        "Save Dish button is active even with empty fields \u2014 should be disabled (opacity-50 cursor-not-allowed) until both name and at least one ingredient are filled",
+        "No character counter on dish name field \u2014 users don't know length limits, risk creating truncated names"
+      ],
+      "improvements": [
+        "Add a Veg / Non-Veg toggle (pill toggle style, green for veg, orange for non-veg) below the dish name input to collect diet type during creation",
+        "Disable the Save Dish button until dish name is non-empty and at least one ingredient is added \u2014 use opacity-40 and cursor-not-allowed states",
+        "Add a semi-transparent dark backdrop (bg-black/60) behind the create card if it is a modal, or restructure as a full page with a back button for clarity",
+        "Split ingredient label into: label text 'INGREDIENTS' on its own line, then a softer subtitle 'Search and add foods below' in text-gray-400 text-sm",
+        "Add a serving size / total portions input field below the ingredients list so nutrition can be calculated per serving rather than just total"
+      ]
+    }
+  ],
+  "overall": 7.0,
+  "top_fixes": [
+    "Unify calorie goal across all pages \u2014 the Food Log shows 2000 kcal while Dashboard shows 2454 kcal; this inconsistency destroys user trust and must be a single source of truth from the profile goal calculation",
+    "Color-code all macro bars consistently across Dashboard and Food Tracker (blue=protein, amber=carbs, orange=fat) \u2014 currently macros are indistinguishable gray bars that convey no information at a glance",
+    "Replace all native browser select dropdowns (Profile goals form, Diet Type) with custom dark-themed dropdowns matching bg-gray-800 border border-gray-700 rounded-lg to close the most obvious design inconsistency in the app",
+    "Add a Veg/Non-Veg toggle to the dish creation form and increase edit/delete touch targets on dish cards to 44px minimum \u2014 both are critical UX gaps that affect daily usability for Indian users who filter by diet type",
+    "Disable Save/submit buttons until required fields are filled across all forms (dish creation, food log) and add micro-validation feedback \u2014 currently all CTAs are always active which leads to empty submissions and poor error states"
+  ],
+  "round": 2,
+  "timestamp": "2026-06-29T22:26:13.026871"
+}

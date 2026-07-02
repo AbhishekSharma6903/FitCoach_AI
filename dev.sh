@@ -71,15 +71,15 @@ cmd_start() {
   green "  Migrations up to date"
 
   # 4. Backend
-  if lsof -i :8000 -sTCP:LISTEN &>/dev/null; then
-    green "→ Backend already running on :8000"
+  if lsof -i :8001 -sTCP:LISTEN &>/dev/null; then
+    green "→ Backend already running on :8001"
   else
     cyan "→ Starting FastAPI backend..."
     (cd "$ROOT/backend" && nohup "$ROOT/backend/venv/bin/uvicorn" \
-      app.main:app --host 0.0.0.0 --port 8000 --reload \
+      app.main:app --host 0.0.0.0 --port 8001 --reload \
       > "$BACKEND_LOG" 2>&1) &
     echo $! > "$BACKEND_PID_FILE"
-    wait_for_url "http://localhost:8000/health" "backend" 30 \
+    wait_for_url "http://localhost:8001/health" "backend" 30 \
       || { red "Backend failed to start. Check $BACKEND_LOG"; exit 1; }
   fi
 
@@ -102,7 +102,7 @@ cmd_start() {
   echo ""
   bold "=== All services up ==="
   green "  Frontend  →  http://localhost:3000"
-  green "  Backend   →  http://localhost:8000"
+  green "  Backend   →  http://localhost:8001"
   green "  Postgres  →  localhost:5433"
   echo ""
   echo "  Logs:  tail -f $BACKEND_LOG"
@@ -168,8 +168,8 @@ cmd_status() {
   fi
 
   # Backend
-  if curl -sf --max-time 2 http://localhost:8000/health -o /dev/null 2>/dev/null; then
-    green "  Backend    ✓  http://localhost:8000"
+  if curl -sf --max-time 2 http://localhost:8001/health -o /dev/null 2>/dev/null; then
+    green "  Backend    ✓  http://localhost:8001"
   else
     red   "  Backend    ✗  not responding"
   fi

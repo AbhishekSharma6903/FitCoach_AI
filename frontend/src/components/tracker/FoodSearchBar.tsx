@@ -44,18 +44,23 @@ export default function FoodSearchBar({ onSelect, dietFilter }: Props) {
           )}
           {results.map((item) => (
             <button
-              key={item.id}
+              key={`${item.is_custom ? "dish" : "food"}-${item.id}`}
               className="w-full px-4 py-3 text-left hover:bg-gray-800 border-b border-gray-800 last:border-0 transition-colors"
               onClick={() => { onSelect(item); setQuery(""); setOpen(false); }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-200">{item.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-medium text-gray-200">{item.name}</p>
+                    {item.is_custom && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-400 font-semibold">MY DISH</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">{item.category} · {item.region}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.is_veg ? "bg-brand-500" : item.is_egg ? "bg-yellow-400" : "bg-red-500"}`} />
-                  <span className="text-xs text-gray-500">{item.calories_kcal} kcal/100g</span>
+                  <span className="text-xs text-gray-500">{Number(item.calories_kcal).toFixed(0)} kcal/100g</span>
                 </div>
               </div>
             </button>
