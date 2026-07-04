@@ -34,6 +34,18 @@ From a full audit of `frontend_legacy/`:
 4. **No bottom navigation** — The whole app uses back arrows for navigation. On mobile this is unusable. Users expect a persistent bottom tab bar.
 5. **Dashboard action bar disaster** — A single row containing: green "Log Food" button, 🏋️ emoji, 🍽️ emoji, weight number input, "Log" button, avatar. At 375px this overflows.
 
+### Desktop Layout Problem (identified 2026-07-04)
+
+6. **Content stranded at `max-w-2xl` on desktop** — a 672px centered column on 1280px leaves
+   ~300px of dead black on each side (44% of screen wasted). The app looks like a mobile screen
+   placed on a monitor. The legacy frontend had this exact problem and users disliked it.
+
+   **Root cause:** PageShell uses `max-w-2xl mx-auto` for all viewports with no sidebar navigation.
+   On desktop there is no persistent navigation at all — no sidebar, no top nav, nothing.
+
+   **Decision:** Left sidebar (`SideNav`) on `md:+` + content fills all remaining width.
+   See Part 2.10 for the full desktop layout specification.
+
 ### Design System Fragmentation
 
 - 3 different `<input>` implementations (Input.tsx, raw in AddFoodModal, raw in FoodSearchBar)
@@ -239,6 +251,64 @@ Inactive:
   label: hidden
 ```
 
+### 2.10 Desktop Layout Strategy (md: 768px and above)
+
+**Pattern:** Left sidebar navigation + full-width content.
+Reference apps: Whoop (web), Hevy (web), Notion, Linear, Vercel.
+
+**Why NOT top nav with centered column:**
+MyFitnessPal and Cronometer use `max-w ~700-800px` centered with top nav. They still waste
+~200px on each side and feel like "mobile app on big screen." Rejected.
+
+**Why NOT full 3-column layout everywhere:**
+Right stats panel on every page (Tracker, Workout, Profile) is overengineering.
+The right panel is a Phase 5A dashboard-specific enhancement, not a global layout.
+
+#### SideNav spec (desktop, 64px wide, `hidden md:flex`)
+
+```
+Width:      64px fixed
+Height:     100dvh sticky left
+Background: rgba(17,17,17,0.95) border-r border-[#2A2A2A]
+
+Items (top): Home | Tracker | Workout | Dishes
+Items (bottom): Profile avatar
+
+Each item:
+  - 44×44px clickable area (meets touch target even on desktop)
+  - Icon centered, no labels (tooltips on hover)
+  - Active: bg-[#1A1A1A] icon text-[#22c55e] + 3px left green border
+  - Inactive: icon text-gray-600 hover:text-gray-300 hover:bg-[#1A1A1A]
+```
+
+#### PageShell on desktop (`md:`)
+
+```
+Mobile:   full width, max-w-2xl mx-auto, bottom nav clearance
+Desktop:  ml-16 (sidebar width), px-8, max-w-none, no bottom nav clearance
+          → content fills full remaining width (~1200px on 1280px screen)
+```
+
+#### Dashboard desktop layout (`lg:`)
+
+```
+lg:grid-cols-[1fr_320px] gap-6
+
+Left column (grows):
+  - Greeting + date header
+  - Calorie ring card (full width of column)
+  - Macro progress bars
+  - Water intake panel
+
+Right column (320px fixed):
+  - Streak + BMI card
+  - Next milestone card
+  - Weight chart (compact)
+```
+
+This gives ~880px left + 320px right on a 1280px screen — properly information-dense,
+no dead space, mirrors Whoop's web dashboard layout.
+
 ---
 
 ## Part 3 — Build Phases
@@ -345,167 +415,211 @@ Inline weight logging is **removed from dashboard**. Users log weight from the P
 
 ---
 
-### Phase 3 — Modal → Responsive Dialog/Drawer (~half day)
 
-#### 3A — Replace Modal
+### Phase 2.5 — Desktop Layout: SideNav + PageShell Update (~2 hours)
 
-New `components/ui/Modal.tsx` (same external API: `open`, `onClose`, `title`, `children`):
+**Problem:** Phase 2 built the mobile layout (BottomNav + PageShell) but left desktop
+without navigation or proper content width. Every page built in Phase 5 onwards needs
+the correct desktop shell to avoid rebuilding later.
 
-- On `md:` and above → shadcn `Dialog` (centered)
-- Below `md:` → shadcn `Drawer` (Vaul bottom sheet, slides up)
-- Drawer handle: `4px × 40px rounded-full bg-[#333] mx-auto mt-3`
-- Panel background: `bg-[#1A1A1A]` (Level 2 elevated)
-- `rounded-t-3xl`, max-height `90dvh`
+**Decision confirmed:** Left 64px icon sidebar on `md:+`. Content fills remaining width.
+Full spec in Part 2 §2.10.
 
-#### 3B — AlertDialog replaces confirm()
+#### Files to create / update
 
-Dishes delete → shadcn `AlertDialog` (Title: "Delete dish?" / Body: "This cannot be undone." / Cancel + Delete buttons)
+**New: `components/layout/SideNav.tsx`**
+- `hidden md:flex` flex-col, 64px wide, `fixed left-0 top-0 h-dvh z-40`
+- Same 5 routes as BottomNav (Home/Tracker/Workout/Dishes/Profile)
+- Icon-only with shadcn Tooltip on hover showing label
+- Active: green left border + green icon + `bg-[#1A1A1A]`
+- Bottom slot: Profile avatar circle
+- Logo / app initial at top
 
-#### 3C — Responsive grid fixes
+**Update: `components/layout/PageShell.tsx`**
+- Mobile: unchanged (`max-w-2xl mx-auto`, bottom padding for BottomNav)
+- Desktop `md:`: `md:ml-16 md:px-8 md:max-w-none md:pb-8` (shift right of sidebar, full width)
+- Remove `max-w-2xl` constraint on `md:+`
 
-- Nutrition preview in AddFoodModal: `grid-cols-2 sm:grid-cols-4`
-- AddWorkoutModal strength fields: `grid-cols-1 sm:grid-cols-3`
-- DateNavigator disabled days: `opacity-30 pointer-events-none`
-- FoodSearchBar: add `touchstart` event alongside `mousedown` for iOS
+**Update: `app/layout.tsx`**
+- Render both `<BottomNav />` (mobile, already done) and `<SideNav />` (desktop, new)
+- Both are hidden on the opposite breakpoint via Tailwind
 
----
-
-### Phase 4 — Command Search (~half day)
-
-#### 4A — SearchCommand Generic Component
-
-`components/ui/SearchCommand.tsx` — wraps shadcn `Command` inside a `Popover`:
-
+#### Dashboard content grid (desktop-only, inside Phase 5A)
 ```tsx
-interface SearchCommandProps<T> {
-  placeholder: string
-  onSearch: (q: string) => Promise<T[]>
-  renderItem: (item: T) => { id: string|number; primary: string; secondary?: string; badge?: string }
-  onSelect: (item: T) => void
-  emptyText?: string
-}
+// Only applied inside /dashboard/page.tsx, not in PageShell
+<div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
+  <main>...</main>
+  <aside>...</aside>
+</div>
 ```
 
-- Debounce 300ms
-- `↑↓` navigate, `Enter` select, `Escape` close
-- `role="combobox"`, `aria-expanded`, `aria-autocomplete="list"`
-- Opens above keyboard on mobile (`sideOffset` + `avoidCollisions`)
-
-#### 4B — FoodSearchBar → SearchCommand
-
-Result rendering: name, category·cuisine, MY DISH badge for custom, veg dot, kcal/100g
-
-#### 4C — ExerciseSearchBar → SearchCommand
-
-Result rendering: name, muscle·equipment, category pill (colored), MET value
+**Verify:** MacBook 1280px screenshot shows sidebar on left, content fills full width.
 
 ---
 
-### Phase 5 — Page Rebuilds (~2-3 sessions)
+### Phase 3 — Modal + Shared UI Components (~half day) ✅ DONE
 
-Run `qa/page_audit.py /{page}` after each page to verify P0 ≥ 8.0 before moving on.
+> **Implementation note:** shadcn v4.13.0 uses `@base-ui/react` instead of Radix UI.
+> `PopoverTrigger` does NOT support `asChild`. `SearchCommand` uses a custom
+> absolutely-positioned dropdown div instead.
+
+#### Files created
+- `components/ui/Modal.tsx` — responsive: `Dialog` on md+, `Drawer` bottom sheet on mobile. API: `{ open, onClose, title?, children, className? }`
+- `components/ui/DeleteConfirmDialog.tsx` — wraps `AlertDialog`. Props: `{ open, onOpenChange, title?, description?, confirmLabel?, onConfirm }`
+- `components/ui/Card.tsx` — Level 1 surface (`#111111`), border `#2A2A2A`, `rounded-2xl`
+- `components/ui/Spinner.tsx` — `Loader2` + `role="status"` + `aria-label`
+- `hooks/useMediaQuery.ts` — SSR-safe media query hook
+- `hooks/useDebounce.ts` — generic debounce hook
+
+---
+
+### Phase 4 — SearchCommand Generic Component (~half day) ✅ DONE
+
+#### Files created
+- `components/ui/SearchCommand.tsx` — generic `<T>`, debounce 300ms, click-outside (mousedown + touchstart for iOS), keyboard (Escape to close). Custom dropdown div (Base UI Popover workaround).
+
+---
+
+### Phase 4.5 — Global State Management with Zustand (~1 hour)
+
+**Decision: Zustand over Redux Toolkit**
+
+| Factor | Redux Toolkit | Zustand |
+|---|---|---|
+| Bundle size | ~15kb | ~1kb |
+| Boilerplate | Reducers, slices, actions, Provider | One `create()` call, no Provider |
+| Next.js App Router | Needs Provider in layout | Works natively, no Provider needed |
+| SWR conflict | None (parallel tools) | None (parallel tools) |
+| Devtools | Redux DevTools | Redux DevTools via middleware |
+| Learning curve | High | Minutes |
+
+**Why not Redux:** SWR already handles ALL server state (dashboard, food log, water, workout, weight). Redux would duplicate that. What remains is pure **UI state** that must persist across route changes — exactly Zustand's sweet spot.
+
+**What goes in Zustand (UI state only):**
+
+| Store | State | Used by |
+|---|---|---|
+| `useTrackerStore` | `selectedDate: string` | Tracker page, food log hooks |
+| `useUIStore` | `toast: { message, type } \| null` | Toast notifications app-wide |
+| `useMealStore` | `pendingMealSlot: string` | Quick-add grid → AddFoodModal pre-selection |
+
+**What stays in SWR (server state):** All API data — dashboard, food logs, water, workouts, dishes, profile. Zustand does NOT duplicate these.
+
+#### Install
+
+```bash
+npm install zustand
+```
+
+#### Store files (SRP — one file per domain)
+
+```
+src/store/
+  useTrackerStore.ts    ← selected date for tracker + workout pages
+  useUIStore.ts         ← global UI: toast, loading overlay
+  useMealStore.ts       ← pending meal slot for quick-add
+```
+
+#### Example: `useTrackerStore.ts`
+
+```ts
+import { create } from 'zustand'
+
+const today = () => new Date().toISOString().split('T')[0]
+
+interface TrackerState {
+  selectedDate: string
+  setSelectedDate: (date: string) => void
+  resetToToday: () => void
+}
+
+export const useTrackerStore = create<TrackerState>((set) => ({
+  selectedDate: today(),
+  setSelectedDate: (date) => set({ selectedDate: date }),
+  resetToToday: () => set({ selectedDate: today() }),
+}))
+```
+
+#### Why this matters before page builds
+Pages depend on `selectedDate` being shared between the DateNavigator and food/workout log hooks. Without a store, we'd need prop-drilling or context. Zustand solves this cleanly.
+
+---
+
+### Phase 5 — Page Rebuilds (~2–3 sessions)
+
+Run `python3 qa/page_audit.py /{page}` after each page. P0 ≥ 8.0 before moving on.
 
 #### 5A — Dashboard
 
-**Section layout (mobile, top to bottom):**
+**Sections (mobile top → bottom):**
+1. Greeting + date (no card, raw text)
+2. Hero card — 2-col grid:
+   - Left 60%: Calorie ring (140px), big kcal center, "remaining" label
+   - Right 40%: Streak (🔥 N days `font-black text-2xl`), BMI badge
+3. `TODAY'S MACROS` section header (caption style) + 3 colored progress bars
+4. Water intake panel
+5. Weight progress chart
 
-1. Greeting + date (large, no banner box)
-2. Hero card: 2-column grid
-   - Left (60%): Calorie ring (140px diameter), big kcal number, "remaining" label
-   - Right (40%): Streak (🔥 N days, font-black text-2xl), BMI badge
-3. "TODAY'S MACROS" section header, 3 macro progress bars (colored)
-4. Water intake panel (existing works well, keep structure)
-5. Weight progress chart (existing works well)
+**Desktop header (md+):** Avatar → `/profile` | Name + date | [spacer] | `+ Log Food` | Workout icon | Dishes icon
 
 #### 5B — Tracker
 
-1. Date navigator (existing DateNavigator component)
-2. Food search (SearchCommand)
-3. Nutrition totals: big remaining kcal, macro bars
-4. Meal tabs (Breakfast | Lunch | Dinner | Snacks) using shadcn Tabs
-   - Each tab label shows kcal when non-zero: `Lunch · 380`
-   - Entries per tab with delete buttons
-   - Empty state per tab
-5. Quick Add grid (6 popular Indian meals) — below tabs
+1. DateNavigator (uses `useTrackerStore.selectedDate`)
+2. SearchCommand for food search
+3. NutritionTotals: big remaining kcal + colored macro bars
+4. shadcn Tabs: Breakfast | Lunch | Dinner | Snacks (tab label shows kcal when non-zero)
+5. Quick Add grid (6 popular Indian meals)
 
 #### 5C — Workout
 
-1. Date navigator
-2. Exercise search (SearchCommand)
-3. Workout summary card (when entries exist): total burned, total volume
+1. DateNavigator (uses same `useTrackerStore.selectedDate`)
+2. SearchCommand for exercises
+3. Workout summary card (when entries exist)
 4. Workout log grouped by exercise name
-5. Calories burned banner (orange, shown when > 0)
+5. Calories burned banner (orange, when > 0)
 
 #### 5D — Dishes
 
-1. Info banner ("dishes appear in food search")
-2. Dish list with DishCard (name, badge, macros, edit/delete)
-3. Client-side search filter
-4. DishBuilder (create/edit form):
-   - Dish name
-   - Diet type toggle (Veg / Non-Veg / Vegan)
-   - Ingredient search (SearchCommand, no custom dishes as ingredients)
-   - Smart unit detection (ml for liquids, qty for eggs/bread/fruit, g for rest)
-   - Ingredient list with inline quantity edit
-   - Live DishNutritionPreview (total not per-100g)
-5. Empty state with CTA
+1. Info banner
+2. Dish list + client-side search
+3. DishBuilder (create/edit) — SearchCommand for ingredients, smart units, live nutrition preview
+4. DeleteConfirmDialog for deletion
 
 #### 5E — Profile
 
-1. Identity card (initial avatar, name, age/gender/height)
-2. Stats grid (BMI, TDEE, target kcal, protein/carbs/fat targets)
-3. Update Goals form (weight, goal weight, timeline, activity, diet)
-4. Account section: Re-do Onboarding link, Sign Out button
-5. Dev mode notice (only in development)
+1. Identity card (avatar initials, name, age/gender/height)
+2. Stats grid (BMI, TDEE, target kcal, macros)
+3. Update Goals form → PUT profile
+4. Account section: Re-do Onboarding + Sign Out
 
-#### 5F — Onboarding (4-step wizard, standalone layout — no PageShell)
+#### 5F — Onboarding (standalone layout — no PageShell, no BottomNav)
 
-1. Step 1: name, age, gender (3-button toggle), height
-2. Step 2: current weight, goal weight, timeline (with live delta badge)
-3. Step 3: experience level (3-card toggle), activity level
-4. Step 4: diet type (3-card toggle), wants_workout_split flag, wants_diet_plan flag
-5. Step indicator with labels
-6. Validate → Submit → redirect `/dashboard`
+4-step wizard: Personal → Weight Goals → Fitness → Diet → POST → redirect `/dashboard`
 
-#### 5G — Admin Pages (low priority, rebuild last)
+#### 5G — Admin (low priority, build last)
 
-- `/admin` — stats dashboard (total users, total foods)
-- `/admin/users` — read-only user list
-- `/admin/food` — full CRUD food catalog
+`/admin`, `/admin/users`, `/admin/food`
 
 ---
 
 ### Phase 6 — wger Images + Workout UX (~1 session)
 
-#### 6A — Backend: image_url column
-
-New Alembic migration: `image_url VARCHAR(512)` nullable on `exercise_library`.
-Re-fetch wger data to include `images[0].image` (first `is_main=true` entry).
-
-#### 6B — Workout UX improvements
-
-- Rename "Duration (min)" → "Session time (min)" with helper: "Total time including rest"
-- Add intensity toggle for strength exercises: Light (MET 3.0) | Moderate (3.5) | Vigorous (6.0)
-- Separate volume display from calories: show `3 × 10 @ 60kg` as distinct line
-
-#### 6C — Exercise images in UI
-
-- SearchCommand results: 36×36 thumbnail (lazy, fallback to category icon)
-- AddWorkoutModal header: 64×64 image
-- WorkoutLog entry row: 32×32 thumbnail
-- Footer attribution: "Exercise images © wger.de (CC-BY-SA 4.0)"
+- Backend: `image_url` column on `exercise_library`, re-fetch wger data
+- Rename "Duration (min)" → "Session time (min)" with helper text
+- Intensity toggle (Light/Moderate/Vigorous) for strength exercises
+- Separate volume display from calories
+- Exercise thumbnails in search results and workout log
 
 ---
 
 ### Phase 7 — Polish (~1 session)
 
-- Swipe gestures: DateNavigator (swipe = change day), food log entries (swipe = delete)
-- ARIA pass: all icon-only buttons get `aria-label`
-- Micro-animations: page entry (y: 8→0, opacity 0→1, 200ms), progress bars (300ms ease-out)
-- TypeScript strict pass: resolve all `any` types
-- Lighthouse: target Accessibility ≥ 90 on all pages
+- Swipe gestures: date navigation, swipe-to-delete food entries
+- ARIA pass: `aria-label` on all icon-only buttons
+- Micro-animations: page entry fade-up, progress bar transitions
+- TypeScript strict pass
+- Lighthouse Accessibility ≥ 90
 
----
 
 ## Part 4 — Feature Inventory (Complete Reference)
 
@@ -745,6 +859,8 @@ Build page → python3 qa/page_audit.py /{page} → read issues → fix → repe
 | Temptation                       | Why Not                                            |
 | -------------------------------- | -------------------------------------------------- |
 | Upgrade Tailwind to v4           | Breaking change — plan separately after refactor  |
+| Top nav + centered column on desktop | Wastes ~44% of screen. Use sidebar instead (see 2.10) |
+| Right panel on every page globally  | Overkill — right panel is dashboard-specific only      |
 | Add Framer Motion before Phase 7 | Bundle weight before design is stable              |
 | Use shadcn`card` component     | Our Card.tsx is fine once tokens are set           |
 | Build custom Calendar            | DateNavigator is already good — polish only       |
@@ -777,8 +893,9 @@ frontend/
       globals.css             ← CSS variables + tailwind directives
     components/
       layout/
-        PageShell.tsx         ← shared page container + header
-        BottomNav.tsx         ← mobile bottom tab bar
+        PageShell.tsx         ← shared page container + header (mobile: max-w-2xl, desktop: full-width ml-16)
+        BottomNav.tsx         ← mobile bottom tab bar (hidden md:)
+        SideNav.tsx           ← desktop left sidebar (hidden below md:)
       ui/                     ← shadcn components + custom overrides
         button.tsx, input.tsx, select.tsx, badge.tsx, progress.tsx
         dialog.tsx, drawer.tsx, alert-dialog.tsx, sheet.tsx
@@ -801,10 +918,15 @@ frontend/
         OnboardingWizard.tsx, Step1Personal.tsx, Step2Weight.tsx
         Step3Fitness.tsx, Step4Diet.tsx, StepIndicator.tsx
       AuthProvider.tsx
+    store/
+      useTrackerStore.ts      ← selectedDate (shared tracker + workout)
+      useUIStore.ts           ← toast notifications, loading overlay
+      useMealStore.ts         ← pending meal slot for quick-add
     hooks/
       useDashboard.ts, useFoodLog.ts, useFoodSearch.ts
       useWorkoutLog.ts, useWaterLog.ts, useWeightLog.ts
       useProfile.ts, useCustomDishes.ts
+      useMediaQuery.ts, useDebounce.ts
     types/
       nutrition.ts, workout.ts, dish.ts, dashboard.ts, profile.ts
     lib/

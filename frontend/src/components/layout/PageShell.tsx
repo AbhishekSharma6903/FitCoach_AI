@@ -20,12 +20,8 @@ interface PageShellProps {
 /**
  * Shared page wrapper used by every page (except onboarding / auth).
  *
- * Handles:
- *  - Full-height dark background
- *  - Centered max-w container
- *  - Consistent header with optional back arrow
- *  - Bottom padding to clear the mobile BottomNav (hidden on md+)
- *  - iOS safe-area support
+ * Mobile  (< md):  max-w-2xl centred, bottom padding clears BottomNav
+ * Desktop (≥ md):  ml-16 (clears SideNav), full remaining width, px-8
  */
 export default function PageShell({
   title,
@@ -40,12 +36,13 @@ export default function PageShell({
     <div className="min-h-dvh bg-background">
       <div
         className={cn(
+          // ── Mobile: centred column ──────────────────────────────────────
           "mx-auto w-full max-w-2xl",
-          // Bottom padding clears the mobile nav bar (64px) on small screens
-          // On md+ there is no bottom nav so normal padding applies
-          "pb-24 md:pb-8",
-          // Horizontal padding (unless noPadding)
+          "pb-24",                    // clears BottomNav (64px + safe-area)
           !noPadding && "px-4",
+          // ── Desktop: full width offset by sidebar ───────────────────────
+          "md:ml-16 md:mr-0 md:max-w-none md:pb-8",
+          !noPadding && "md:px-8",
           className,
         )}
       >

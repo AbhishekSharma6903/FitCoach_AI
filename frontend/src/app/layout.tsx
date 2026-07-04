@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthProvider from "@/components/AuthProvider";
 import BottomNav from "@/components/layout/BottomNav";
+import SideNav from "@/components/layout/SideNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,8 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <TooltipProvider>
           <AuthProvider>
+            <SideNav />   {/* desktop only — hidden on mobile */}
             {children}
-            <BottomNav />
+            <BottomNav /> {/* mobile only — hidden on desktop */}
           </AuthProvider>
         </TooltipProvider>
       </body>
