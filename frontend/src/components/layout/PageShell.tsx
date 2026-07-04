@@ -41,7 +41,7 @@ export default function PageShell({
           "pb-24",                    // clears BottomNav (64px + safe-area)
           !noPadding && "px-4",
           // ── Desktop: full width offset by sidebar ───────────────────────
-          "md:ml-16 md:mr-0 md:max-w-none md:pb-8",
+          "md:ml-16 md:mr-0 md:w-auto md:max-w-none md:pb-8",
           !noPadding && "md:px-8",
           className,
         )}

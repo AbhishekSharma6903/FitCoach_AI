@@ -22,6 +22,33 @@
 
 ---
 
+## 🚫 CRITICAL RULE — UI Inspiration
+
+> **DO NOT copy the legacy UI. The legacy frontend was deliberately deleted because its UI was bad.**
+
+**`frontend_legacy/` exists ONLY as a reference for:**
+- Which API endpoints each page calls
+- What data fields are available
+- Which features exist (search, date nav, meal slots, etc.)
+
+**For UI and layout, take inspiration from:**
+- **Bevel** — the primary reference. Clean dark cards, big numbers, lots of breathing room
+- **Hevy** — exercise/workout screen patterns
+- **Whoop** — biometric summary cards, ring charts
+- **Strong** — workout log UX
+- Modern shadcn/ui component patterns (see https://ui.shadcn.com)
+
+**Concrete rules:**
+1. Never replicate the exact structure of a legacy page — rebuild it from scratch with better design
+2. Use shadcn/ui `Card`, `Tabs`, `Dialog`, `Drawer`, `Progress`, `Badge`, `Input` etc. wherever possible
+3. On desktop, use shadcn `Tabs` for meal sections instead of custom accordions
+4. Use `shadcn/Popover` + `shadcn/Command` for food search dropdowns
+5. Use shadcn `Sheet` for mobile add-food flow (full bottom sheet, not a tiny modal)
+6. Large hero numbers (`text-4xl font-black`) for calories/weight — not small summary rows
+7. Section headers: `UPPERCASE tracking-widest text-[11px]` caption style — never bold section titles with inline content
+
+---
+
 ## Part 1 — What's Wrong With the Current UI (Root Causes)
 
 From a full audit of `frontend_legacy/`:
