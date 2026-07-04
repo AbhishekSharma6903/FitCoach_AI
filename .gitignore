@@ -20,3 +20,5 @@ audit/
 page_audit_results/
 responsive_audit_results/
 test-results/
+node_modules/
+/qa/results/

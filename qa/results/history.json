@@ -7,6 +7,150 @@
       "p0_score": 6.83,
       "avg_score": 7.2,
       "timestamp": "2026-07-03T23:40:37.606399"
+    },
+    {
+      "run_id": "20260704-210921",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 6.5,
+      "avg_score": 6.6,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T21:10:26.047148"
+    },
+    {
+      "run_id": "20260704-211518",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 6.83,
+      "avg_score": 6.9,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T21:16:06.950488"
+    },
+    {
+      "run_id": "20260704-212140",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.5,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T21:22:29.132658"
+    },
+    {
+      "run_id": "20260704-212354",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.33,
+      "avg_score": 7.2,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T21:24:42.570077"
+    },
+    {
+      "run_id": "20260704-212753",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.1,
+      "p0_pass": true,
+      "timestamp": "2026-07-04T21:28:41.393845"
+    },
+    {
+      "run_id": "20260704-215904",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 6.67,
+      "avg_score": 7.0,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T21:59:52.453413"
+    },
+    {
+      "run_id": "20260704-220244",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.5,
+      "avg_score": 7.7,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:03:35.517707"
+    },
+    {
+      "run_id": "20260704-220544",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.83,
+      "avg_score": 8.0,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:06:32.040428"
+    },
+    {
+      "run_id": "20260704-220822",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.17,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:09:15.875078"
+    },
+    {
+      "run_id": "20260704-221200",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.0,
+      "avg_score": 7.3,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:12:45.124269"
+    },
+    {
+      "run_id": "20260704-221704",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.67,
+      "avg_score": 7.8,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:17:50.968778"
+    },
+    {
+      "run_id": "20260704-221937",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.83,
+      "avg_score": 8.0,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:20:20.348852"
+    },
+    {
+      "run_id": "20260704-222407",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.83,
+      "avg_score": 8.0,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:24:55.228272"
+    },
+    {
+      "run_id": "20260704-223046",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.33,
+      "avg_score": 7.7,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:31:32.298328"
+    },
+    {
+      "run_id": "20260704-223224",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.17,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:33:04.142647"
+    },
+    {
+      "run_id": "20260704-223414",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 7.5,
+      "avg_score": 7.8,
+      "p0_pass": false,
+      "timestamp": "2026-07-04T22:34:55.260696"
     }
   ]
 }

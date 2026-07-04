@@ -75,7 +75,7 @@ export default function BottomNav() {
                 <span
                   className={cn(
                     "text-[10px] font-semibold tracking-wide transition-colors",
-                    isActive ? "text-[#22c55e]" : "opacity-0",
+                    isActive ? "text-[#22c55e]" : "text-[#4B5563]",
                   )}
                 >
                   {label}
