@@ -1,0 +1,106 @@
+{
+  "run_id": "20260703-233948",
+  "page": "/dashboard",
+  "state": "default",
+  "timestamp": "2026-07-03T23:40:37.606399",
+  "scores": [
+    {
+      "viewport_id": "iphone-se",
+      "score": 6.0,
+      "overflow": true,
+      "touch_targets_ok": true,
+      "good": [
+        "Calorie ring card is well-proportioned and readable at 375px"
+      ],
+      "issues": [
+        "Action bar (Log Food + icons + weight input) overflows horizontally \u2014 weight input and additional buttons are clipped off-screen",
+        "Right-side streak/BMI card is partially cut off, content cramped in narrow column",
+        "Two-column card layout shrinks both cards too narrow for comfortable reading on SE"
+      ],
+      "fixes": [
+        "Wrap action bar with flex-wrap: wrap so weight input drops to next line on 375px",
+        "Stack the two dashboard cards to single column (flex-direction: column) below 400px breakpoint",
+        "Add overflow-x: hidden to page container to prevent horizontal scroll"
+      ]
+    },
+    {
+      "viewport_id": "iphone-14",
+      "score": 7.5,
+      "overflow": false,
+      "touch_targets_ok": true,
+      "good": [
+        "Today's Macros section is clean and fully visible below the fold \u2014 good progressive disclosure"
+      ],
+      "issues": [
+        "Action bar still clips the last button/icon at 390px \u2014 rightmost element partially off-screen",
+        "Right BMI card top section has excessive empty space before the flame icon appears, making the card feel unbalanced",
+        "Weight input field text 'Weight (kg)' placeholder may render below 14px on this viewport"
+      ],
+      "fixes": [
+        "Set action bar max-width: 100% with overflow-x: hidden and flex-wrap: wrap",
+        "Add padding-top to BMI card content or vertically center its inner content with justify-content: center",
+        "Ensure input placeholder font-size is explicitly set to min 14px"
+      ]
+    },
+    {
+      "viewport_id": "pixel-7",
+      "score": 7.5,
+      "overflow": true,
+      "touch_targets_ok": true,
+      "good": [
+        "Next milestone banner with green styling looks polished and contextually useful"
+      ],
+      "issues": [
+        "Action bar overflows \u2014 'Log' button and avatar 'D' are clipped at right edge on 412px",
+        "Two-column card layout leaves the right streak/BMI card with too little horizontal space, content feels squeezed",
+        "Water Intake section partially cut off at bottom \u2014 suggests no graceful scroll affordance"
+      ],
+      "fixes": [
+        "Constrain action bar to viewport width using width: 100%; overflow: hidden or move Log button + avatar to a second row",
+        "Increase right card min-width or switch to single column at \u2264430px",
+        "Add padding-bottom: 80px to page container to ensure last card is fully scrollable into view"
+      ]
+    },
+    {
+      "viewport_id": "ipad",
+      "score": 8.0,
+      "overflow": false,
+      "touch_targets_ok": true,
+      "good": [
+        "Full action bar renders completely with all elements visible \u2014 Log Food, icons, weight input, Log button, avatar all fit cleanly"
+      ],
+      "issues": [
+        "Content is left-aligned in a narrow centered column leaving large black empty margins on both sides \u2014 wasted screen real estate on 768px tablet",
+        "Two dashboard cards don't expand to use available width \u2014 right BMI card looks undersized relative to viewport",
+        "Typography hierarchy between card headers and body text could be more differentiated at tablet size"
+      ],
+      "fixes": [
+        "Set dashboard container max-width to 90% or 700px on tablet and center it, expanding card grid to fill",
+        "Use CSS grid with grid-template-columns: 2fr 1fr on \u2265768px to better proportion the two cards",
+        "Increase card header font-size by 2\u20134px on tablet breakpoint for better visual hierarchy"
+      ]
+    },
+    {
+      "viewport_id": "macbook-13",
+      "score": 7.0,
+      "overflow": false,
+      "touch_targets_ok": true,
+      "good": [
+        "Desktop navigation bar is clean with full Log Food button, icons, weight input and user avatar all properly spaced"
+      ],
+      "issues": [
+        "Dashboard content is rendered in a very narrow centered column \u2014 roughly 700px wide on a 1280px screen, leaving ~280px of black void on each side",
+        "The two-column card layout (calorie + streak) is functional but undersized \u2014 cards could expand significantly on desktop",
+        "No desktop-optimised layout \u2014 it appears to be a mobile layout simply centred, not a true responsive desktop design"
+      ],
+      "fixes": [
+        "Increase container max-width to 900\u20131000px on \u22651024px breakpoint",
+        "Consider a 3-column grid on desktop: calorie card | macros | streak/BMI side panel",
+        "Add a sidebar or secondary content panel on desktop to better utilise horizontal space and elevate the app to a premium desktop experience"
+      ]
+    }
+  ],
+  "p0_score": 6.83,
+  "avg_score": 7.2,
+  "screenshots_dir": "/Users/i750332/Library/CloudStorage/OneDrive-SAPSE/projects/learnings/FitCoach_AI/frontend/tests/responsive/screenshots/dashboard-20260703-233948"
+}
