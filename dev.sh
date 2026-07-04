@@ -84,24 +84,24 @@ cmd_start() {
   fi
 
   # 4. Frontend
-  if lsof -i :3000 -sTCP:LISTEN &>/dev/null; then
-    green "→ Frontend already running on :3000"
+  if lsof -i :3001 -sTCP:LISTEN &>/dev/null; then
+    green "→ Frontend already running on :3001"
   else
     cyan "→ Starting Next.js frontend..."
     if [ ! -f "$ROOT/frontend/node_modules/.bin/next" ]; then
       cyan "  Installing frontend dependencies..."
       (cd "$ROOT/frontend" && npm install) || { red "npm install failed"; exit 1; }
     fi
-    (cd "$ROOT/frontend" && nohup node_modules/.bin/next dev \
+    (cd "$ROOT/frontend" && nohup node_modules/.bin/next dev --port 3001 \
       > "$FRONTEND_LOG" 2>&1) &
     echo $! > "$FRONTEND_PID_FILE"
-    wait_for_url "http://localhost:3000/sign-in" "frontend" 60 \
+    wait_for_url "http://localhost:3001" "frontend" 60 \
       || { red "Frontend failed to start. Check $FRONTEND_LOG"; exit 1; }
   fi
 
   echo ""
   bold "=== All services up ==="
-  green "  Frontend  →  http://localhost:3000"
+  green "  Frontend  →  http://localhost:3001"
   green "  Backend   →  http://localhost:8001"
   green "  Postgres  →  localhost:5433"
   echo ""
@@ -175,8 +175,8 @@ cmd_status() {
   fi
 
   # Frontend
-  if curl -sf --max-time 3 http://localhost:3000/sign-in -o /dev/null 2>/dev/null; then
-    green "  Frontend   ✓  http://localhost:3000"
+  if curl -sf --max-time 3 http://localhost:3001 -o /dev/null 2>/dev/null; then
+    green "  Frontend   ✓  http://localhost:3001"
   else
     red   "  Frontend   ✗  not responding"
   fi

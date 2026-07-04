@@ -1,0 +1,39 @@
+{
+  "runs": [
+    {
+      "run_id": "run-20260703-221215",
+      "timestamp": "2026-07-03T22:12:43.101772",
+      "p0_score": 0,
+      "overall_score": 0,
+      "p0_pass": false
+    },
+    {
+      "run_id": "baseline-20260703",
+      "timestamp": "2026-07-03T22:18:30.516661",
+      "p0_score": 7.38,
+      "overall_score": 7.44,
+      "p0_pass": false
+    },
+    {
+      "run_id": "baseline-20260703",
+      "timestamp": "2026-07-03T22:23:08.641868",
+      "p0_score": 7.32,
+      "overall_score": 7.37,
+      "p0_pass": false
+    },
+    {
+      "run_id": "baseline-20260703",
+      "timestamp": "2026-07-03T22:27:42.629558",
+      "p0_score": 7.3,
+      "overall_score": 7.37,
+      "p0_pass": false
+    },
+    {
+      "run_id": "run-20260703-224612",
+      "timestamp": "2026-07-03T23:02:57.290242",
+      "p0_score": 7.4,
+      "overall_score": 6.81,
+      "p0_pass": false
+    }
+  ]
+}

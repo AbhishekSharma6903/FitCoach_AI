@@ -7,4 +7,16 @@ datasets/.venv/
 **/.ipynb_checkpoints/
 venv/
 __pycache__/
-/frontend/tests/screenshots/*
+
+# ── QA / Audit ────────────────────────────────────────────────────────────────
+# Screenshots are large binary files — don't commit them.
+# Commit qa/results/ manually after each refactor phase to track progress.
+qa/screenshots/
+
+# Old audit folders (now consolidated into qa/)
+/frontend/tests/screenshots/
+/frontend/tests/responsive/screenshots/
+audit/
+page_audit_results/
+responsive_audit_results/
+test-results/
