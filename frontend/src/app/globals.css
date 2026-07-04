@@ -1,0 +1,167 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* ── Dark-only app: force dark class variant ─────────────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
+/* ── FitCoach AI Design Tokens ──────────────────────────────────────────────
+   Surface hierarchy (warm-neutral darks — no blue tint):
+   Level 0  Page background   #0A0A0A
+   Level 1  Card surface      #111111
+   Level 2  Elevated          #1A1A1A  (modals, dropdowns)
+   Level 3  Control           #222222  (inputs, toggles)
+   Border                     #2A2A2A
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  /* Map shadcn semantic names to our tokens */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         var(--destructive);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
+
+  /* Brand + semantic (used via arbitrary values or as CSS vars) */
+  --color-brand:               var(--brand);
+  --color-brand-dim:           var(--brand-dim);
+  --color-brand-glow:          var(--brand-glow);
+  --color-elevated:            var(--elevated);
+  --color-control:             var(--control);
+  --color-border-subtle:       var(--border-subtle);
+
+  /* Macro / semantic colors */
+  --color-protein:             #3b82f6;
+  --color-carbs:               #f59e0b;
+  --color-fat:                 #f97316;
+  --color-fiber:               #a78bfa;
+  --color-burned:              #fb923c;
+
+  /* Typography */
+  --font-sans:                 var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono:                 var(--font-geist-mono), monospace;
+
+  /* Radius scale */
+  --radius-sm:   calc(var(--radius) * 0.5);   /* 4px */
+  --radius-md:   var(--radius);                /* 8px */
+  --radius-lg:   calc(var(--radius) * 1.5);   /* 12px */
+  --radius-xl:   calc(var(--radius) * 2);     /* 16px */
+  --radius-2xl:  calc(var(--radius) * 3);     /* 24px */
+  --radius-3xl:  calc(var(--radius) * 4);     /* 32px */
+}
+
+/* ── Dark mode tokens (app is dark-only — these are the only tokens used) ── */
+:root {
+  /* Base radius: 8px */
+  --radius: 0.5rem;
+
+  /* Surface hierarchy */
+  --background:    #0A0A0A;
+  --card:          #111111;
+  --elevated:      #1A1A1A;
+  --control:       #222222;
+  --border:        #2A2A2A;
+  --border-subtle: #1F1F1F;
+  --input:         #222222;
+  --popover:       #1A1A1A;
+  --muted:         #1A1A1A;
+
+  /* Text */
+  --foreground:          #F5F5F5;
+  --card-foreground:     #F5F5F5;
+  --popover-foreground:  #F5F5F5;
+  --muted-foreground:    #9CA3AF;
+  --accent-foreground:   #F5F5F5;
+  --secondary-foreground: #F5F5F5;
+  --primary-foreground:  #000000;
+
+  /* Brand — FitCoach green */
+  --primary:      #22c55e;
+  --brand:        #22c55e;
+  --brand-dim:    rgba(34, 197, 94, 0.1);
+  --brand-glow:   rgba(34, 197, 94, 0.2);
+
+  /* Secondary / accent surfaces */
+  --secondary:    #1A1A1A;
+  --accent:       #1A1A1A;
+
+  /* Semantic */
+  --destructive:  #ef4444;
+  --ring:         #22c55e;
+
+  /* Charts */
+  --chart-1: #3b82f6;
+  --chart-2: #f59e0b;
+  --chart-3: #f97316;
+  --chart-4: #a78bfa;
+  --chart-5: #fb923c;
+}
+
+/* .dark is applied to <html> — all shadcn components respect this */
+.dark {
+  --background:    #0A0A0A;
+  --card:          #111111;
+  --elevated:      #1A1A1A;
+  --control:       #222222;
+  --border:        #2A2A2A;
+  --border-subtle: #1F1F1F;
+  --input:         #222222;
+  --popover:       #1A1A1A;
+  --muted:         #1A1A1A;
+  --foreground:          #F5F5F5;
+  --card-foreground:     #F5F5F5;
+  --popover-foreground:  #F5F5F5;
+  --muted-foreground:    #9CA3AF;
+  --accent-foreground:   #F5F5F5;
+  --secondary-foreground: #F5F5F5;
+  --primary-foreground:  #000000;
+  --primary:      #22c55e;
+  --brand:        #22c55e;
+  --brand-dim:    rgba(34, 197, 94, 0.1);
+  --brand-glow:   rgba(34, 197, 94, 0.2);
+  --secondary:    #1A1A1A;
+  --accent:       #1A1A1A;
+  --destructive:  #ef4444;
+  --ring:         #22c55e;
+}
+
+/* ── Base layer ──────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+  }
+  html {
+    @apply font-sans;
+    /* iOS safe-area support */
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ── Utility: hide scrollbars visually but keep scroll functionality ─────── */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
