@@ -672,7 +672,416 @@ All other new widgets (macro % split, TDEE deficit, trend insight) use **existin
 
 ## Page 2: Tracker (`/tracker`)
 
-> Design spec to be written before implementation begins.
+> Goal: log what you ate today in under 10 seconds. Date navigation for past logs.
+> Inspiration: Bevel Nutrition screen (big goal number, compact macro row), MFP meal tabs — but cleaner, darker, less cluttered.
+> UI must NOT copy the legacy tracker. Use shadcn Tabs for meal slots. Use Modal.tsx (updated to lg: breakpoint) for add-food.
+
+> **Architecture review applied 2026-07-05 — see `docs/ARCHITECTURE_REVIEW_TRACKER.md` for full findings.**
+
+---
+
+### Data Available (from existing hooks — no backend changes needed)
+
+| Source | Data |
+|---|---|
+| `useFoodLog(selectedDate)` | `DailyNutrition { entries[], totals, targets }` — entries include `fiber_g`, `meal_type` |
+| `useFoodSearch(query, dietFilter)` | Food search results (debounced 300ms) |
+| `useTrackerStore` | `selectedDate`, `goToPrevDay`, `goToNextDay`, `resetToToday`, `isToday()` |
+| `useMealStore` | `pendingMealSlot` — pre-selects meal tab when Quick Add is tapped |
+| `useProfile()` | `profile.diet_type` — used as `dietFilter` in food search |
+
+**Computed frontend-only (zero backend change):**
+- Calorie pace projection: `(totals.calories_kcal / hoursElapsed) × 24` → projected daily total
+- Meal distribution %: calories per `meal_type` from `entries[]`
+- Multi-meal badge: count distinct `meal_type` values in `entries[]`
+
+---
+
+### Pre-implementation Fix Required: Modal.tsx Breakpoint
+
+> ⚠️ **Do this BEFORE building tracker components.**
+
+`Modal.tsx` currently switches at `md:` (768px). Our nav switches at `lg:` (1024px). At 768–1023px (iPad portrait), the user is on BottomNav (mobile) but would get a desktop Dialog — inconsistent.
+
+**Fix in `Modal.tsx`:**
+```tsx
+// Change:
+const isDesktop = useMediaQuery("(min-width: 768px)")
+// To:
+const isDesktop = useMediaQuery("(min-width: 1024px)")
+```
+
+This aligns modal behaviour with nav breakpoints across the entire app. The add-food flow then uses `Modal.tsx` directly — no new `AddFoodSheet.tsx` needed.
+
+---
+
+### AG Checklist
+
+- [x] AG-1: Two-tier width — `w-full px-4 pb-24` mobile, `lg:max-w-6xl lg:mx-auto lg:px-8` desktop
+- [x] **AG-2 updated**: Tracker uses `xl:grid-cols-[1fr_300px]` on desktop — right panel holds Quick Add + utilities. AG-2 now permits right panels on Tracker/Workout at `xl:` where content naturally splits into "primary action | utility context". See AG-2 note below.
+- [x] AG-3: Mobile card order — Date nav → Nutrition summary → Meal Tabs → Quick Add (below fold, accessed via scroll)
+- [x] AG-4: Cards fill column width — Nutrition Summary spans full width with compact layout
+- [x] AG-7: shadcn `Tabs` for meals, `Modal.tsx` (updated) for add-food, `Button`/`Input`/`Progress`/`Badge`/`Skeleton` throughout
+
+> **AG-2 note — Tracker 2-column update:**
+> The original AG-2 said "right panel is dashboard-only." After review, the Tracker at desktop has a natural split: left = logging workflow (needs focus), right = quick add shortcuts + utilities. Adding a right panel at `xl:` (1280px+) improves desktop UX without affecting mobile. **AG-2 in `UI_REFACTOR_PLAN_V2.md` is updated to reflect this.**
+
+---
+
+### Layout — Mobile (< 1024px)
+
+Single column, full width. Quick Add below the meal tabs (scroll to it).
+
+```
+┌─────────────────────────────┐
+│  [←]   Sunday, 5 July  [→] │  ← DateNavigator
+│              [Today]        │
+├─────────────────────────────┤
+│  NUTRITION SUMMARY          │  ← compact: big number + macro dots + bars
+│  2,352  kcal remaining      │
+│  [──────────────────] 0%    │  ← calorie progress bar
+│  P: 0g  C: 0g  F: 0g  Fi:0g│  ← compact dots+values (no bars on mobile)
+│  On pace for ~0 kcal today  │  ← F-1: calorie pace (hidden before noon)
+├─────────────────────────────┤
+│  [☕][☀️][🌙][🍪]            │  ← icon tabs — short labels, NO overflow
+│  Break  Lunch Dinner Snack  │
+│  ─────────────────────────  │
+│  (entry list or empty state)│
+│  [+ Add food]               │
+├─────────────────────────────┤
+│  QUICK ADD                  │  ← below fold, 3×2 grid
+│  [🫕 Dal] [🫓 Roti] [🥘 Pan] │
+│  [🍚 Rice] [🫔 Idli] [🍛 Curd]│
+└─────────────────────────────┘
+```
+
+---
+
+### Layout — Desktop (≥ 1024px, 2-column at ≥ 1280px)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│  [F] FitCoach   Home · Tracker · Workout · Dishes   [+Log] [D]        │
+├────────────────────────────────────────────────────────────────────────┤
+│                     max-w-6xl mx-auto px-8                             │
+│  [←]  Sunday, 5 July  [→]  [Today]    [📋 3 meals logged today]       │
+│                                                                        │
+│  ┌──── left column (≥ xl: ~800px) ────┐  ┌── right col 300px ─────┐  │
+│  │  NUTRITION SUMMARY                 │  │  QUICK ADD             │  │
+│  │  2,352 kcal remaining              │  │  [🫕][🫓][🥘]           │  │
+│  │  [P ████░░ 0/176g] 0%              │  │  [🍚][🫔][🍛]           │  │
+│  │  [C ████░░ 0/235g] 0%              │  │  ──────────────────    │  │
+│  │  [F ████░░  0/78g] 0%              │  │  TODAY'S SUMMARY       │  │
+│  │  [Fi ───░ 0/30g]  0%              │  │  0 kcal logged         │  │
+│  │  [─────────────] 0%               │  │  0 entries total       │  │
+│  │  On pace for ~0 kcal today        │  │  [meal dist. bar]      │  │
+│  │  [■ Break 0%][■ Lunch 0%]...      │  └────────────────────────┘  │
+│  ├────────────────────────────────────┤                               │
+│  │  [Breakfast][Lunch][Dinner][Snack] │  ← full labels + kcal here   │
+│  │  (entries / empty state)           │                               │
+│  │  [+ Add food to Breakfast]         │                               │
+│  └────────────────────────────────────┘                               │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+**Grid:** `grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6`
+Right column: `sticky top-20 space-y-4` (shorter than dashboard — no max-h needed for 2–3 cards)
+
+---
+
+### Component Breakdown
+
+---
+
+#### 1. DateNavigator
+
+Shared with Workout page — reads/writes `useTrackerStore`. Same component used on both pages.
+
+```
+[←]       📅  Sunday, 5 July       [Today]  [→]
+```
+
+- Left `←`: `goToPrevDay()` — always enabled
+- Right `→`: `goToNextDay()` — **disabled + opacity-40 when `isToday()`**
+- Centre: "Today" when on today, else formatted date
+- "Today" badge: `shadcn Badge`, only visible when not on today, taps `resetToToday()`
+- shadcn `Button` ghost for arrows (44px min touch target)
+
+---
+
+#### 2. Nutrition Summary Card
+
+**Two responsive layouts — compact on mobile, full bars on desktop (same principle as CalorieHeroCard).**
+
+**Mobile layout (< lg): no bars — compact dots + values**
+```
+NUTRITION SUMMARY
+
+  2,352          ← text-4xl font-black, green (under goal) / red (over)
+  kcal remaining
+
+  [████████░░░░░░░░░░░] 0%    ← single calorie bar h-2, full width
+  of 2,352 kcal goal
+
+  ● P: 0g  ● C: 0g  ● F: 0g  ● Fi: 0g    ← compact dots + values, no bars
+  On pace for ~2,352 kcal today           ← F-1 pace (hidden if 0 logged or < noon)
+```
+
+**Desktop layout (≥ lg): full labelled bars**
+```
+  2,352  kcal remaining  ·  of 2,352 goal
+
+  Protein  [████░░░] 0 / 176g   0%
+  Carbs    [████░░░] 0 / 235g   0%
+  Fat      [████░░░]  0 / 78g   0%
+  Fiber    [████░░░]  0 / 30g   0%      ← Q-3: fiber added (violet-400)
+
+  [─────────────────────] calorie progress bar
+  On pace for ~0 kcal today             ← F-1
+  [■ Break 0%][■ Lunch 0%][■ Din 0%]   ← F-2 meal distribution
+```
+
+**Calorie pace (F-1):**
+```ts
+const hoursElapsed = new Date().getHours() + new Date().getMinutes() / 60
+// Only show when: food has been logged AND it's past noon (≥12hrs elapsed)
+const showPace = totals.calories_kcal > 0 && hoursElapsed >= 12
+const projectedKcal = showPace ? Math.round((totals.calories_kcal / hoursElapsed) * 24) : null
+const paceColor = projectedKcal
+  ? Math.abs(projectedKcal - targets.calories_kcal) <= 200 ? "text-primary" : "text-amber-400"
+  : ""
+```
+
+**Meal distribution bar (F-2):**
+```ts
+// Only show when 2+ different meal types have entries
+const mealKcal = {
+  breakfast: entries.filter(e => e.meal_type === "breakfast").reduce((s,e) => s + e.calories_kcal, 0),
+  // ... lunch, dinner, snack
+}
+const totalMealKcal = Object.values(mealKcal).reduce((s, v) => s + v, 0)
+// Stacked bar: [■ amber][■ yellow][■ blue][■ orange]
+// Only render if totalMealKcal > 0 AND 2+ meal types non-zero
+```
+
+**Progress bars:** `shadcn Progress`, `h-2` mobile, `h-2 lg:h-2.5` desktop — same as dashboard macros.
+**Motion:** bars fill from 0 on mount, `duration: 0.5`
+
+---
+
+#### 3. Meal Tabs (shadcn Tabs — NOT custom accordion)
+
+**State management — fixes B-4:**
+`activeTab` is lifted to page state and passed down to both `MealTabs` and `QuickAddGrid`:
+```tsx
+// page.tsx
+const [activeTab, setActiveTab] = useState<MealSlot>("breakfast")
+```
+
+**Tab triggers — fixes B-3 (overflow at 375px):**
+```tsx
+<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MealSlot)}>
+  <TabsList className="w-full grid grid-cols-4">
+    {MEAL_SLOTS.map(slot => {
+      const slotKcal = entriesBySlot[slot.id].reduce((s,e) => s + e.calories_kcal, 0)
+      return (
+        <TabsTrigger key={slot.id} value={slot.id} className="flex flex-col gap-0.5 py-2 h-auto">
+          {/* Icon always visible */}
+          <slot.Icon size={16} aria-hidden="true" />
+          {/* Short label — no overflow at 375px */}
+          <span className="text-[10px]">{slot.shortLabel}</span>
+          {/* Kcal badge — only on active tab or when non-zero */}
+          {slotKcal > 0 && (
+            <span className="text-[9px] text-primary tabular-nums">{Math.round(slotKcal)}</span>
+          )}
+        </TabsTrigger>
+      )
+    })}
+  </TabsList>
+  ...
+</Tabs>
+```
+
+Tab slot config:
+```ts
+const MEAL_SLOTS = [
+  { id: "breakfast", label: "Breakfast", shortLabel: "Break", Icon: Coffee,  iconColor: "text-amber-400"  },
+  { id: "lunch",     label: "Lunch",     shortLabel: "Lunch", Icon: Sun,     iconColor: "text-yellow-400" },
+  { id: "dinner",    label: "Dinner",    shortLabel: "Dinner",Icon: Moon,    iconColor: "text-blue-400"   },
+  { id: "snack",     label: "Snack",     shortLabel: "Snack", Icon: Cookie,  iconColor: "text-orange-400" },
+] as const
+```
+
+On **desktop** (≥ lg), full `label` is shown instead of `shortLabel`.
+
+**MealTabContent — per tab:**
+- Empty state: `🍽️` emoji in 48px `bg-[#1A1A1A]` circle + `"Nothing logged"` muted text + primary Add button
+- Entry rows: food name | kcal | delete X
+
+**Entry delete — fixes B-5 (no confirm-on-second-tap):**
+```tsx
+async function handleDelete(entryId: number, foodName: string) {
+  await deleteEntry(entryId)  // immediate
+  toast(`${foodName} removed`, {
+    action: { label: "Undo", onClick: () => { /* re-add via addEntry */ } }
+  })
+}
+```
+Requires `sonner` installed: `npx shadcn@latest add sonner`
+
+---
+
+#### 4. Add Food Modal (uses existing Modal.tsx — no new AddFoodSheet component)
+
+> ⚠️ `Modal.tsx` must be updated to `lg:` breakpoint BEFORE using here (see Pre-implementation Fix above).
+
+```
+ADD FOOD TO {MEAL}
+
+[🔍 Search food items...    ]   ← SearchCommand (already built)
+  ↳ dropdown: name, veg dot, kcal, category
+
+── Once food selected ──────────
+
+[Paneer Sabzi]  [×]             ← selected food pill
+
+Meal      [Breakfast ▼]         ← pre-filled from activeTab / pendingMealSlot
+Quantity  [100      ] g         ← defaults to item.serving_size_g
+
+PREVIEW
+  350 kcal  ·  22g P  ·  12g C  ·  24g F
+
+[Add to Breakfast]              ← primary, disabled while saving
+```
+
+- Mobile (< 1024px): Drawer bottom sheet (built into Modal.tsx)
+- Desktop (≥ 1024px): Dialog centred (built into Modal.tsx)
+- Meal selector: pre-filled from `activeTab` (passed as prop), user can change
+- Live preview: `(quantity / item.serving_size_g) × nutrients`
+- On submit: `addEntry()` → close → `clearPendingMealSlot()`
+
+---
+
+#### 5. Quick Add Grid
+
+6 tiles. On tap: sets `pendingMealSlot` to `activeTab` (page state), opens Modal.
+
+```
+QUICK ADD   Popular Indian meals
+
+[🫕 Dal Tadka  ] [🫓 Roti      ] [🥘 Paneer Sabzi]   ← 3×2 on mobile
+[180 kcal      ] [70 kcal      ] [220 kcal       ]
+
+[🍚 Steamed Rice] [🫔 Idli (2) ] [🍛 Curd Rice   ]
+```
+
+- Mobile: `grid-cols-3`
+- Desktop right column: `grid-cols-3` still (300px right col, 3-col fits well)
+- If desktop single column (1024–1279px): `grid-cols-6` (all 6 in one row)
+- Each tile: `bg-[#111111] border-[#2A2A2A] rounded-xl` — emoji + name + kcal
+- Motion: `whileTap={{ scale: 0.95 }}`
+
+---
+
+#### 6. Today's Summary Widget (right column desktop only — new)
+
+Small utility card showing today's totals at a glance without looking at macro bars.
+
+```
+TODAY
+  0 kcal  logged
+  0 items  across 0 meals
+
+MEAL DISTRIBUTION
+  [─────────────────────]    ← greyed out until food logged
+```
+
+- When food logged: stacked coloured bar + meal labels
+- Breakfast: amber | Lunch: yellow | Dinner: blue | Snack: orange
+- Only renders in right column at `xl:` — hidden on mobile (covered by Nutrition Summary)
+
+---
+
+### Empty States
+
+| State | Visual |
+|---|---|
+| No entries in a meal tab | 48px emoji circle (`🍽️`) + `"Nothing here yet"` + primary Add button |
+| All tabs empty (new day) | Nutrition Summary shows full remaining goal, bars at 0 — correct |
+| Past date with no logs | Same as above — no special handling needed |
+| Search with no results | SearchCommand shows `"No foods found"` in dropdown (built in) |
+
+---
+
+### Loading State
+
+```tsx
+// Skeleton layout mirrors actual content shape
+{isLoading ? (
+  <div className="space-y-5">
+    <Skeleton className="h-10 w-full rounded-xl" />     {/* DateNavigator */}
+    <Skeleton className="h-32 w-full rounded-2xl" />    {/* Nutrition Summary */}
+    <Skeleton className="h-48 w-full rounded-2xl" />    {/* Meal Tabs area */}
+  </div>
+) : <content />}
+```
+
+---
+
+### Animation Summary
+
+| Element | Animation | Spec |
+|---|---|---|
+| Nutrition macro bars | Fill from 0 on data load | `motion.div width`, `duration: 0.5` |
+| Meal distribution bar | Fill segments on data load | CSS width, `duration: 0.4`, delayed |
+| Tab switch | Instant (shadcn default) | — |
+| Entry added | Slide in from bottom | `AnimatePresence y: 8`, `duration: 0.2` |
+| Entry deleted | Fade out left | `AnimatePresence exit: { opacity: 0, x: -20 }` |
+| Quick Add tile press | Scale down | `whileTap={{ scale: 0.95 }}` |
+| Modal open/close | Drawer slide (mobile) / fade (desktop) | built into Modal.tsx |
+
+---
+
+### What We Are NOT Doing on Tracker
+
+- No custom accordion — `shadcn Tabs` only (CRITICAL RULE)
+- No per-meal calorie bars in the tab header — kcal subtotal as small text under icon is enough
+- No confirm-on-second-tap delete — immediate delete + sonner undo toast
+- No calendar date picker — date nav arrows only (calendar is Phase 7)
+- No diet filter toggle UI — filter applied silently from `profile.diet_type`
+- No duplicate AddFoodSheet component — `Modal.tsx` (after breakpoint fix) handles both
+
+---
+
+### Files to Create / Modify
+
+```
+── Modify ────────────────────────────────────────────────────────────────
+src/components/ui/Modal.tsx          ← update breakpoint: md:→ lg: (1024px)
+
+── Install ───────────────────────────────────────────────────────────────
+npx shadcn@latest add sonner         ← for undo toast on entry delete
+
+── Create ────────────────────────────────────────────────────────────────
+src/lib/trackerUtils.ts              ← pure functions: calorie pace, meal distribution, badge
+src/components/tracker/
+  DateNavigator.tsx                  ← arrows + today badge (reads useTrackerStore)
+  NutritionSummaryCard.tsx           ← responsive: compact mobile / full desktop
+  MealTabs.tsx                       ← shadcn Tabs, activeTab state, all 4 slots
+  MealTabContent.tsx                 ← entry list + empty state per tab
+  FoodLogEntry.tsx                   ← single entry row (name, qty, kcal, delete + undo)
+  AddFoodModal.tsx                   ← wraps Modal.tsx with SearchCommand + form
+  QuickAddGrid.tsx                   ← 6-tile grid (3×2 mobile, 3×2 right-col desktop)
+  TodaySummaryWidget.tsx             ← desktop right col only: totals + distribution bar
+
+src/app/tracker/page.tsx             ← page: activeTab state, useFoodLog, xl: 2-col grid
+```
+
+---
+
+### Open Questions Before Building
+
+None. All data, hooks, and components are available. Modal.tsx breakpoint fix is the only prerequisite.
 
 ---
 

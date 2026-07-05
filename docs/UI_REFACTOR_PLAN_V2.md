@@ -41,29 +41,32 @@ Desktop (lg+, ≥ 1024px):            max-w-6xl mx-auto px-8 pb-8
 
 ---
 
-### AG-2 · Two-Column Grid — Dashboard Only
+### AG-2 · Two-Column Grid — When to Use a Right Panel
 
-The 2-column layout (main content | right panel) is **dashboard-specific**. Other pages use single-column within the content column.
+The 2-column layout (main content | right panel) is appropriate when content **naturally separates** into primary action and contextual utility. Not every page needs it — use it purposefully.
 
 ```
-Dashboard desktop:  grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6
-                    ↑ xl: = 1280px+. Below 1280px: single full-width column.
-                    At 1280px: left col = 1152 - 340 - 24(gap) = 788px — genuinely spacious.
-                    At 1024px (iPad landscape): single full-width column — ring fills it beautifully.
-
-All other pages:    Single column only. Max-width from AG-1.
+Dashboard  xl:grid-cols-[1fr_340px]  ← metrics (main) | stats panel (context)
+Tracker    xl:grid-cols-[1fr_300px]  ← logging workflow (main) | quick add + summary (utility)
+Workout    xl:grid-cols-[1fr_300px]  ← exercise log (main) | exercise search + stats (utility)
+Profile    single column only        ← no natural split
+Dishes     single column only        ← list + form don't need sidebar
 ```
 
-**Why `xl:` not `lg:`:** At `lg:` (1024px) the 2-column left column is only 596px — barely wider than the old `max-w-2xl` problem. `xl:` (1280px) gives 788px — properly spacious for flanking stats and chart content.
+**Rule:** Add a right panel at `xl:` (1280px+) when:
+1. There's a clear "primary action" (logging) and "utility context" (shortcuts, summaries)
+2. The right panel is SHORT enough to stay visible without scroll (≤ 4 cards)
+3. The right panel content would clutter the main flow if inline
 
-**Right column sticky spec (dashboard only):**
+**Never add a right panel just to fill horizontal space** — that was the old sidebar problem.
+
 ```
-sticky top-20
-max-h-[calc(100vh-80px)]
-overflow-y-auto
-space-y-4
+Dashboard right col:  sticky top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-4
+Tracker right col:    sticky top-20 space-y-4  (shorter, no overflow needed)
+All other pages:      Single column, max-width from AG-1.
 ```
-`top-20` = 80px (56px navbar + 24px gap). `max-h + overflow-y-auto` prevents sticky breaking if right column content grows taller than viewport.
+
+**Why `xl:` not `lg:`:** At `lg:` (1024px) with a 300px right col, the left column is only 804px — fine but tight. `xl:` (1280px) gives 828px left — genuinely spacious.
 
 ---
 
@@ -173,7 +176,7 @@ Run through this before writing any component for a new page:
 
 - [ ] Read Part 4 (Feature Inventory) for the page's required features
 - [ ] Check AG-1: am I using the correct two-tier width strategy (mobile full-width / desktop max-w-6xl)?
-- [ ] Check AG-2: does this page need a 2-column grid? (Only dashboard does by default)
+- [ ] Check AG-2: does this page need a right panel at xl:? (See AG-2 table — Dashboard/Tracker/Workout yes; Profile/Dishes no)
 - [ ] Check AG-3: is mobile card order prioritised correctly?
 - [ ] Check AG-4: do all cards fill their column width?
 - [ ] Check AG-6: are animations using the correct mechanisms?
@@ -795,25 +798,115 @@ Pages depend on `selectedDate` being shared between the DateNavigator and food/w
 
 Run `python3 qa/page_audit.py /{page}` after each page. P0 ≥ 8.0 before moving on.
 
-#### 5A — Dashboard
+#### 5A — Dashboard ✅ DONE (2026-07-05) · P0: 8.17 PASS
 
 **See `docs/DESIGN_OVERVIEW.md` for full component-level spec (authoritative source).**
 
-Mobile card order (AG-3): Greeting → Calorie Hero → Macros + % split → Streak/BMI → Milestone → Water → Weight chart
-Desktop: 2-col grid `[1fr_340px]`. Left: Calorie Hero + Macros + Water + Chart. Right (sticky): Streak/BMI + Milestone + TDEE widget + Weight log.
+---
 
-Key rules:
-- Calorie hero: ring centred with stats flanking left+right (AG-4) — not ring alone in a wide card
-- Streak + BMI: side-by-side `grid-cols-2` within card, not stacked (AG-4)
-- Motion: `strokeDashoffset` for rings, `animate(0, to)` for count-up (AG-6)
+##### Problems Encountered and Fixes Applied
+
+**P1 · Motion v12 TypeScript `ease` type error**
+Motion v12 changed the `Variants` type — `ease: "easeOut"` as a plain string fails TypeScript because `Easing` is a union type, not `string`. Fix: remove `ease` from variant `transition` objects (Motion uses its default easing), and import `type Variants from "motion/react"` with explicit typing.
+
+**P2 · QA script only captured viewport frame (no scroll) — scores were wrong**
+The original QA script captured `fullPage: false` — a single viewport frame. On iPhone SE (375×667), the calorie hero card fills ~60% of the viewport. The LLM scored 6.0 because it saw content "cut off" — but the content was simply below the fold, which is correct scroll UX. Score was unfairly penalising normal behaviour.
+Fix: Upgraded `qa/page_audit.py` to capture scroll shots per viewport (see QA Upgrade section below).
+
+**P3 · Calorie hero card looked sparse on macbook — ring too small in wide card**
+At desktop, the left column is ~788px wide. A 200px ring centred alone in a 788px card leaves 290px of empty space each side. The LLM scored macbook 7.5 for this.
+Fix: Wrap the desktop ring+stats layout in `max-w-2xl mx-auto` inside the card. This centres the 672px inner layout within the 788px card — ring feels comfortably sized, not dwarfed.
+**Note:** This `max-w-2xl` is on the card's *inner layout element*, NOT on the page content column. AG-1 (`max-w-6xl` for page columns) is not violated — this is an AG-4 technique for filling card width appropriately.
+
+**P4 · Macro bars appeared thin on macbook-13**
+`h-2` (8px) bars look fine on mobile OLED screens but the LLM auditor called them thin on the 1280px macbook screenshot. Fix: Use `h-2 lg:h-2.5` — 8px on mobile, 10px on desktop. Macbook score jumped from 7.5 → 8.5 → 9.0 after this + the ring fix.
+
+---
+
+##### AG Compliance Audit
+
+| AG | Status | Note |
+|---|---|---|
+| AG-1 (two-tier width) | ✅ | PageShell: `w-full px-4 pb-24` mobile, `lg:max-w-6xl lg:mx-auto lg:px-8` desktop |
+| AG-2 (2-col dashboard only) | ✅ | `grid-cols-1 xl:grid-cols-[1fr_340px]` — fires at xl (1280px+) only |
+| AG-3 (mobile card order) | ✅ | Greeting → Hero → Macros → Streak/BMI → Milestone → Water → Chart |
+| AG-4 (cards fill column) | ✅ | Desktop hero: `max-w-2xl mx-auto` centres inner layout. Macro bars fill full width. |
+| AG-5 (sticky right col) | ✅ | `sticky top-20 max-h-[calc(100vh-80px)] overflow-y-auto` |
+| AG-6 (animation rules) | ✅ | `strokeDashoffset` for rings, `animate(0, to)` for count-up, `Variants` typed |
+| AG-7 (shadcn defaults) | ✅ | Progress, Badge, Input, Button, Separator, Skeleton all used |
+| AG-8 (state ownership) | ✅ | SWR for dashboard data, local useState for water/weight form state |
+| AG-9 (parity exceptions) | ✅ | Weight log widget desktop-only; TDEE widget desktop-only |
+
+---
+
+##### Files Created
+
+```
+src/lib/dashboardUtils.ts         ← pure functions: trend, pace, day score, BMI, macros
+src/components/dashboard/
+  CountUp.tsx                      ← animated number (Motion animate(), reusable)
+  CalorieRing.tsx                  ← SVG donut ring (strokeDashoffset, presentational)
+  CalorieHeroCard.tsx              ← responsive hero: stacked mobile, flanking desktop
+  MacroBarsCard.tsx                ← macro bars + % split + protein density (F-1)
+  StreakBMICard.tsx                ← streak + BMI side-by-side (border-r divider)
+  MilestoneCard.tsx                ← milestone + progress bar
+  TDEEWidget.tsx                   ← deficit/surplus + daily fat change (F-2)
+  WaterIntakeCard.tsx              ← water ring + presets + custom input
+  WeightChart.tsx                  ← Recharts line chart + trend (F-3) + pace insight
+  WeightLogWidget.tsx              ← quick weight log (desktop right col only)
+  DayScoreBadge.tsx                ← composite score mini ring in greeting (F-4)
+  DashboardSkeletons.tsx           ← all skeleton states
+src/app/dashboard/page.tsx         ← page wires all components, 2-col xl: grid
+```
+
+---
+
+##### QA Upgrade: Multi-scroll Per-viewport Folders
+
+The QA script was upgraded during this phase (problem P2 above):
+
+**Old:** Single viewport screenshot per device (`fullPage: false`)
+**New:** Multiple scroll screenshots per device, stored in per-viewport subfolders
+
+```
+qa/screenshots/dashboard-{ts}/
+  iphone-se/   scroll-0.png  scroll-1.png  scroll-2.png  scroll-3.png
+  macbook-13/  scroll-0.png  scroll-1.png
+  ...
+```
+
+Scroll logic: 80% viewport height per step (20% overlap), stops at bottom, cap 8 shots.
+LLM prompt updated: explicitly states "content below fold is NOT a problem."
+
+Final scores (run dashboard-20260705-133250):
+
+| Viewport | Score | P0? |
+|---|---|---|
+| macbook-13 | 9.0 | ★ P0 ✅ |
+| iphone-14 | 8.0 | ★ P0 ✅ |
+| pixel-7 | 8.0 | — |
+| iphone-se | 7.5 | ★ P0 ✅ (avg pulls above 8.0) |
+| ipad | 7.0 | P1 |
+| **P0 avg** | **8.17** | **✅ PASS** |
+
+iPad 7.0 is a P1 (not blocking). Main issue: at 768px it's single-column with BottomNav, which is correct per AG-1 and Phase 2.5 decision. The LLM rates it lower because it expects a "tablet layout" — but our two-tier strategy is intentional.
+
+---
 
 #### 5B — Tracker
 
-1. DateNavigator (uses `useTrackerStore.selectedDate`)
-2. SearchCommand for food search
-3. NutritionTotals: big remaining kcal + colored macro bars
-4. shadcn Tabs: Breakfast | Lunch | Dinner | Snacks (tab label shows kcal when non-zero)
-5. Quick Add grid (6 popular Indian meals)
+**See `docs/DESIGN_OVERVIEW.md §Page 2` for full component-level spec (authoritative source).**
+
+**Pre-implementation prerequisite:** Update `Modal.tsx` breakpoint from `md:` (768px) → `lg:` (1024px).
+
+Key rules:
+- Nutrition Summary: compact dots on mobile / full bars on desktop (same responsive principle as CalorieHeroCard)
+- Meal tabs: icon + short label (no overflow at 375px), `activeTab` lifted to page state
+- Entry delete: immediate + sonner undo toast (NOT confirm-on-second-tap)
+- Add food: use `Modal.tsx` (after breakpoint fix) — no new AddFoodSheet component
+- Desktop `xl:` 2-column: left=logging, right=quick add + today summary (AG-2 updated)
+- 4 macros tracked: Protein, Carbs, Fat, **Fiber** (violet-400)
+- New analytics (zero backend): calorie pace (F-1), meal distribution bar (F-2), multi-meal badge (F-3)
 
 #### 5C — Workout
 
