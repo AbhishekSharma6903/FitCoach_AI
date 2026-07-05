@@ -151,6 +151,51 @@
       "avg_score": 7.8,
       "p0_pass": false,
       "timestamp": "2026-07-04T22:34:55.260696"
+    },
+    {
+      "run_id": "20260705-124951",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.0,
+      "avg_score": 7.2,
+      "p0_pass": false,
+      "timestamp": "2026-07-05T12:50:47.961532"
+    },
+    {
+      "run_id": "20260705-131918",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.0,
+      "avg_score": 7.2,
+      "p0_pass": false,
+      "timestamp": "2026-07-05T13:20:11.244867"
+    },
+    {
+      "run_id": "20260705-132117",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.5,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-05T13:22:01.571839"
+    },
+    {
+      "run_id": "20260705-132313",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.0,
+      "avg_score": 7.2,
+      "p0_pass": false,
+      "timestamp": "2026-07-05T13:24:00.890716"
+    },
+    {
+      "run_id": "20260705-132459",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 7.33,
+      "avg_score": 7.4,
+      "p0_pass": false,
+      "timestamp": "2026-07-05T13:25:47.479650"
     }
   ]
 }
