@@ -162,9 +162,10 @@ Some features are intentionally desktop-only or mobile-only. These are not bugs:
 |---|---|
 | Quick weight log widget | Desktop right column only (mobile users log from Profile) |
 | TDEE vs Deficit insight card | Desktop right column only (too dense for mobile) |
-| Top navbar | Desktop only (`hidden md:flex`) |
-| Bottom tab bar | Mobile only (`flex md:hidden`) |
-| Page titles in shell header | Mobile only (desktop uses top navbar for branding) |
+| Top navbar | Desktop only (`hidden lg:flex`) |
+| Bottom tab bar | Mobile/tablet only (`lg:hidden`) |
+| Page titles in shell header | Mobile only (`lg:hidden` — desktop uses TopNav branding) |
+| "Log Food" shortcut CTA | **Dashboard greeting row, desktop only** — ghost secondary button linking to `/tracker`. NOT in TopNav (redundant + dead click on /tracker). NOT on other pages (wrong context). |
 
 When adding a new feature, decide up-front: is it mobile+desktop, desktop-only, or mobile-only?
 
@@ -506,10 +507,12 @@ Left:  App logo mark (28px rounded-lg) + "FitCoach" wordmark
 Centre: Nav links — Home · Tracker · Workout · Dishes
         Active: text-white + 2px green underline dot
         Inactive: text-muted-foreground hover:text-white
-Right: "+ Log Food" primary button (h-9 px-4) + Avatar → /profile
+Right: Avatar circle (32px, initials) → /profile
 
-NOTE: Use plain <Link> elements with cn() active styling.
-      Do NOT use shadcn NavigationMenu — heavyweight for 4 links, Base UI API uncertain.
+NOTE: "+ Log Food" button REMOVED from TopNav (2026-07-05).
+      Reason: redundant (Tracker nav link does the same), dead click on /tracker,
+      wrong context on /workout /dishes /profile. See DESIGN_OVERVIEW.md §Log Food CTA.
+      On /dashboard only: a ghost secondary button in the greeting row links to /tracker.
 ```
 
 **Breakpoints (both nav components must use lg:):**
@@ -614,11 +617,15 @@ Rendered in `app/layout.tsx`. Hidden on `/onboarding` and `/sign-in`. Uses `useP
 
 **Mobile (< md):** No action bar. Bottom nav handles navigation. Header shows greeting + date only.
 
-**Desktop (≥ md):**
+**Desktop (≥ lg) — dashboard greeting row only:**
 
 ```
-Avatar | Name + date | [spacer] | + Log Food | Workout | Settings icon
+Good morning, Dev 👋      Saturday, 5 July    [72% score]    [Log Food →]
 ```
+
+Ghost secondary button `[Log Food →]` links to `/tracker` — desktop, dashboard page only.
+All other pages: no food logging CTA in the header. TopNav "Tracker" link handles navigation.
+See DESIGN_OVERVIEW.md §Log Food CTA for full decision and responsive plan.
 
 Inline weight logging is **removed from dashboard**. Users log weight from the Profile page.
 
@@ -675,8 +682,8 @@ Both nav components use `lg:` (1024px) as the single switchover point. **Not `md
 - Inner container: `max-w-6xl mx-auto px-8` — matches PageShell desktop container exactly
 - Left: "F" logo mark (green ring) + "FitCoach" wordmark
 - Centre: nav links (Home / Tracker / Workout / Dishes) with green underline dot on active
-- Right: "+ Log Food" primary green button + avatar circle → `/profile`
-- **Note:** Did NOT use `shadcn NavigationMenu` — shadcn v4.13.0 uses `@base-ui/react`, and NavigationMenu is heavyweight for 4 links. Used plain `<Link>` elements with active state styling instead. Simpler, no dependency on unconfirmed Base UI API.
+- Right: Avatar circle → `/profile` (**"Log Food" button removed — 2026-07-05**, see DESIGN_OVERVIEW.md §Log Food CTA)
+- **Note:** Did NOT use `shadcn NavigationMenu` — shadcn v4.13.0 uses `@base-ui/react`, and NavigationMenu is heavyweight for 4 links. Used plain `<Link>` elements with active state styling instead.
 
 **Deleted: `components/layout/SideNav.tsx`**
 
@@ -1128,7 +1135,13 @@ DEV_ADMIN_ID = "dev-admin-001"
 
 ## Part 6 — QA / Testing Framework
 
-All testing is handled by one script: **`qa/page_audit.py`**
+All testing is handled by two tools:
+- **`qa/page_audit.py`** — static multi-scroll screenshots + LLM scoring per page
+- **`qa/playwright/tracker-states.js`** — interactive states (modals, date nav, search)
+
+> ⚠️ **ALL screenshots and results MUST go under `qa/` (project root), never under `frontend/qa/`.**
+> Run scripts from project root: `node qa/playwright/tracker-states.js`
+> The Playwright script uses `__dirname/../screenshots` which resolves correctly to `qa/screenshots/`.
 
 ### Usage
 

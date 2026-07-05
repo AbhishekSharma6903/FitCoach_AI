@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useDashboard } from "@/hooks/useDashboard";
 import PageShell from "@/components/layout/PageShell";
@@ -174,6 +176,15 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             {dayScore !== null && <DayScoreBadge score={dayScore} />}
+            {/* Ghost "Log Food" shortcut — desktop only, dashboard page only */}
+            {/* Not in TopNav (redundant + dead click on /tracker) — see DESIGN_OVERVIEW.md §Log Food CTA */}
+            <Link
+              href="/tracker"
+              className="hidden lg:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#2A2A2A] text-muted-foreground text-xs font-medium hover:border-[#3A3A3A] hover:text-foreground transition-colors duration-120"
+            >
+              <Plus size={12} aria-hidden="true" />
+              Log Food
+            </Link>
             {/* Avatar — mobile only, desktop avatar is in TopNav */}
             <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm ring-1 ring-primary/20">
               {firstName[0]?.toUpperCase() ?? "?"}
