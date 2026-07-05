@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
 import {
   LayoutDashboard,
   Utensils,
@@ -71,7 +70,6 @@ export default function TopNav() {
                 )}
               >
                 {label}
-                {/* Active dot indicator below label */}
                 {isActive && (
                   <span
                     className="absolute -bottom-[11px] left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full bg-primary"
@@ -83,36 +81,23 @@ export default function TopNav() {
           })}
         </nav>
 
-        {/* Right: Log Food CTA + avatar */}
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href="/tracker"
-            className={cn(
-              "flex items-center gap-1.5 h-9 px-4 rounded-lg",
-              "bg-primary text-black text-sm font-semibold",
-              "hover:bg-green-400 active:scale-[0.98] transition-all duration-120",
-            )}
-          >
-            <Plus size={14} aria-hidden="true" />
-            Log Food
-          </Link>
-
-          <Link
-            href="/profile"
-            aria-label="Profile"
-            aria-current={pathname === "/profile" ? "page" : undefined}
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold",
-              "bg-primary/10 text-primary ring-1 ring-primary/20",
-              "hover:bg-primary/20 transition-colors duration-120",
-              pathname === "/profile" && "ring-2 ring-primary/40",
-            )}
-          >
-            D
-          </Link>
-        </div>
+        {/* Right: avatar only — no Log Food button (see DESIGN_OVERVIEW.md §Log Food CTA) */}
+        <Link
+          href="/profile"
+          aria-label="Profile"
+          aria-current={pathname === "/profile" ? "page" : undefined}
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold shrink-0",
+            "bg-primary/10 text-primary ring-1 ring-primary/20",
+            "hover:bg-primary/20 transition-colors duration-120",
+            pathname === "/profile" && "ring-2 ring-primary/40",
+          )}
+        >
+          D
+        </Link>
 
       </div>
     </header>
   );
 }
+

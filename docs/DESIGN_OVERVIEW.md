@@ -13,27 +13,84 @@
 
 | Viewport | Pattern |
 |---|---|
-| Mobile (< 768px) | Fixed bottom tab bar — 5 tabs: Home / Tracker / Workout / Dishes / Profile |
-| Desktop (≥ 768px) | Sticky top navbar — logo left, nav links centre, avatar + actions right |
+| Mobile (< 1024px) | Fixed bottom tab bar — 5 tabs: Home / Tracker / Workout / Dishes / Profile |
+| Desktop (≥ 1024px) | Sticky top navbar — logo left, nav links centre, avatar right |
 
-**Top navbar spec (desktop):**
+**Top navbar spec (desktop) — UPDATED 2026-07-05:**
 ```
 h-14 sticky top-0 z-50
 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-[#2A2A2A]
 
 Inner: max-w-6xl mx-auto px-8 flex items-center justify-between h-full
 
-Left:   App logo mark (28px rounded-lg, green bg) + "FitCoach" wordmark text-white font-semibold
+Left:   App logo mark (28px rounded-lg) + "FitCoach" wordmark
 Centre: Nav links — Home · Tracker · Workout · Dishes
-        Active:   text-white font-medium + 2px green dot below link text
-        Inactive: text-muted-foreground hover:text-white transition-colors
-Right:  "+ Log Food" primary pill button (h-9 px-4 bg-primary rounded-lg)
-        + Avatar circle (32px, initials, links to /profile)
+        Active:   text-white font-medium + 2px green dot below link
+        Inactive: text-muted-foreground hover:text-white
+Right:  Avatar circle (32px, initials, links to /profile)
 ```
 
-**shadcn:** `NavigationMenu` for nav links. `Button` (primary) for Log Food CTA.
+> **⚠️ "Log Food" button REMOVED from TopNav — 2026-07-05**
+> See "Log Food CTA — Decision & Responsive Plan" section below.
 
-**Why top nav:** Bevel, Whoop web, and most health web apps use top nav. It gives full viewport width to content. Centred `max-w-6xl` column provides tasteful breathing room on both sides without wasting it.
+---
+
+### Log Food CTA — Decision & Responsive Plan
+
+#### Problem
+
+The original spec placed a green "+ Log Food" button in the top navbar. This caused three issues:
+
+1. **Redundant on every page** — the "Tracker" nav link already navigates to the food logging page. Having both is clutter.
+2. **Dead click when already on `/tracker`** — clicking it did nothing (just reloads the current page). Felt broken.
+3. **Wrong context on non-tracking pages** — on `/workout`, `/dishes`, `/profile`, a user is there for a different purpose. Offering "Log Food" there is noise, not help.
+
+#### Decision
+
+**Remove the "+ Log Food" button from TopNav entirely.**
+
+The nav becomes: `[F] FitCoach · Home · Tracker · Workout · Dishes · [Avatar]` — clean, symmetric, Bevel-style.
+
+**Exception — Dashboard page only:**
+The dashboard IS the landing page. A user arriving there may want to immediately log food without clicking the Tracker nav link. Here, a contextual CTA on the dashboard page itself (not in the global nav) makes sense.
+
+#### Responsive Plan
+
+| Viewport | Where the "Log Food" action lives |
+|---|---|
+| **Mobile** | Inside `/tracker` page: the prominent `+ Add food` green button per meal tab + Quick Add grid. BottomNav "Tracker" tab navigates there. |
+| **Desktop — on `/dashboard`** | A ghost/secondary button in the **page header row** (greeting row), right side: `+ Log Food →` that links to `/tracker`. Not in the nav, in the page content. |
+| **Desktop — on `/tracker`** | The `+ Add food` / `+ Add more` buttons within each meal tab. No global nav CTA needed — user is already here. |
+| **Desktop — all other pages** | No food logging CTA. User is on a different task. The "Tracker" nav link is always available if needed. |
+
+#### Dashboard page header CTA (desktop only)
+
+```
+Good morning, Dev 👋              Saturday, 5 July    [72% ◉]  [+ Log Food →]
+```
+
+```tsx
+// Only on /dashboard, desktop only (lg:+), right side of greeting row
+<Link
+  href="/tracker"
+  className="hidden lg:flex items-center gap-1.5 h-8 px-3 rounded-lg
+             border border-[#2A2A2A] text-muted-foreground text-xs font-medium
+             hover:border-[#3A3A3A] hover:text-foreground transition-colors"
+>
+  <Plus size={12} />
+  Log Food
+</Link>
+```
+
+**Why ghost/secondary style (not green pill):**
+- The green primary CTA on this page is already the Calorie Ring + water preset buttons
+- Having two green primary buttons on the same page violates the "one CTA per screen" rule (§2.3)
+- A subtle ghost button communicates "shortcut" not "primary action"
+
+#### QA impact
+
+- `qa/playwright/tracker-states.js` and `page_audit.py` — no change needed
+- TopNav screenshots will show cleaner nav without the button — this is correct
 
 ---
 
@@ -206,10 +263,10 @@ Top navbar sticky at top. Content in `max-w-6xl mx-auto px-8` column. Single col
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [F] FitCoach    Home · Tracker · Workout · Dishes   [+Log] [👤]│  ← sticky top nav
+│  [F] FitCoach    Home · Tracker · Workout · Dishes          [👤]│  ← sticky top nav (no Log Food button)
 ├─────────────────────────────────────────────────────────────────┤
 │                     max-w-6xl mx-auto px-8                      │
-│  Good morning, Dev 👋              Saturday, 5 July    [72% ◉] │  ← Day Score badge
+│  Good morning, Dev 👋       Saturday, 5 July  [72% ◉] [Log→]  │  ← Day Score + ghost Log Food (desktop only)
 ├──────────────────────────────────┬──────────────────────────────┤
 │                                  │  sticky top-20               │
 │   Calorie Hero Card              │   Streak | BMI (border-r)    │
@@ -761,7 +818,7 @@ Single column, full width. Quick Add below the meal tabs (scroll to it).
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│  [F] FitCoach   Home · Tracker · Workout · Dishes   [+Log] [D]        │
+│  [F] FitCoach   Home · Tracker · Workout · Dishes               [D]   │  ← TopNav (no Log Food)
 ├────────────────────────────────────────────────────────────────────────┤
 │                     max-w-6xl mx-auto px-8                             │
 │  [←]  Sunday, 5 July  [→]  [Today]    [📋 3 meals logged today]       │
