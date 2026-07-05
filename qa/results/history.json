@@ -196,6 +196,24 @@
       "avg_score": 7.4,
       "p0_pass": false,
       "timestamp": "2026-07-05T13:25:47.479650"
+    },
+    {
+      "run_id": "20260705-133250",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 7.9,
+      "p0_pass": true,
+      "timestamp": "2026-07-05T13:33:42.936113"
+    },
+    {
+      "run_id": "20260705-142606",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.1,
+      "p0_pass": true,
+      "timestamp": "2026-07-05T14:26:57.200568"
     }
   ]
 }

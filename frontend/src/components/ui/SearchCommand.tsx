@@ -31,6 +31,8 @@ export interface SearchResultItem {
 
 interface SearchCommandProps<T> {
   placeholder?: string;
+  /** Pre-fills the search input and triggers search on mount (for Quick Add) */
+  initialQuery?: string;
   onSearch: (query: string) => Promise<T[]>;
   renderItem: (item: T) => SearchResultItem;
   onSelect: (item: T) => void;
@@ -41,6 +43,7 @@ interface SearchCommandProps<T> {
 
 export default function SearchCommand<T>({
   placeholder = "Search…",
+  initialQuery = "",
   onSearch,
   renderItem,
   onSelect,
@@ -48,7 +51,12 @@ export default function SearchCommand<T>({
   className,
   disabled = false,
 }: SearchCommandProps<T>) {
-  const [query, setQuery] = React.useState("");
+  const [query, setQuery] = React.useState(initialQuery);
+
+  // When initialQuery changes (modal reopened with new food name), update the query
+  React.useEffect(() => {
+    if (initialQuery) setQuery(initialQuery);
+  }, [initialQuery]);
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [results, setResults] = React.useState<T[]>([]);

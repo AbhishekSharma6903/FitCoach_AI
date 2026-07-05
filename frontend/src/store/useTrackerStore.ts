@@ -28,18 +28,18 @@ export const useTrackerStore = create<TrackerState>((set, get) => ({
   setSelectedDate: (date) => set({ selectedDate: date }),
 
   goToPrevDay: () => {
-    const d = new Date(get().selectedDate + "T00:00:00");
-    d.setDate(d.getDate() - 1);
-    set({ selectedDate: d.toISOString().split("T")[0] });
+    const [y, m, d] = get().selectedDate.split("-").map(Number);
+    const prev = new Date(y, m - 1, d - 1);
+    set({ selectedDate: `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,"0")}-${String(prev.getDate()).padStart(2,"0")}` });
   },
 
   goToNextDay: () => {
-    const next = new Date(get().selectedDate + "T00:00:00");
-    next.setDate(next.getDate() + 1);
+    const [y, m, d] = get().selectedDate.split("-").map(Number);
+    const next = new Date(y, m - 1, d + 1);
+    const nextStr = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,"0")}-${String(next.getDate()).padStart(2,"0")}`;
     const today = todayString();
-    // Never navigate to future dates
-    if (next.toISOString().split("T")[0] <= today) {
-      set({ selectedDate: next.toISOString().split("T")[0] });
+    if (nextStr <= today) {
+      set({ selectedDate: nextStr });
     }
   },
 
