@@ -2,9 +2,184 @@
 
 ## Definitive Reference Document
 
-> Written: 2026-07-02. Updated: 2026-07-04.
-> **This is the ONLY plan document needed. The original UI_REFACTOR_PLAN.md can be deleted.**
-> Read Parts 1–3 before writing any code. Read Part 4 (feature inventory) to ensure nothing is missed.
+> Written: 2026-07-02. Updated: 2026-07-05 (architecture review applied).
+> **This is the ONLY plan document needed.**
+> Read **Architecture Guidelines** first, then Parts 1–3 before writing any code.
+
+---
+
+## ★ Architecture Guidelines
+### Read This Before Designing Any Page
+
+These rules are derived from mistakes made in previous iterations. Every page design MUST comply with all of them before implementation starts.
+
+---
+
+### AG-1 · Responsive Width — The One Rule That Governs All Pages
+
+Every page uses a **two-tier responsive width strategy**. Do not invent per-page widths, and do not add an intermediate tablet tier.
+
+```
+Mobile  (default, < lg, < 1024px):  w-full px-4 pb-24
+                                     ↑ full width — phones AND tablets, pb-24 clears bottom nav
+
+Desktop (lg+, ≥ 1024px):            max-w-6xl mx-auto px-8 pb-8
+                                     ↑ 1152px centred column, tasteful breathing room both sides
+```
+
+**Why two tiers only (not three):** A `max-w-3xl` intermediate tier at `md:` (768px) gives zero breathing room at that exact breakpoint (768px container = 768px viewport). It adds complexity with no benefit. Mobile full-width → desktop centred is the correct 2-tier model (same as Bevel, Notion, Vercel).
+
+**Why `max-w-6xl` on desktop:**
+- 1280px screen → 1152px content, 64px each side ✅
+- 1440px screen → 1152px content, 144px each side ✅  
+- 1920px screen → 1152px content, 384px each side — background fills gracefully ✅
+- `max-w-5xl` inside a 2-column grid → left col = ~640px, barely wider than mobile ❌
+
+**Critical alignment rule:** The top navbar's inner container and every page's content container must use the **exact same** `max-w-6xl mx-auto px-8`. Any difference means nav links don't align with content edges — the layout looks broken.
+
+**For mobile: never add any `lg:` constraints that force content narrower than full viewport.** Let mobile be full-width. `pb-24` is the only mobile-specific override needed.
+
+---
+
+### AG-2 · Two-Column Grid — Dashboard Only
+
+The 2-column layout (main content | right panel) is **dashboard-specific**. Other pages use single-column within the content column.
+
+```
+Dashboard desktop:  grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6
+                    ↑ xl: = 1280px+. Below 1280px: single full-width column.
+                    At 1280px: left col = 1152 - 340 - 24(gap) = 788px — genuinely spacious.
+                    At 1024px (iPad landscape): single full-width column — ring fills it beautifully.
+
+All other pages:    Single column only. Max-width from AG-1.
+```
+
+**Why `xl:` not `lg:`:** At `lg:` (1024px) the 2-column left column is only 596px — barely wider than the old `max-w-2xl` problem. `xl:` (1280px) gives 788px — properly spacious for flanking stats and chart content.
+
+**Right column sticky spec (dashboard only):**
+```
+sticky top-20
+max-h-[calc(100vh-80px)]
+overflow-y-auto
+space-y-4
+```
+`top-20` = 80px (56px navbar + 24px gap). `max-h + overflow-y-auto` prevents sticky breaking if right column content grows taller than viewport.
+
+---
+
+### AG-3 · Mobile Layout Card Order
+
+Order cards from highest to lowest **time-sensitive + motivational value**:
+
+1. **Greeting** (always first — orientation)
+2. **Primary metric** (calorie ring, nutrition totals, etc. — why the user opened the app)
+3. **Secondary metrics** (macros, workout summary — context for the primary)
+4. **Motivational / streak / milestone** — drives return visits, must appear early
+5. **Interactive utility** (water log, food search, weight log — actions)
+6. **Reference data** (charts, history — least time-sensitive, user scrolls to it)
+
+**Never bury streak/motivation cards below interactive panels** — motivation is what keeps users coming back daily.
+
+---
+
+### AG-4 · Cards Must Fill Their Column Width
+
+A card in a 720px column must use that 720px. Do not put a small widget (200px ring, small stat block) in a 720px card without flanking content to fill horizontal space. Empty card space reads as "mobile app on desktop."
+
+**Techniques for filling width:**
+- Ring/chart in centre + stats flanking left and right (`grid grid-cols-[1fr_auto_1fr]`)
+- Multi-stat grid within one card (`grid grid-cols-2` or `grid-cols-3 gap-4`)
+- Full-width progress bar below a centred element
+- Two-column stat blocks separated by a `Separator` (vertical)
+
+---
+
+### AG-5 · Sticky Right Column Constraints
+
+When using a sticky right column, it must have a `max-h` to prevent it from growing taller than the viewport (which silently breaks `sticky`):
+
+```tsx
+<div className="sticky top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-4">
+  {/* right column cards */}
+</div>
+```
+
+Only add `overflow-y-auto` if you expect the right column to be content-heavy. For short columns (2–3 cards), `max-h` alone is sufficient.
+
+---
+
+### AG-6 · Animation Rules
+
+- **Card stagger:** `staggerChildren: 0.03` (30ms), NOT 50ms. 7 cards × 50ms = 350ms lag on last card.
+- **SVG donut rings:** Animate `strokeDashoffset`, NOT `pathLength`. They are different mechanisms.
+- **Number count-up:** Use `animate(0, to, { onUpdate })` from Motion, NOT CSS counters.
+- **Progress bars:** Use `motion.div` with `width` animation, NOT CSS `transition` on `width`.
+- **No animations on text-only elements** (labels, captions) — reserved for numeric/visual changes.
+- **Respect `prefers-reduced-motion`:** Wrap all Motion animations in a check or use Motion's built-in reduced-motion support.
+
+---
+
+### AG-7 · shadcn Component Defaults
+
+Always use shadcn primitives over custom implementations. Current installed set:
+
+| Need | Use |
+|---|---|
+| Progress bar | `shadcn Progress` with `indicatorClassName` for colour |
+| Modal (desktop) / bottom sheet (mobile) | `Modal.tsx` (custom responsive wrapper) |
+| Toast notifications | `sonner` (install: `npx shadcn@latest add sonner`) |
+| Loading placeholders | `shadcn Skeleton` — NOT spinners in cards |
+| Food/exercise search dropdown | `SearchCommand.tsx` (custom, uses `command`) |
+| Tabs (meal slots, etc.) | `shadcn Tabs` — NOT custom accordion/toggles |
+| Delete confirmation | `DeleteConfirmDialog.tsx` (wraps `alert-dialog`) |
+| Badges (BMI, diet type) | `shadcn Badge` with `variant="outline"` + custom colour |
+| Avatar | `shadcn Avatar` (install if not present) |
+| Top nav links | Plain `<Link>` with `cn()` active styling — NOT `shadcn NavigationMenu` (heavyweight, uncertain Base UI API) |
+
+---
+
+### AG-8 · What Belongs Where
+
+| Data type | Tool |
+|---|---|
+| Server data (API responses) | SWR — `useDashboard`, `useFoodLog`, etc. |
+| UI state (selected date, modal open) | Zustand stores |
+| Form state (inputs before submit) | `useState` — local to the component |
+| Toast messages | `sonner` via `toast()` calls |
+
+**Never put API data in Zustand. Never put pure UI state in SWR.**
+
+---
+
+### AG-9 · Desktop/Mobile Feature Parity Exceptions
+
+Some features are intentionally desktop-only or mobile-only. These are not bugs:
+
+| Feature | Where |
+|---|---|
+| Quick weight log widget | Desktop right column only (mobile users log from Profile) |
+| TDEE vs Deficit insight card | Desktop right column only (too dense for mobile) |
+| Top navbar | Desktop only (`hidden md:flex`) |
+| Bottom tab bar | Mobile only (`flex md:hidden`) |
+| Page titles in shell header | Mobile only (desktop uses top navbar for branding) |
+
+When adding a new feature, decide up-front: is it mobile+desktop, desktop-only, or mobile-only?
+
+---
+
+### AG-10 · Before Designing a New Page — Checklist
+
+Run through this before writing any component for a new page:
+
+- [ ] Read Part 4 (Feature Inventory) for the page's required features
+- [ ] Check AG-1: am I using the correct two-tier width strategy (mobile full-width / desktop max-w-6xl)?
+- [ ] Check AG-2: does this page need a 2-column grid? (Only dashboard does by default)
+- [ ] Check AG-3: is mobile card order prioritised correctly?
+- [ ] Check AG-4: do all cards fill their column width?
+- [ ] Check AG-6: are animations using the correct mechanisms?
+- [ ] Check AG-7: am I using shadcn primitives everywhere possible?
+- [ ] Write the page spec in `docs/DESIGN_OVERVIEW.md` before coding
+- [ ] Get the spec reviewed before starting implementation
 
 ---
 
@@ -70,8 +245,8 @@ From a full audit of `frontend_legacy/`:
    **Root cause:** PageShell uses `max-w-2xl mx-auto` for all viewports with no sidebar navigation.
    On desktop there is no persistent navigation at all — no sidebar, no top nav, nothing.
 
-   **Decision:** Left sidebar (`SideNav`) on `md:+` + content fills all remaining width.
-   See Part 2.10 for the full desktop layout specification.
+   **Decision (updated 2026-07-05):** Top navbar (`TopNav.tsx`) + centred `max-w-6xl` content column.
+   See Architecture Guideline AG-1 and §2.10 for the full desktop layout specification.
 
 ### Design System Fragmentation
 
@@ -211,53 +386,62 @@ Plyometrics:    #f97316  (orange-500)
 
 ### 2.9 Component Patterns
 
+> **NEVER use raw Tailwind `gray-*` colours** (gray-300, gray-400, gray-500, gray-600, gray-800).
+> These have blue undertones and break the warm-neutral palette. Use semantic tokens instead:
+> `text-muted-foreground` · `text-foreground` · `bg-[#1A1A1A]` · `border-[#2A2A2A]`
+
 #### Cards
 
 ```
-bg: var(--color-surface)     → #111111
+bg: #111111  (--color-surface)
 border: 1px solid #2A2A2A
 border-radius: rounded-2xl
-padding: 20px (p-5)
+padding: p-5 (20px)
 shadow: none on mobile, subtle on desktop
+Hover (desktop): border-color transitions to #3A3A3A (motion.div whileHover)
 ```
 
 #### Metric Display (Bevel pattern — primary numbers)
 
-```
-<span className="text-5xl font-black text-white">349</span>
-<span className="text-sm text-gray-400 font-medium">kcal</span>
-<span className="text-xs text-gray-600">of 2352 goal</span>
+```tsx
+<span className="text-5xl font-black text-white tabular-nums">349</span>
+<span className="text-sm text-muted-foreground font-medium">kcal</span>
+<span className="text-xs text-muted-foreground/60">of 2352 goal</span>
 ```
 
 #### Section Headers (floating label style)
 
-```
-className="text-[11px] font-semibold tracking-[0.12em] uppercase text-gray-500 mb-2"
+```tsx
+className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3"
 ```
 
-No box, no card header. Just a floating uppercase label above the section.
+No box, no card header. Floating uppercase label above each section. `mb-3` (12px) gap to content.
 
 #### Progress Bars
 
+**Standard height: `h-2` (8px) on ALL progress bars without exception.**
+
 ```
-track: h-2 rounded-full bg-[#2A2A2A]    (NOT Tailwind gray-800 — too blue)
-fill:  h-2 rounded-full transition-all duration-300
+track: h-2 rounded-full bg-[#2A2A2A]
+fill:  h-2 rounded-full (animate with Motion width, not CSS transition)
 label row (above bar):
-  left:  text-xs font-medium text-gray-300
-  right: text-xs font-semibold text-white + text-gray-600 for /target
+  left:  text-xs font-medium text-foreground/70
+  right: text-xs font-semibold text-white + text-muted-foreground for /target
 ```
 
 #### Buttons
 
 ```
-Primary:   h-11 bg-[#22c55e] text-black font-semibold rounded-lg hover:bg-green-400 active:scale-[0.98]
-Secondary: h-11 bg-[#222222] border border-[#333333] text-gray-200 rounded-lg
-Ghost:     transparent text-gray-400 hover:text-white hover:bg-[#1A1A1A]
+Primary:   h-11 bg-primary text-black font-semibold rounded-lg
+           hover:bg-green-400 active:scale-[0.98] transition-all
+Secondary: h-11 bg-[#222222] border border-[#2A2A2A] text-foreground rounded-lg
+           hover:bg-[#2A2A2A]
+Ghost:     transparent text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A]
 Danger:    h-11 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg
-Icon-only: min 44×44px bg-[#1A1A1A] rounded-xl
+Icon-only: min 44×44px bg-[#1A1A1A] rounded-xl border border-[#2A2A2A]
 ```
 
-#### Bottom Navigation (mobile only, hidden md:+)
+#### Bottom Navigation (mobile only, `flex lg:hidden`)
 
 ```
 height:     64px + env(safe-area-inset-bottom)
@@ -265,76 +449,72 @@ background: rgba(17,17,17,0.85) backdrop-blur-xl
 border-top: 1px solid #2A2A2A
 position:   fixed bottom-0 left-0 right-0 z-50
 
-Items: Dashboard | Tracker | Workout | Dishes | Profile
-Icons: Home | UtensilsCrossed | Dumbbell | ChefHat | User
+Items: Home | Tracker | Workout | Dishes | Profile
 
 Active:
-  icon: text-[#22c55e] (filled variant)
-  label: text-[10px] font-semibold text-[#22c55e]
-  dot indicator: 2px × 16px bg-[#22c55e] rounded-full above icon
+  icon: text-primary (green)
+  label: text-[10px] font-semibold text-primary  ← VISIBLE (not hidden)
+  dot indicator: 2px × 16px bg-primary rounded-full above icon
 
 Inactive:
-  icon: text-gray-600 (outline)
-  label: hidden
+  icon: text-[#6B7280]
+  label: text-[10px] font-medium text-[#4B5563]  ← DIMMED BUT VISIBLE
+  (hidden labels fail usability at 375px — labels help users build tap-target memory)
 ```
 
 ### 2.10 Desktop Layout Strategy (md: 768px and above)
 
-**Pattern:** Left sidebar navigation + full-width content.
-Reference apps: Whoop (web), Hevy (web), Notion, Linear, Vercel.
+**Decision (confirmed 2026-07-05): Top navbar + centred content column.**
 
-**Why NOT top nav with centered column:**
-MyFitnessPal and Cronometer use `max-w ~700-800px` centered with top nav. They still waste
-~200px on each side and feel like "mobile app on big screen." Rejected.
+Previous approach (64px left sidebar) was scrapped because:
+- Content stretched across the full remaining width with dead space on the right
+- Adjusting for mobile compactness made the desktop layout worse
+- Reference apps (Bevel, Whoop web) use top nav with centred content
 
-**Why NOT full 3-column layout everywhere:**
-Right stats panel on every page (Tracker, Workout, Profile) is overengineering.
-The right panel is a Phase 5A dashboard-specific enhancement, not a global layout.
-
-#### SideNav spec (desktop, 64px wide, `hidden md:flex`)
-
+**Pattern:**
 ```
-Width:      64px fixed
-Height:     100dvh sticky left
-Background: rgba(17,17,17,0.95) border-r border-[#2A2A2A]
+sticky top navbar (h-14, blurred bg, border-bottom)
+  └─ max-w-6xl mx-auto px-8  [logo | nav links | actions]
 
-Items (top): Home | Tracker | Workout | Dishes
-Items (bottom): Profile avatar
-
-Each item:
-  - 44×44px clickable area (meets touch target even on desktop)
-  - Icon centered, no labels (tooltips on hover)
-  - Active: bg-[#1A1A1A] icon text-[#22c55e] + 3px left green border
-  - Inactive: icon text-gray-600 hover:text-gray-300 hover:bg-[#1A1A1A]
+main content (see AG-1 — two-tier only: mobile full-width / desktop max-w-6xl)
+  └─ max-w-6xl mx-auto px-8 pb-8   ← desktop (lg+)
+  └─ w-full px-4 pb-24             ← mobile + tablet (< lg)
+       ├─ Dashboard: 2-column grid [1fr_340px] (see AG-2)
+       └─ All other pages: single column
 ```
 
-#### PageShell on desktop (`md:`)
+**Content max-width:** `max-w-6xl` (1152px) — see AG-1 for full reasoning. `max-w-5xl` inside a 2-column grid gives a ~640px left column, recreating the old narrow layout.
+
+**Dashboard desktop grid:** `grid grid-cols-[1fr_340px] gap-6` inside the content column.
+Right column: `sticky top-20 max-h-[calc(100vh-80px)] overflow-y-auto` — see AG-2 and AG-5.
+
+**Mobile:** Bottom tab bar (already done) + `px-4 pb-24` on content.
+
+#### TopNav spec (desktop, `hidden lg:flex`)
 
 ```
-Mobile:   full width, max-w-2xl mx-auto, bottom nav clearance
-Desktop:  ml-16 (sidebar width), px-8, max-w-none, no bottom nav clearance
-          → content fills full remaining width (~1200px on 1280px screen)
+h-14 sticky top-0 z-50
+bg-[#0A0A0A]/80 backdrop-blur-md border-b border-[#2A2A2A]
+
+Inner: max-w-6xl mx-auto px-8 flex items-center justify-between h-full
+       ↑ must match content column exactly
+
+Left:  App logo mark (28px rounded-lg) + "FitCoach" wordmark
+Centre: Nav links — Home · Tracker · Workout · Dishes
+        Active: text-white + 2px green underline dot
+        Inactive: text-muted-foreground hover:text-white
+Right: "+ Log Food" primary button (h-9 px-4) + Avatar → /profile
+
+NOTE: Use plain <Link> elements with cn() active styling.
+      Do NOT use shadcn NavigationMenu — heavyweight for 4 links, Base UI API uncertain.
 ```
 
-#### Dashboard desktop layout (`lg:`)
+**Breakpoints (both nav components must use lg:):**
+- `TopNav`: `hidden lg:flex` — desktop only (≥ 1024px)
+- `BottomNav`: `lg:hidden` — mobile/tablet only (< 1024px)
 
-```
-lg:grid-cols-[1fr_320px] gap-6
-
-Left column (grows):
-  - Greeting + date header
-  - Calorie ring card (full width of column)
-  - Macro progress bars
-  - Water intake panel
-
-Right column (320px fixed):
-  - Streak + BMI card
-  - Next milestone card
-  - Weight chart (compact)
-```
-
-This gives ~880px left + 320px right on a 1280px screen — properly information-dense,
-no dead space, mirrors Whoop's web dashboard layout.
+#### SideNav (REMOVED)
+The 64px left sidebar (`SideNav.tsx`) is no longer part of the design. It should be deleted from `components/layout/`. The top navbar replaces it on desktop.
 
 ---
 
@@ -418,10 +598,9 @@ interface PageShellProps {
 }
 ```
 
-- `min-h-[100dvh] bg-[var(--color-bg)]`
-- `max-w-2xl mx-auto px-4 pt-6 pb-[max(96px,calc(96px+env(safe-area-inset-bottom)))]`
-- On `md:` breakpoint: `pb-6` (no bottom nav)
-- Header: `h-14 flex items-center gap-3`
+- Mobile (< lg): `w-full px-4 pb-24` — full width including tablets
+- Desktop (lg+): `max-w-6xl mx-auto px-8 pb-8`
+- Header: `h-14 flex items-center gap-3` (mobile only — desktop uses TopNav)
 
 #### 2B — BottomNav Component
 
@@ -443,44 +622,84 @@ Inline weight logging is **removed from dashboard**. Users log weight from the P
 ---
 
 
-### Phase 2.5 — Desktop Layout: SideNav + PageShell Update (~2 hours)
+### Phase 2.5 — Desktop Layout: TopNav + PageShell Update ✅ DONE (2026-07-05)
 
-**Problem:** Phase 2 built the mobile layout (BottomNav + PageShell) but left desktop
-without navigation or proper content width. Every page built in Phase 5 onwards needs
-the correct desktop shell to avoid rebuilding later.
+**Decision:** Top navbar replaces the left sidebar on desktop.
+Full spec in §2.10 and `docs/DESIGN_OVERVIEW.md`.
 
-**Decision confirmed:** Left 64px icon sidebar on `md:+`. Content fills remaining width.
-Full spec in Part 2 §2.10.
+---
 
-#### Files to create / update
+#### 🐛 Problem Found During Implementation: Nav Dead Zone at 768–1023px
 
-**New: `components/layout/SideNav.tsx`**
-- `hidden md:flex` flex-col, 64px wide, `fixed left-0 top-0 h-dvh z-40`
-- Same 5 routes as BottomNav (Home/Tracker/Workout/Dishes/Profile)
-- Icon-only with shadcn Tooltip on hover showing label
-- Active: green left border + green icon + `bg-[#1A1A1A]`
-- Bottom slot: Profile avatar circle
-- Logo / app initial at top
+**The original spec said:**
+- `TopNav`: `hidden md:flex` (shows at ≥ 768px)
+- `BottomNav`: `md:hidden` (hides at ≥ 768px)
 
-**Update: `components/layout/PageShell.tsx`**
-- Mobile: unchanged (`max-w-2xl mx-auto`, bottom padding for BottomNav)
-- Desktop `md:`: `md:ml-16 md:px-8 md:max-w-none md:pb-8` (shift right of sidebar, full width)
-- Remove `max-w-2xl` constraint on `md:+`
+**Problem discovered:** `md:` = 768px, `lg:` = 1024px. Our AG-1 says desktop starts at `lg:` (1024px). If TopNav was `hidden md:flex` and BottomNav was `md:hidden`, they matched at 768px — that's fine. **BUT** PageShell's desktop layout is `lg:max-w-6xl` (only centres at 1024px+). So at 768–1023px:
+- BottomNav was gone (hidden at md+)
+- TopNav was present but content wasn't centred yet
+- Result: navigation existed but layout was inconsistent
 
-**Update: `app/layout.tsx`**
-- Render both `<BottomNav />` (mobile, already done) and `<SideNav />` (desktop, new)
-- Both are hidden on the opposite breakpoint via Tailwind
+**A more critical version:** If we had used `hidden lg:flex` on TopNav but kept `md:hidden` on BottomNav, the 768–1023px range would have had **zero navigation at all** — no TopNav, no BottomNav.
 
-#### Dashboard content grid (desktop-only, inside Phase 5A)
-```tsx
-// Only applied inside /dashboard/page.tsx, not in PageShell
-<div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-6">
-  <main>...</main>
-  <aside>...</aside>
-</div>
+**Decision and reasoning:** All navigation breakpoints must be unified at `lg:` (1024px):
+- `TopNav`: `hidden lg:flex` — appears at 1024px+
+- `BottomNav`: `lg:hidden` — disappears at 1024px+
+- Below 1024px: BottomNav is the only navigation (includes iPad portrait 768px, iPad mini, all phones)
+- Above 1024px: TopNav is the only navigation (includes iPad landscape, laptops, desktops)
+
+**This is a correction to the original spec.** The plan doc previously said `hidden md:flex` for TopNav — that is wrong and has been corrected here and in §2.10.
+
+---
+
+#### AG-1 Update: Navigation Breakpoints
+
+Both nav components use `lg:` (1024px) as the single switchover point. **Not `md:`.**
+
+```
+< lg (< 1024px):  BottomNav visible (lg:hidden),  TopNav hidden (hidden lg:flex)
+≥ lg (≥ 1024px):  TopNav visible (hidden lg:flex), BottomNav hidden (lg:hidden)
 ```
 
-**Verify:** MacBook 1280px screenshot shows sidebar on left, content fills full width.
+---
+
+#### Files Created / Updated
+
+**New: `components/layout/TopNav.tsx`**
+- `hidden lg:flex` — visible only at 1024px+ (corrected from `hidden md:flex`)
+- `sticky top-0 z-50 h-14`
+- `bg-[#0A0A0A]/80 backdrop-blur-md border-b border-[#2A2A2A]`
+- Inner container: `max-w-6xl mx-auto px-8` — matches PageShell desktop container exactly
+- Left: "F" logo mark (green ring) + "FitCoach" wordmark
+- Centre: nav links (Home / Tracker / Workout / Dishes) with green underline dot on active
+- Right: "+ Log Food" primary green button + avatar circle → `/profile`
+- **Note:** Did NOT use `shadcn NavigationMenu` — shadcn v4.13.0 uses `@base-ui/react`, and NavigationMenu is heavyweight for 4 links. Used plain `<Link>` elements with active state styling instead. Simpler, no dependency on unconfirmed Base UI API.
+
+**Deleted: `components/layout/SideNav.tsx`**
+
+**Updated: `components/layout/PageShell.tsx`**
+- Removed all `md:ml-16`, `md:mr-0`, `md:max-w-none` (sidebar offset classes)
+- Two-tier strategy as per AG-1: `w-full px-4 pb-24` mobile / `lg:max-w-6xl lg:mx-auto lg:px-8 lg:pb-8` desktop
+- Mobile header (`title`, `backHref`, `headerRight`) now has `lg:hidden` — invisible on desktop since TopNav handles branding
+- Comment updated to reflect two-tier strategy
+
+**Updated: `components/layout/BottomNav.tsx`**
+- Changed `md:hidden` → `lg:hidden` to match TopNav breakpoint
+- Labels kept visible (dimmed) for inactive tabs — per §2.9 spec
+
+**Updated: `app/layout.tsx`**
+- Replaced `<SideNav />` with `<TopNav />`
+
+---
+
+#### Verification — All 5 Viewports Confirmed ✅
+
+| Viewport | Nav shown | Layout |
+|---|---|---|
+| iPhone SE 375px | BottomNav ✅ | Full width px-4 ✅ |
+| iPhone 14 390px | BottomNav ✅ | Full width px-4 ✅ |
+| iPad 768px | BottomNav ✅ | Full width px-4 ✅ (previously had dead zone) |
+| Macbook 1280px | TopNav ✅ | max-w-6xl centred, nav edges align ✅ |
 
 ---
 
@@ -578,16 +797,15 @@ Run `python3 qa/page_audit.py /{page}` after each page. P0 ≥ 8.0 before moving
 
 #### 5A — Dashboard
 
-**Sections (mobile top → bottom):**
-1. Greeting + date (no card, raw text)
-2. Hero card — 2-col grid:
-   - Left 60%: Calorie ring (140px), big kcal center, "remaining" label
-   - Right 40%: Streak (🔥 N days `font-black text-2xl`), BMI badge
-3. `TODAY'S MACROS` section header (caption style) + 3 colored progress bars
-4. Water intake panel
-5. Weight progress chart
+**See `docs/DESIGN_OVERVIEW.md` for full component-level spec (authoritative source).**
 
-**Desktop header (md+):** Avatar → `/profile` | Name + date | [spacer] | `+ Log Food` | Workout icon | Dishes icon
+Mobile card order (AG-3): Greeting → Calorie Hero → Macros + % split → Streak/BMI → Milestone → Water → Weight chart
+Desktop: 2-col grid `[1fr_340px]`. Left: Calorie Hero + Macros + Water + Chart. Right (sticky): Streak/BMI + Milestone + TDEE widget + Weight log.
+
+Key rules:
+- Calorie hero: ring centred with stats flanking left+right (AG-4) — not ring alone in a wide card
+- Streak + BMI: side-by-side `grid-cols-2` within card, not stacked (AG-4)
+- Motion: `strokeDashoffset` for rings, `animate(0, to)` for count-up (AG-6)
 
 #### 5B — Tracker
 
@@ -883,17 +1101,20 @@ Build page → python3 qa/page_audit.py /{page} → read issues → fix → repe
 
 ## Part 8 — What NOT to Do
 
-| Temptation                       | Why Not                                            |
-| -------------------------------- | -------------------------------------------------- |
-| Upgrade Tailwind to v4           | Breaking change — plan separately after refactor  |
-| Top nav + centered column on desktop | Wastes ~44% of screen. Use sidebar instead (see 2.10) |
-| Right panel on every page globally  | Overkill — right panel is dashboard-specific only      |
-| Add Framer Motion before Phase 7 | Bundle weight before design is stable              |
-| Use shadcn`card` component     | Our Card.tsx is fine once tokens are set           |
-| Build custom Calendar            | DateNavigator is already good — polish only       |
-| Switch from Recharts             | Charts work correctly — not worth disruption      |
-| Add light mode                   | Dark-only for now — separate sprint               |
-| Patch legacy code                | Full rebuild only — legacy is read-only reference |
+| Temptation                            | Why Not                                                             |
+| ------------------------------------- | ------------------------------------------------------------------- |
+| Using `max-w-5xl` on desktop          | Inside a 2-col grid it gives ~640px left col — barely wider than mobile. Use `max-w-6xl`. |
+| Using `max-w-2xl` on desktop          | 672px centred column wastes 44% of screen. The original problem.   |
+| Left sidebar navigation               | Causes wide stretched content with dead right-side space. Use top nav. |
+| Right panel on every page globally    | Overkill — right panel is dashboard-specific only (see AG-2)       |
+| Different max-width on navbar vs content | Nav links won't align with content edges. Must use same `max-w-6xl` everywhere. |
+| Add Framer Motion before Phase 7      | Already reconsidered — Motion for React is approved, install it in Phase 5A |
+| Use `pathLength` for SVG donut rings  | Wrong mechanism. Use `strokeDashoffset` (see AG-6)                 |
+| Stagger cards at 50ms intervals       | 7 cards × 50ms = 350ms lag. Use 30ms (see AG-6)                   |
+| Build custom Calendar                 | DateNavigator is already good — polish only                        |
+| Switch from Recharts                  | Charts work correctly — not worth disruption                       |
+| Add light mode                        | Dark-only for now — separate sprint                                |
+| Patch legacy code                     | Full rebuild only — legacy is read-only reference                  |
 
 ---
 
@@ -920,9 +1141,9 @@ frontend/
       globals.css             ← CSS variables + tailwind directives
     components/
       layout/
-        PageShell.tsx         ← shared page container + header (mobile: max-w-2xl, desktop: full-width ml-16)
-        BottomNav.tsx         ← mobile bottom tab bar (hidden md:)
-        SideNav.tsx           ← desktop left sidebar (hidden below md:)
+        PageShell.tsx         ← shared page container (mobile: w-full px-4, desktop: max-w-6xl px-8)
+        BottomNav.tsx         ← mobile/tablet nav bar (lg:hidden — disappears at 1024px)
+        TopNav.tsx            ← desktop sticky top navbar (hidden lg:flex — appears at 1024px), max-w-6xl inner
       ui/                     ← shadcn components + custom overrides
         button.tsx, input.tsx, select.tsx, badge.tsx, progress.tsx
         dialog.tsx, drawer.tsx, alert-dialog.tsx, sheet.tsx

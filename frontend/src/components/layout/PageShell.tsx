@@ -3,25 +3,28 @@ import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PageShellProps {
-  /** Text shown in the header */
+  /** Title shown in mobile header (hidden on desktop — TopNav handles branding) */
   title?: string;
-  /** If set, shows a back arrow linking to this href */
+  /** Back arrow href — shows ChevronLeft when set */
   backHref?: string;
-  /** Custom content to render on the right side of the header */
+  /** Custom content for right side of mobile header */
   headerRight?: React.ReactNode;
-  /** Skip horizontal padding (for full-bleed pages) */
+  /** Skip horizontal padding (for full-bleed sections) */
   noPadding?: boolean;
-  /** Skip the header entirely */
+  /** Skip mobile header entirely (dashboard uses its own greeting row) */
   noHeader?: boolean;
   children: React.ReactNode;
   className?: string;
 }
 
 /**
- * Shared page wrapper used by every page (except onboarding / auth).
+ * Shared page wrapper — two-tier responsive width strategy (AG-1):
  *
- * Mobile  (< md):  max-w-2xl centred, bottom padding clears BottomNav
- * Desktop (≥ md):  ml-16 (clears SideNav), full remaining width, px-8
+ * Mobile  (< lg, < 1024px):  w-full px-4 pb-24  — full width, clears BottomNav
+ * Desktop (lg+, ≥ 1024px):   max-w-6xl mx-auto px-8 pb-8  — centred column
+ *
+ * TopNav is rendered in layout.tsx (desktop). Mobile header is rendered here.
+ * Never add intermediate tablet widths — see AG-1 in UI_REFACTOR_PLAN_V2.md.
  */
 export default function PageShell({
   title,
@@ -36,19 +39,18 @@ export default function PageShell({
     <div className="min-h-dvh bg-background">
       <div
         className={cn(
-          // ── Mobile: centred column ──────────────────────────────────────
-          "mx-auto w-full max-w-2xl",
-          "pb-24",                    // clears BottomNav (64px + safe-area)
+          // ── Mobile (< lg): full width ────────────────────────────────────
+          "w-full pb-24",
           !noPadding && "px-4",
-          // ── Desktop: full width offset by sidebar ───────────────────────
-          "md:ml-16 md:mr-0 md:w-auto md:max-w-none md:pb-8",
-          !noPadding && "md:px-8",
+          // ── Desktop (lg+): centred column, max-w-6xl matches TopNav inner ─
+          "lg:max-w-6xl lg:mx-auto lg:px-8 lg:pb-8",
           className,
         )}
       >
-        {/* ── Header ───────────────────────────────────────────────────── */}
+        {/* ── Mobile-only header ────────────────────────────────────────── */}
+        {/* Hidden on desktop — TopNav handles navigation there            */}
         {!noHeader && (
-          <header className="flex h-14 items-center gap-3">
+          <header className="flex h-14 items-center gap-3 lg:hidden">
             {backHref && (
               <Link
                 href={backHref}
@@ -65,7 +67,6 @@ export default function PageShell({
               </h1>
             )}
 
-            {/* Spacer when there is no title but there is a right slot */}
             {!title && <div className="flex-1" />}
 
             {headerRight && (
@@ -74,7 +75,6 @@ export default function PageShell({
           </header>
         )}
 
-        {/* ── Page content ─────────────────────────────────────────────── */}
         {children}
       </div>
     </div>

@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthProvider from "@/components/AuthProvider";
+import TopNav from "@/components/layout/TopNav";
 import BottomNav from "@/components/layout/BottomNav";
-import SideNav from "@/components/layout/SideNav";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,9 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
         <TooltipProvider>
           <AuthProvider>
-            <SideNav />   {/* desktop only — hidden on mobile */}
+            <TopNav />    {/* desktop lg+ only — hidden on mobile */}
             {children}
-            <BottomNav /> {/* mobile only — hidden on desktop */}
+            <BottomNav /> {/* mobile/tablet < lg — hidden on desktop */}
           </AuthProvider>
         </TooltipProvider>
       </body>
