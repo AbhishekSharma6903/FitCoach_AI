@@ -23,8 +23,9 @@ const HIDDEN_ON_ROUTES = ["/onboarding", "/sign-in", "/sign-up"];
 
 /**
  * Persistent mobile bottom navigation bar.
- * Rendered at root layout level, hidden on md+ breakpoint.
- * Uses `usePathname` to highlight the active tab.
+ * Hidden at lg+ (1024px) — TopNav takes over on desktop.
+ * Uses lg:hidden (NOT md:hidden) to match TopNav's hidden lg:flex,
+ * preventing a dead zone at 768-1023px with no navigation.
  */
 export default function BottomNav() {
   const pathname = usePathname();
@@ -36,7 +37,7 @@ export default function BottomNav() {
     <nav
       aria-label="Main navigation"
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 md:hidden",
+        "fixed bottom-0 left-0 right-0 z-50 lg:hidden",
         "h-16 border-t border-[#2A2A2A] bg-[rgba(17,17,17,0.92)] backdrop-blur-xl",
         // iOS safe area
         "pb-[env(safe-area-inset-bottom)]",
