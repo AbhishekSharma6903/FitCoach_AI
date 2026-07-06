@@ -1144,7 +1144,511 @@ None. All data, hooks, and components are available. Modal.tsx breakpoint fix is
 
 ## Page 3: Workout (`/workout`)
 
-> Design spec to be written before implementation begins.
+> Goal: log exercises with minimal friction, see calories burned at a glance, track volume over time.
+> Inspiration: **Hevy** (grouped exercise cards, volume tracking), **Strong** (clean set rows), **Bevel** (big numbers, dark breathing room).
+> UI must NOT copy the legacy workout layout.
+>
+> **Phase 5C builds the core UI. Phase 6 adds wger images + proper intensity column.**
+
+---
+
+### Phase 6 Pre-decisions (affects Phase 5C layout)
+
+**1. Exercise images (wger, Phase 6)**
+Phase 5C reserves a 36×36 rounded square slot per exercise card. Uses a coloured category initial as fallback (`S`, `C`, `Y`…) in the matching semantic colour — not emoji. This looks more premium than emoji on a dark card.
+
+```tsx
+// Phase 5C: coloured initial in rounded square
+<div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0
+                bg-blue-500/10 text-blue-400 text-sm font-black">
+  {exercise.name[0]}
+</div>
+// Phase 6: replace with <img src={exercise.image_url} className="w-9 h-9 rounded-xl object-cover" />
+```
+
+**2. Intensity toggle (Phase 5C)**
+Built as a proper 3-segment control (not text buttons). Stores as `[intensity]` notes prefix until Phase 6 adds a column.
+
+**3. "Session time" rename + notes field (Phase 5C)**
+Both included in the modal. Confirmed in backend schema.
+
+**4. Volume separate from calories (Phase 5C)**
+Volume displayed as its own metric, not mixed with kcal.
+
+---
+
+### Data Available
+
+| Source | Data |
+|---|---|
+| `useWorkoutLog(selectedDate)` | `DailyWorkout { entries[], total_calories_burned }` |
+| `/api/v1/workout/search?q=` | `Exercise { id, name, category, muscle_group, equipment, level, met_value }` |
+| `useTrackerStore` | Shared date store with Tracker — stays in sync |
+| `useProfile()` | `profile.current_weight_kg` — for calorie preview |
+
+**`WorkoutLogEntry`:** `exercise_name`, `category`, `sets`, `reps`, `weight_kg`, `duration_min`, `calories_burned`, `notes`
+
+**Computed frontend-only:**
+- Volume per exercise: `sets × reps × weight_kg` (only meaningful for strength)
+- Total session volume: sum of all strength volumes
+
+---
+
+### AG Checklist
+
+- [x] AG-1: `w-full px-4 pb-24` mobile / `lg:max-w-6xl lg:mx-auto lg:px-8` desktop
+- [x] AG-2: Right panel at `xl:` — left=workout log, right=exercise search + session summary
+- [x] **AG-3 (corrected)**: Mobile order — Date nav → Calories banner (when >0) → **[+ Log Exercise] CTA** → Exercise log entries. CTA comes BEFORE the log so it's always visible without scrolling.
+- [x] AG-4: Cards use full column width — exercise name + stats fill the card, not a narrow table
+- [x] AG-7: `Modal.tsx`, `SearchCommand`, `sonner`, `Badge`, `Skeleton` throughout
+
+> **AG-3 correction:** The original spec buried the "Log Exercise" CTA below all entries. On a day with 6 exercises logged, the user scrolls 400px to find the add button. Fixed: float a sticky "+ Log Exercise" button OR put the CTA prominently at the top on mobile.
+
+---
+
+### Layout — Mobile (< 1024px)
+
+```
+┌─────────────────────────────┐
+│  [←]  Sunday, 5 July  [→]  │  ← DateNavigator
+│              [Today]        │
+├─────────────────────────────┤
+│  [🔥 312 kcal burned today] │  ← orange banner — only when total > 0
+├─────────────────────────────┤
+│  [+ Log Exercise]           │  ← PRIMARY CTA — always visible, above the log
+├─────────────────────────────┤
+│  WORKOUT LOG                │
+│                             │
+│  ┌─ Push Up ──────────────┐ │
+│  │  [S] · Strength        │ │  ← coloured initial + category (one line header)
+│  │  3 sets · 30 reps      │ │  ← volume summary
+│  │  39 kcal               │ │  ← calories
+│  │  📝 felt strong today  │ │  ← note (italic, muted, only if set)
+│  └────────────────────────┘ │
+│                             │
+│  ┌─ Running ──────────────┐ │
+│  │  [C] · Cardio          │ │
+│  │  15 min · 142 kcal     │ │
+│  └────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+---
+
+### Layout — Desktop (≥ 1024px, 2-column at ≥ 1280px)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  [F] FitCoach   Home · Tracker · Workout (active) · Dishes   [D]  │
+├────────────────────────────────────────────────────────────────────┤
+│                   max-w-6xl mx-auto px-8                           │
+│  [←]  Sunday, 5 July  [→]  [Today]                               │
+│                                                                    │
+│  ┌──── left column (~800px) ───────┐  ┌── right col 300px ──────┐ │
+│  │  [🔥 312 kcal burned today]    │  │  SEARCH EXERCISES       │ │
+│  │                                │  │  [🔍 Search...]          │ │
+│  │  [+ Log Exercise]              │  │   ↳ dropdown (contained) │ │
+│  │                                │  │  ─────────────────────  │ │
+│  │  WORKOUT LOG                   │  │  SESSION SUMMARY        │ │
+│  │  ┌─ Push Up ────────────────┐  │  │  312 kcal  ·  4 moves   │ │
+│  │  │  [S]  Push Up  [Strength]│  │  │  8 sets · 2,400 kg vol  │ │
+│  │  │  3 sets · 30 reps · 39  │  │  │  [Strength 80%][Cardio] │ │
+│  │  │  ── sets table ──────── │  │  └─────────────────────────┘ │
+│  │  │  📝 felt strong today   │  │                               │
+│  │  └──────────────────────────┘  │                               │
+│  └────────────────────────────────┘                               │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Grid:** `grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6`
+Right column: `sticky top-20 space-y-4`
+
+> **Right column SearchCommand containment:** The SearchCommand dropdown must be `position: absolute` within a `relative` container in the right column — it cannot overflow into the left column. Cap the dropdown `max-h-60 overflow-y-auto` so it scrolls within its 300px column.
+
+---
+
+### Component Breakdown
+
+---
+
+#### 1. DateNavigator
+**Reuse `src/components/tracker/DateNavigator.tsx`** — no new file. Same Zustand store, date syncs between Tracker and Workout when user switches tabs.
+
+---
+
+#### 2. Calories Burned Banner
+
+Conditional — only when `total_calories_burned > 0`. Full width, orange.
+
+```
+┌────────────────────────────────────────────────┐
+│  🔥  312 kcal burned today                     │
+└────────────────────────────────────────────────┘
+```
+
+```tsx
+{workout.total_calories_burned > 0 && (
+  <motion.div
+    initial={{ opacity: 0, y: -8 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="flex items-center gap-2.5 px-4 py-3 rounded-xl
+               bg-orange-500/10 border border-orange-500/20"
+  >
+    <Flame size={16} className="text-orange-400 shrink-0" />
+    <span className="text-sm font-semibold text-orange-400">
+      {Math.round(workout.total_calories_burned).toLocaleString()} kcal burned today
+    </span>
+  </motion.div>
+)}
+```
+
+---
+
+#### 3. Log Exercise CTA
+
+**Positioned above the exercise log** (AG-3 fix) — always visible, never buried below entries.
+
+```tsx
+{/* Full width on mobile, left-aligned on desktop */}
+<button
+  onClick={openModal}
+  className="flex items-center justify-center gap-2 w-full lg:w-auto lg:px-6
+             h-11 rounded-xl bg-primary text-black font-semibold text-sm
+             hover:bg-green-400 active:scale-[0.98] transition-all"
+>
+  <Plus size={15} />
+  Log Exercise
+</button>
+```
+
+---
+
+#### 4. WorkoutLogCard (per exercise, grouped)
+
+**Mobile-optimised header — two rows, not one crowded row:**
+
+```
+┌────────────────────────────────────────────────┐
+│  [S]  Push Up                          [×]     │  ← row 1: icon + name + delete
+│       Strength · Chest                         │  ← row 2: category + muscle (muted)
+│  ─────────────────────────────────────────     │
+│  VOLUME            CALORIES                    │  ← stats row (2-col)
+│  3 sets · 30 reps  39 kcal                     │
+│  2,400 kg total    (MET calc)                  │
+│  ─────────────────────────────────────────     │
+│  Set  Reps  Weight                             │  ← sets table (strength only)
+│   1    10   body                               │
+│   2    10   body                               │
+│   3     8   body                   [delete]    │
+│  ─────────────────────────────────────────     │
+│  felt strong today, good form                  │  ← note: no emoji, just italic text
+└────────────────────────────────────────────────┘
+```
+
+```tsx
+<Card padding="md" className="space-y-3">
+  {/* Header — two rows, no overflow at 375px */}
+  <div className="flex items-start justify-between gap-3">
+    <div className="flex items-start gap-3 min-w-0">
+      {/* Category initial square — Phase 6: replace with img */}
+      <div className={cn(
+        "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-sm",
+        CATEGORY_STYLE[category].bg, CATEGORY_STYLE[category].text
+      )}>
+        {exercise_name[0].toUpperCase()}
+      </div>
+      <div className="min-w-0">
+        <p className="text-sm font-bold text-foreground truncate">{exercise_name}</p>
+        <p className="text-xs text-muted-foreground">
+          {category}{muscle_group ? ` · ${muscle_group}` : ""}
+        </p>
+      </div>
+    </div>
+    {/* Category badge + delete */}
+    <div className="flex items-center gap-2 shrink-0">
+      <Badge variant="outline" className={CATEGORY_STYLE[category].badge}>
+        {category}
+      </Badge>
+      <button onClick={onDeleteAll} className="text-muted-foreground/30 hover:text-red-400 transition-colors">
+        <X size={14} />
+      </button>
+    </div>
+  </div>
+
+  {/* Stats row — Volume | Calories */}
+  <div className="grid grid-cols-2 gap-3 py-2 border-t border-[#2A2A2A]">
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Volume</p>
+      <p className="text-sm font-bold text-white">{volumeLabel}</p>
+    </div>
+    <div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Calories</p>
+      <p className="text-sm font-bold text-white">{caloriesLabel}</p>
+    </div>
+  </div>
+
+  {/* Sets table (strength only) */}
+  {isStrength && sets.length > 0 && (
+    <div className="border-t border-[#2A2A2A] pt-2 space-y-1">
+      {sets.map((set, i) => <WorkoutLogRow key={set.id} set={set} index={i+1} onDelete={onDeleteSet} />)}
+    </div>
+  )}
+
+  {/* Note — only if non-empty after stripping intensity prefix */}
+  {strippedNote && (
+    <p className="text-xs text-muted-foreground/70 italic border-t border-[#2A2A2A] pt-2">
+      {strippedNote}
+    </p>
+  )}
+</Card>
+```
+
+**Category styles:**
+```ts
+const CATEGORY_STYLE = {
+  Strength:   { bg: "bg-blue-500/10",   text: "text-blue-400",   badge: "text-blue-400 border-blue-500/30"   },
+  Cardio:     { bg: "bg-red-500/10",    text: "text-red-400",    badge: "text-red-400 border-red-500/30"     },
+  Yoga:       { bg: "bg-purple-500/10", text: "text-purple-400", badge: "text-purple-400 border-purple-500/30"},
+  Stretching: { bg: "bg-green-500/10",  text: "text-green-400",  badge: "text-green-400 border-green-500/30" },
+  default:    { bg: "bg-[#1A1A1A]",     text: "text-muted-foreground", badge: "text-muted-foreground border-[#2A2A2A]" },
+}
+```
+
+---
+
+#### 5. Add Workout Modal
+
+**Sleek, not cluttered.** Key changes from previous spec:
+- Intensity: **segmented control** with icons, not plain text buttons
+- Notes: **below the CTA** — optional, collapsed with "Add note" ghost link (expands on tap)
+- Session time helper: single small line, not a separate label
+
+```
+LOG EXERCISE                              ← Modal title
+
+[🔍 Search push up, running...]           ← SearchCommand
+
+── Once selected ─────────────────────────
+
+  [S]  Bench Press                        ← selected pill (category initial + name)
+       Chest · Strength              [×]
+
+── Strength ──────────────────────────────
+
+INTENSITY
+  ┌──────────────────────────────────┐
+  │  Light  │  Moderate ✓  │  Vigorous│  ← 3-segment control, full width
+  └──────────────────────────────────┘
+
+  Sets  [3]    Reps  [10]   Weight  [60 kg]
+
+── OR Cardio/Yoga ────────────────────────
+
+  Session time  [15]  min
+  ↳ Total time including rest
+
+── Shared ────────────────────────────────
+
+CALORIE PREVIEW
+  ≈ 47 kcal
+
+  [+ Add note]                           ← ghost link — expands to textarea on tap
+
+[Log Exercise]                           ← primary green button
+```
+
+**Intensity segmented control:**
+```tsx
+const INTENSITIES = [
+  { value: "light",    label: "Light",    met: 3.0 },
+  { value: "moderate", label: "Moderate", met: 3.5 },
+  { value: "vigorous", label: "Vigorous", met: 6.0 },
+]
+
+<div className="flex rounded-xl bg-[#222222] border border-[#2A2A2A] p-1 gap-1">
+  {INTENSITIES.map(({ value, label }) => (
+    <button
+      key={value}
+      onClick={() => setIntensity(value)}
+      className={cn(
+        "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all",
+        intensity === value
+          ? "bg-[#1A1A1A] text-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
+  ))}
+</div>
+```
+
+**Notes — collapsed by default, expands on tap:**
+```tsx
+const [showNote, setShowNote] = useState(false)
+
+{!showNote ? (
+  <button
+    onClick={() => setShowNote(true)}
+    className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+  >
+    + Add a note (optional)
+  </button>
+) : (
+  <textarea
+    rows={2}
+    placeholder="e.g. felt strong today, good form…"
+    value={notes}
+    onChange={(e) => setNotes(e.target.value)}
+    className="w-full rounded-xl bg-[#222222] border border-[#2A2A2A] text-foreground
+               text-sm px-3 py-2 resize-none outline-none
+               focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors"
+  />
+)}
+```
+
+---
+
+#### 6. Exercise Search (right column, desktop)
+
+Always-visible `SearchCommand` with contained dropdown.
+
+```
+SEARCH EXERCISES
+
+[🔍 Push up, running...]
+  ↳ contained dropdown (max-h-60, overflow-y-auto, z-50)
+     [S] Push Up    · Chest    [Strength]
+     [C] Running    · Cardio   [Cardio]
+     [Y] Yoga Sun   · Full     [Yoga]
+```
+
+> The dropdown must be `max-h-60 overflow-y-auto` and contained within the right column's `relative` wrapper — never overflows into the left column.
+
+---
+
+#### 7. Session Summary Widget (right column desktop only)
+
+```
+SESSION SUMMARY
+
+  ┌──────────────┬──────────────┐
+  │   312        │      4       │
+  │  kcal        │  exercises   │
+  └──────────────┴──────────────┘
+
+  8 sets  ·  2,400 kg volume
+
+  BREAKDOWN
+  [████████████░] Strength  80%
+  [████░░░░░░░░░] Cardio    20%
+```
+
+- Stats grid: `grid grid-cols-2` — consistent with Streak/BMI card pattern (AG-4)
+- Volume only shown when strength entries exist
+- Category breakdown: one bar per category, sorted by kcal %
+- Hidden when no entries logged
+
+---
+
+### Empty States
+
+| State | Visual |
+|---|---|
+| No exercises logged | 36px category-coloured rounded square + "Start logging to track your workout" + CTA |
+| Search returns nothing | "No exercises found. Try a different name." |
+
+**Empty state:**
+```tsx
+<div className="flex flex-col items-center py-12 gap-4">
+  <div className="w-14 h-14 rounded-2xl bg-[#1A1A1A] flex items-center justify-center">
+    <Dumbbell size={24} className="text-muted-foreground/40" />
+  </div>
+  <p className="text-sm text-muted-foreground text-center">
+    No exercises logged yet
+  </p>
+  <button onClick={openModal} className="flex items-center gap-1.5 h-9 px-4 rounded-xl
+    bg-primary text-black text-sm font-semibold hover:bg-green-400 active:scale-95 transition-all">
+    <Plus size={14} />
+    Log Exercise
+  </button>
+</div>
+```
+
+---
+
+### Loading State
+
+```tsx
+{isLoading ? (
+  <div className="space-y-4">
+    <Skeleton className="h-10 w-full rounded-xl" />          {/* DateNavigator */}
+    <Skeleton className="h-11 w-full rounded-xl" />          {/* Log Exercise CTA */}
+    <Skeleton className="h-28 w-full rounded-2xl" />         {/* First exercise card */}
+    <Skeleton className="h-20 w-full rounded-2xl" />         {/* Second card */}
+  </div>
+) : <content />}
+```
+
+---
+
+### Animation Summary
+
+| Element | Animation | Spec |
+|---|---|---|
+| Calories banner appear | Fade + slide down | `motion.div opacity + y: -8`, `duration: 0.3` |
+| Exercise card added | Slide in from bottom | `AnimatePresence y: 8`, `duration: 0.2` |
+| Exercise card deleted | Fade out left | `AnimatePresence exit: { opacity: 0, x: -20 }` |
+| Set row deleted | Fade out | `AnimatePresence exit: { opacity: 0 }`, `duration: 0.15` |
+| Calorie preview | Count up | `CountUp` (reuse from dashboard) |
+| Note expand | Height transition | CSS `max-h` transition, `duration: 200ms` |
+
+---
+
+### What We Are NOT Doing (Phase 5C)
+
+- No rest timer
+- No sets logged as separate entries — one modal per set, reopen for next set (Hevy pattern)
+- No custom exercise creation — Phase 6
+- No muscle diagram — Phase 6
+- No wger images — Phase 6 (coloured initial fallback used instead)
+- No intensity for Yoga/Stretching — session time only
+
+---
+
+### Phase 6 Upgrade Path
+
+| Item | What to change in 5C code |
+|---|---|
+| `image_url` available | Swap `div` initial in `WorkoutLogCard` and search results for `<img src={image_url} className="w-9 h-9 rounded-xl object-cover" />` |
+| `intensity` column | Remove `[intensity]` notes prefix; read/write dedicated field |
+| Muscle diagram | New `MuscleDiagram.tsx` — wger SVG overlays on body outline (exercise detail only) |
+
+---
+
+### Files to Create
+
+```
+src/lib/workoutUtils.ts          ← groupByExercise, volumeCalc, caloriePreview,
+                                    intensityToMet, stripIntensityPrefix, categoryStyle
+src/components/workout/
+  CaloriesBurnedBanner.tsx       ← orange conditional banner
+  WorkoutLogCard.tsx             ← full card: header + stats + sets table + note
+  WorkoutLogRow.tsx              ← single set row (Set | Reps | Weight | delete)
+  AddWorkoutModal.tsx            ← intensity segmented control, sets/cardio fields,
+                                    collapsible notes, calorie preview
+  SessionSummaryWidget.tsx       ← desktop right col: stats grid + volume + category bars
+
+src/app/workout/page.tsx         ← page: xl: 2-col, DateNavigator (reused), CTA above log
+```
+
+Reuse: `DateNavigator` from tracker, `CountUp` from dashboard, `Modal.tsx`, `SearchCommand`.
+
+---
+
+### Open Questions Before Building
+
+None.
 
 ---
 

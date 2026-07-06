@@ -900,28 +900,124 @@ iPad 7.0 is a P1 (not blocking). Main issue: at 768px it's single-column with Bo
 
 ---
 
-#### 5B — Tracker
+#### 5B — Tracker ✅ DONE (2026-07-05) · P0: 8.17 PASS
 
 **See `docs/DESIGN_OVERVIEW.md §Page 2` for full component-level spec (authoritative source).**
 
-**Pre-implementation prerequisite:** Update `Modal.tsx` breakpoint from `md:` (768px) → `lg:` (1024px).
+---
 
-Key rules:
-- Nutrition Summary: compact dots on mobile / full bars on desktop (same responsive principle as CalorieHeroCard)
-- Meal tabs: icon + short label (no overflow at 375px), `activeTab` lifted to page state
-- Entry delete: immediate + sonner undo toast (NOT confirm-on-second-tap)
-- Add food: use `Modal.tsx` (after breakpoint fix) — no new AddFoodSheet component
-- Desktop `xl:` 2-column: left=logging, right=quick add + today summary (AG-2 updated)
-- 4 macros tracked: Protein, Carbs, Fat, **Fiber** (violet-400)
-- New analytics (zero backend): calorie pace (F-1), meal distribution bar (F-2), multi-meal badge (F-3)
+##### Problems Encountered and Fixes Applied
+
+**P1 · Modal breakpoint inconsistency (md: → lg:)**
+`Modal.tsx` switched between Drawer/Dialog at `md:` (768px). Our nav switches at `lg:` (1024px). At 768–1023px (iPad portrait), the user was on BottomNav (mobile style) but got a desktop Dialog — inconsistent. Fixed by changing `useMediaQuery("(min-width: 768px)")` → `"(min-width: 1024px)"` in `Modal.tsx`. This fix affects all modal usage across the app.
+
+**P2 · shadcn Tabs wrappers had conflicting defaults — switched to Base UI primitives directly**
+`TabsList` has hardcoded `h-8` (32px fixed height) and `TabsTrigger` has `whitespace-nowrap` + `inline-flex`. These conflicted with our custom icon+label vertical layout, causing:
+- Active tab trigger overflowed the oval wrapper (active `rounded-md` background bleeds outside the list height)
+- Label truncated to "Break" because `whitespace-nowrap` constrained the trigger width
+
+Fix: import `Tabs` directly from `@base-ui/react/tabs` and use `Tabs.Root`, `Tabs.List`, `Tabs.Tab`, `Tabs.Panel` — bypasses all shadcn wrapper defaults, full layout control. Documented in plan doc as a pattern: *when shadcn's trigger/list defaults conflict with a custom layout, drop to the Base UI primitive directly.*
+
+**P3 · Duplicate label span leftover from incremental edits**
+During the tab label fix iterations, a stale `<span>` rendering `{label}` was left in the JSX alongside the new `hidden lg:block` span — causing both "Breakfast" and "Breakfast" to render on desktop (two rows). Found and removed the orphan span.
+
+**P4 · Quick Add tiles opened an empty modal (food name discarded)**
+`onSelect={(_, slot) => openModal(slot)}` — the food name (first param) was thrown away with `_`. Modal opened with no pre-filled search. Fixed by:
+1. Adding `initialQuery` prop to `SearchCommand` — seeds the input and triggers debounced search on mount
+2. Adding `prefilledQuery` prop to `AddFoodModal` — passed through to SearchCommand
+3. Wiring page: `onSelect={(foodName, slot) => openModal(slot, foodName)}`
+
+**P5 · Date navigation timezone bug — couldn't navigate forward from past**
+`goToNextDay()` used `new Date(dateStr + "T00:00:00").toISOString().split("T")[0]`. In IST (+5:30), midnight local converts to the previous day in UTC → `toISOString()` returned the wrong date. The forward-navigation guard compared the wrong string and blocked the move.
+Fix: replaced all date arithmetic with pure local calendar math:
+```ts
+const [y, m, d] = dateStr.split("-").map(Number)
+const next = new Date(y, m - 1, d + 1)  // local, no UTC conversion
+```
+
+**P6 · Mobile drawer too small — only showed title + search bar**
+Base UI Drawer auto-sizes to content height. With just a title + search input, the drawer was ~180px — barely visible at the bottom. Fixed by adding `snapPoints={[0.85]}` to the `Drawer` — forces it to 85% viewport height on open, giving search results room to render below the input.
+
+**P7 · Native `<input type="date">` calendar was ugly**
+Initial implementation used a hidden native date input triggered by the calendar icon. The OS-native date picker is unstyled, inconsistent across browsers, and breaks the dark aesthetic.
+Fix: replaced with a fully custom dark calendar popover — `rounded-2xl`, `bg-[#111111]`, month grid with green today highlight, future dates disabled, "Jump to Today" footer, click-outside closes.
+
+**P8 · Log Food button in TopNav — redundant + dead click on /tracker**
+"+ Log Food" green pill in TopNav linked to `/tracker`. Problems: (1) duplicate of the "Tracker" nav link, (2) dead click when already on `/tracker`, (3) wrong context on /workout /dishes /profile. Removed from TopNav entirely. Added a ghost secondary button only in the dashboard greeting row (desktop, `hidden lg:flex`) — contextual, not global. Documented in DESIGN_OVERVIEW.md §Log Food CTA.
+
+**P9 · Day Score badge had no context — mystery number**
+The 28px ring badge showing the composite score had no label. Added:
+- `Tooltip` (hover, desktop) wrapping `PopoverTrigger` via Base UI `render` prop
+- `Popover` (click/tap, all devices) showing a rich dark card: large ring, score label, "Calculated from" breakdown, score range legend
+- `hideArrow` prop added to `TooltipContent` to remove the white diamond arrow that appeared when using a custom dark card style in the tooltip
+- `space-y-3` instead of `flex flex-col gap-3` so `<div className="h-px">` dividers render correctly
+- `gap-4 shrink-0` on label rows so "Hydration" doesn't collide with "water goal %"
+
+---
+
+##### AG Compliance Audit
+
+| AG | Status | Note |
+|---|---|---|
+| AG-1 (two-tier width) | ✅ | `w-full px-4 pb-24` mobile, `lg:max-w-6xl` desktop |
+| AG-2 (right panel) | ✅ | `xl:grid-cols-[1fr_300px]` — AG-2 updated to permit Tracker right panel |
+| AG-3 (mobile card order) | ✅ | Date nav → Nutrition Summary → Meal Tabs → Quick Add |
+| AG-4 (cards fill width) | ✅ | Tabs fill full width, Nutrition Summary responsive compact/full |
+| AG-6 (animations) | ✅ | `motion.div width` for bars, `AnimatePresence` for entries |
+| AG-7 (shadcn defaults) | ✅ | Base UI Tabs primitives (shadcn wrappers had conflicting defaults — P2) |
+| AG-8 (state ownership) | ✅ | SWR for food log, Zustand for `activeTab`/`selectedDate`, local `useState` for modal/prefilledQuery |
+
+---
+
+##### Files Created / Modified
+
+```
+── Modified ──────────────────────────────────────────────────────────────
+src/components/ui/Modal.tsx          ← breakpoint md: → lg:, snapPoints={[0.85]} for drawer
+src/components/ui/tooltip.tsx        ← added hideArrow prop
+src/components/ui/SearchCommand.tsx  ← added initialQuery prop (seeds search on mount)
+src/components/layout/TopNav.tsx     ← removed Log Food button (avatar only)
+src/app/dashboard/page.tsx           ← ghost Log Food button in greeting row (desktop only)
+src/components/dashboard/DayScoreBadge.tsx ← Popover + Tooltip (hideArrow), full card both
+
+── Created ───────────────────────────────────────────────────────────────
+src/lib/trackerUtils.ts              ← calorie pace, meal distribution, multi-meal badge
+src/components/tracker/
+  DateNavigator.tsx                  ← custom dark calendar popover (no native input)
+  NutritionSummaryCard.tsx           ← responsive compact/full + F-1 pace + F-2 distribution
+  MealTabs.tsx                       ← Base UI Tabs primitives (NOT shadcn wrappers)
+  FoodLogEntry.tsx                   ← immediate delete + sonner undo toast
+  AddFoodModal.tsx                   ← Modal.tsx wrapper, prefilledQuery → SearchCommand
+  QuickAddGrid.tsx                   ← passes food name to openModal (was broken)
+  TodaySummaryWidget.tsx             ← desktop right col: totals + meal distribution bar
+src/app/tracker/page.tsx             ← xl: 2-col, activeTab state, prefilledQuery state
+qa/playwright/tracker-states.js     ← interactive state testing (7 states × 2 viewports)
+```
+
+---
+
+##### QA Notes
+
+- Final score (run tracker-20260705-142606): **P0: 8.17 PASS** — macbook 9.0, iphone-14 8.0, pixel 8.5
+- All screenshots must go under `qa/screenshots/` (project root). Scripts run from project root: `python3 qa/page_audit.py /tracker`
+- `qa/playwright/tracker-states.js` — interactive state testing: modal open, search, quick add, date navigation, forward from past. Run: `node qa/playwright/tracker-states.js --capture-only`
+
+---
 
 #### 5C — Workout
 
-1. DateNavigator (uses same `useTrackerStore.selectedDate`)
-2. SearchCommand for exercises
-3. Workout summary card (when entries exist)
-4. Workout log grouped by exercise name
-5. Calories burned banner (orange, when > 0)
+**See `docs/DESIGN_OVERVIEW.md §Page 3` for full component-level spec (authoritative source).**
+
+Key rules (Phase 5C scope):
+- `DateNavigator` reused from Tracker — shared `useTrackerStore`, date syncs
+- **AG-3 correction**: "+ Log Exercise" CTA is ABOVE the exercise log, not below it — so it's always visible without scrolling on a day with many entries
+- Exercise cards: coloured initial letter (not emoji) in a rounded square — cleaner than emoji fallback, same slot that Phase 6 replaces with wger thumbnail
+- Two-row card header — prevents overflow at 375px (exercise name on row 1, category+muscle on row 2)
+- Intensity: segmented control (not plain text buttons) — maps to MET 3.0/3.5/6.0
+- Notes: collapsed by default, "+ Add a note" ghost link expands to textarea on tap
+- Volume separate from calories in both the card and Session Summary Widget
+- Desktop right column SearchCommand: dropdown must be contained within 300px col (`max-h-60 overflow-y-auto z-50`)
+- Emoji fallbacks phase out in Phase 6 (coloured initials used in Phase 5C instead)
 
 #### 5D — Dishes
 
@@ -947,13 +1043,27 @@ Key rules:
 
 ---
 
-### Phase 6 — wger Images + Workout UX (~1 session)
+### Phase 6 — wger Images + Workout UX Polish (~1 session)
 
-- Backend: `image_url` column on `exercise_library`, re-fetch wger data
-- Rename "Duration (min)" → "Session time (min)" with helper text
-- Intensity toggle (Light/Moderate/Vigorous) for strength exercises
-- Separate volume display from calories
-- Exercise thumbnails in search results and workout log
+> Most Workout UX improvements have been moved into Phase 5C (they require no backend changes).
+> Phase 6 is now specifically about items that need backend work first.
+
+**Backend prerequisites for Phase 6:**
+1. Add `image_url VARCHAR(512)` column to `exercise_library` table
+2. Re-fetch wger exercise data: `GET https://wger.de/api/v2/exerciseinfo/?format=json&language=2&limit=100` — extract `images[is_main=true].image` URL per exercise
+3. Add `intensity VARCHAR(16)` column to `workout_logs` table (currently stored as `[light/moderate/vigorous] ` prefix in `notes`)
+
+**Frontend changes in Phase 6 (after backend is ready):**
+- Replace emoji category fallbacks in `WorkoutLogCard` and `AddWorkoutModal` search results with `<img src={exercise.image_url} className="w-10 h-10 rounded-lg object-cover" />` (40×40 slot already reserved in 5C layout)
+- Add muscle diagram overlay to exercise detail: wger SVG overlays (`/static/images/muscles/main/muscle-{id}.svg`) over a body outline — shows primary muscles targeted
+- Remove `[intensity] ` notes prefix hack — use dedicated `intensity` column from backend
+- License attribution: add "Exercise images © wger.de (CC-BY-SA 4.0)" to footer or exercise detail modal
+
+**Already done in Phase 5C (not Phase 6):**
+- ~~Rename "Duration (min)" → "Session time (min)"~~ ✅ done in 5C
+- ~~Intensity toggle (Light/Moderate/Vigorous)~~ ✅ done in 5C (stored as notes prefix)
+- ~~Separate volume display from calories~~ ✅ done in 5C
+- ~~Notes field~~ ✅ done in 5C (already in backend schema)
 
 ---
 

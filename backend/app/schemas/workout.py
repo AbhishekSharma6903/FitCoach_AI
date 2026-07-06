@@ -42,6 +42,14 @@ class WorkoutLogRead(BaseModel):
     created_at: datetime
 
 
+class WorkoutLogUpdate(BaseModel):
+    sets:         Optional[int]   = None
+    reps:         Optional[int]   = None
+    weight_kg:    Optional[float] = None
+    duration_min: Optional[float] = None
+    notes:        Optional[str]   = None
+
+
 class DailyWorkoutRead(BaseModel):
     log_date: date
     entries: List[WorkoutLogRead]
