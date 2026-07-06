@@ -9,7 +9,7 @@ from app.auth import get_current_user_id
 from app.models.workout_log import ExerciseLibrary, WorkoutLog
 from app.models.user_profile import UserProfile
 from app.schemas.workout import (
-    ExerciseSearchResult, WorkoutLogCreate, WorkoutLogRead, DailyWorkoutRead
+    ExerciseSearchResult, WorkoutLogCreate, WorkoutLogUpdate, WorkoutLogRead, DailyWorkoutRead
 )
 from app.services.workout_service import calculate_calories_burned
 
@@ -105,6 +105,43 @@ def get_workout_log(
         entries=[_to_read(e) for e in entries],
         total_calories_burned=round(total_cal, 2),
     )
+
+
+@router.patch("/log/{entry_id}", response_model=WorkoutLogRead)
+def update_workout_log(
+    entry_id: int,
+    body: WorkoutLogUpdate,
+    user_id: str = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    entry = db.query(WorkoutLog).filter_by(id=entry_id, user_id=user_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Workout log entry not found")
+
+    if body.sets is not None:
+        entry.sets = body.sets
+    if body.reps is not None:
+        entry.reps = body.reps
+    if body.weight_kg is not None:
+        entry.weight_kg = body.weight_kg
+    if body.duration_min is not None:
+        entry.duration_min = body.duration_min
+    if body.notes is not None:
+        entry.notes = body.notes
+
+    # Recompute calories if duration changed
+    if body.duration_min is not None and entry.exercise_id:
+        exercise = db.get(ExerciseLibrary, entry.exercise_id)
+        profile = db.query(UserProfile).filter_by(user_id=user_id).first()
+        weight_kg = float(profile.current_weight_kg) if profile else 70.0
+        if exercise and entry.duration_min and entry.duration_min > 0:
+            entry.calories_burned = calculate_calories_burned(
+                float(exercise.met_value), weight_kg, float(entry.duration_min)
+            )
+
+    db.commit()
+    db.refresh(entry)
+    return _to_read(entry)
 
 
 @router.delete("/log/{entry_id}", status_code=200)

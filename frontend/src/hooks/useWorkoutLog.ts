@@ -25,11 +25,20 @@ export function useWorkoutLog(date?: string) {
     globalMutate("/api/v1/dashboard");
   }
 
+  async function updateEntry(
+    entryId: number,
+    payload: { sets?: number; reps?: number; weight_kg?: number; duration_min?: number; notes?: string }
+  ) {
+    await api.patch(`/api/v1/workout/log/${entryId}`, payload);
+    mutate();
+    globalMutate("/api/v1/dashboard");
+  }
+
   async function deleteEntry(entryId: number) {
     await api.delete(`/api/v1/workout/log/${entryId}`);
     mutate();
     globalMutate("/api/v1/dashboard");
   }
 
-  return { workout: data, error, isLoading, addEntry, deleteEntry, mutate };
+  return { workout: data, error, isLoading, addEntry, updateEntry, deleteEntry, mutate };
 }
