@@ -1004,20 +1004,162 @@ qa/playwright/tracker-states.js     ← interactive state testing (7 states × 2
 
 ---
 
-#### 5C — Workout
+#### 5C — Workout ✅ DONE (2026-07-06) · P0: 8.17 PASS
 
-**See `docs/DESIGN_OVERVIEW.md §Page 3` for full component-level spec (authoritative source).**
+**See `docs/DESIGN_OVERVIEW.md §Page 3` for updated component-level spec.**
 
-Key rules (Phase 5C scope):
-- `DateNavigator` reused from Tracker — shared `useTrackerStore`, date syncs
-- **AG-3 correction**: "+ Log Exercise" CTA is ABOVE the exercise log, not below it — so it's always visible without scrolling on a day with many entries
-- Exercise cards: coloured initial letter (not emoji) in a rounded square — cleaner than emoji fallback, same slot that Phase 6 replaces with wger thumbnail
-- Two-row card header — prevents overflow at 375px (exercise name on row 1, category+muscle on row 2)
-- Intensity: segmented control (not plain text buttons) — maps to MET 3.0/3.5/6.0
-- Notes: collapsed by default, "+ Add a note" ghost link expands to textarea on tap
-- Volume separate from calories in both the card and Session Summary Widget
-- Desktop right column SearchCommand: dropdown must be contained within 300px col (`max-h-60 overflow-y-auto z-50`)
-- Emoji fallbacks phase out in Phase 6 (coloured initials used in Phase 5C instead)
+---
+
+##### Problems Encountered and Fixes Applied
+
+**P1 · CSS class construction broken for category breakdown bars (Bug 6)**
+`CATEGORY_STYLE` stored `bg: "bg-blue-500/10"`. To get a solid bar fill, code did:
+```tsx
+style.bg.replace("bg-", "").replace("/10", "")  // → "blue-500" — missing bg- prefix
+```
+Tailwind generated no class → bars were grey. Fix: added explicit `bgSolid: "bg-blue-500"` field to `CATEGORY_STYLE`. All progress bars now use `style.bgSolid`. Documented as a general rule: never reconstruct Tailwind class names from substrings — define the class explicitly.
+
+**P2 · DB stores lowercase categories, frontend CATEGORY_STYLE used title-case keys**
+Exercise library seeded with `category: "strength"` (lowercase). `getCategoryStyle("strength")` found no match → fell back to grey defaults. Fix: `getCategoryStyle()` now normalises the input — `category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()` before lookup. Same fix applied to `isStrengthCategory()` — uses `.toLowerCase()` for comparison.
+
+**P3 · Per-set data model — original design was wrong (architectural decision)**
+Original spec said: "sets=3 → one DB row with `sets=3`". This produced nonsense UI: `1 sets · 12 reps · 108 kg` (1 row × 12 reps × 108 kg averaging all sets). The correct model, used by every serious workout tracker (Hevy, Strong), is:
+- `sets=3` → 3 separate POST calls → 3 DB rows, each with `sets=1`
+- Volume = sum of `reps × weight_kg` per row
+- Each row is individually editable (different reps/weight per set)
+
+This was a **misread of the Hevy pattern** in the original spec. Hevy stores each set as a separate row. The original doc said "one modal per set, reopen for next set" — that described the UX flow for Hevy, not the data model. The UI flow in Phase 5C is: enter sets/reps/weight once → click "Log 3 Sets" → 3 rows created. See §Architectural Decisions below for full reasoning.
+
+**P4 · Intensity picker removed (architectural decision)**
+The modal had a Light / Moderate / Vigorous segmented control mapping to MET 3.0/3.5/6.0. Problems:
+1. Intensity is subjective and non-quantifiable — the user cannot self-assess consistently
+2. The 3-tier MET difference is small vs. the actual calorie variation from barbell load
+3. It consumed ~100px of modal space for minimal calorie accuracy gain
+
+Removed entirely. Calorie estimation now uses: `sets × reps × 3s` (active time) + `sets × 90s` (rest) + barbell load factor `(1 + barbell_kg / body_kg × 0.3)`. This is objectively more accurate. Notes field still available for users to record how they felt. See §Architectural Decisions below.
+
+**P5 · PATCH endpoint did not recompute calories after edit**
+The backend PATCH only recomputed calories when `duration_min` changed. Editing `reps` or `weight_kg` left `calories_burned` stale. Fix: PATCH now recomputes whenever any of `reps`, `weight_kg`, or `duration_min` change. For strength, duration is re-estimated from updated reps + barbell weight using `estimate_strength_duration()` in `workout_service.py`.
+
+**P6 · WorkoutLogRow local state stayed stale after edit**
+`useState(entry.reps)` initialises on mount. After a successful PATCH, the parent's SWR revalidated with new data, but the row's local state still held the old values because React didn't remount the component (same `key`). Fix: `key` on each row now includes the entry's data values: `key={entry.id}-${entry.reps}-${entry.weight_kg}-${entry.calories_burned}`. When data changes, the row remounts with fresh state.
+
+**P7 · Volume label averaged mixed sets — presented approximation as fact**
+After editing individual sets to different weights, the volume header said `3 sets × 9 reps @ 12 kg` (using the last set's weight and averaged reps). Set 1 was 10 reps @ 15 kg — the label was wrong. Fix: detect uniform vs mixed sets:
+- Uniform (all same reps + weight): `3 sets × 10 reps @ 20 kg` — exact, no approximation
+- Mixed: `3 sets × ~9 reps @ ~13 kg` — prefixed with `~` to communicate average
+The `(avg)` tag is added to the total lifted subtitle when mixed.
+
+---
+
+##### Architectural Decisions (with reasoning)
+
+**Decision A · Per-set data model: `sets=3` → 3 rows of `sets=1`**
+
+| Approach | Problem |
+|---|---|
+| One row, `sets=3` | Volume = `3 × reps × weight_kg` (correct math but wrong UX — can't edit Set 2 differently from Set 1) |
+| One row per set (chosen) | Volume = sum of `reps × weight_kg` per row — naturally handles dropsets, progressive overload, individual set editing |
+
+Every professional workout tracker (Hevy, Strong, Fitbod) uses the per-row model. The original spec's "one modal per set" was a UX description of Hevy's _add flow_ (you log each set individually) — not a data model prescription. We adapted: log all sets in one modal open (`sets=3` → 3 posts) for UX speed, while getting the correct one-row-per-set data model.
+
+**Decision B · Remove intensity picker**
+
+Kept in Phase 6 plan? **No.** Intensity is permanently removed, not deferred. The Phase 6 plan mentioned adding a dedicated `intensity` column to the DB. This is no longer needed.
+
+Reasoning: a barbell-weight-based load factor (`1 + barbell_kg / body_kg × 0.3`) anchors calorie estimation to objective, measurable data. "Vigorous" vs "Moderate" depends on who's asking — a 20 kg squat is vigorous for a beginner, moderate for an athlete. Weight is weight.
+
+**Decision C · Volume display: uniform vs mixed format**
+
+The old "3 sets · 28 reps · 366 kg total" format was three meaningless aggregates. The new format:
+- Uniform sets: `3 sets × 10 reps @ 20 kg` — matches how gym people talk ("three by ten at twenty")
+- Mixed: `3 sets × ~9 reps @ ~13 kg` — honest approximation, set rows below tell the real story
+- Secondary: `366 kg total lifted` — for coaches/powerlifters who track tonnage
+
+---
+
+##### AG Compliance Audit
+
+| AG | Status | Note |
+|---|---|---|
+| AG-1 (two-tier width) | ✅ | `w-full px-4 pb-24` mobile, `lg:max-w-6xl` desktop |
+| AG-2 (right panel) | ✅ | `xl:grid-cols-[1fr_300px]` — exercise search + session summary |
+| AG-3 (mobile card order) | ✅ | Date nav → Calories banner → Log Exercise CTA → Workout log |
+| AG-4 (cards fill width) | ✅ | Cards span full column width, stats in 2-col grid |
+| AG-5 (sticky right col) | ✅ | `sticky top-20 space-y-4` (no overflow-y-auto — right col is short) |
+| AG-6 (animation rules) | ✅ | `AnimatePresence` for card add/exit, `motion.div width` for breakdown bars |
+| AG-7 (shadcn defaults) | ✅ | Modal.tsx, SearchCommand, Badge, Skeleton, sonner toasts |
+| AG-8 (state ownership) | ✅ | SWR for workout log, Zustand for `selectedDate`, local `useState` for modal inputs |
+| AG-9 (parity exceptions) | ✅ | SessionSummaryWidget is desktop-only (`hidden xl:flex`) — confirmed intentional |
+
+---
+
+##### Files Created / Modified
+
+```
+── Created ────────────────────────────────────────────────────────
+src/lib/workoutUtils.ts            ← CATEGORY_STYLE (+ bgSolid field), getCategoryStyle
+                                      (case-normalised), isStrengthCategory (lowercase-safe),
+                                      calcVolume (per-entry reps×weight), formatVolume,
+                                      calcCaloriePreview, calcStrengthCaloriePreview
+                                      (with barbellKg load factor), groupEntriesByExercise,
+                                      calcCategoryBreakdown, buildNotes, stripIntensityPrefix,
+                                      extractIntensity, INTENSITIES (kept for reference)
+src/components/workout/
+  CaloriesBurnedBanner.tsx         ← orange conditional banner
+  WorkoutLogCard.tsx               ← grouped card: uniform/mixed volume label, sets table,
+                                      per-set key for remount after edit
+  WorkoutLogRow.tsx                ← single set row with inline edit (pencil → reps/weight
+                                      inputs → save/cancel)
+  AddWorkoutModal.tsx              ← no intensity picker; sets=N → N sequential POSTs;
+                                      calorie preview with barbell load factor
+  SessionSummaryWidget.tsx         ← kcal + exercise count + sets/reps + category bars
+
+── Modified ────────────────────────────────────────────────────────
+src/hooks/useWorkoutLog.ts         ← added updateEntry (PATCH)
+src/app/workout/page.tsx           ← passes updateEntry to WorkoutLogCard
+
+── Backend ─────────────────────────────────────────────────────────
+backend/app/schemas/workout.py     ← added WorkoutLogUpdate schema
+backend/app/services/workout_service.py ← added estimate_strength_duration()
+backend/app/routers/workout.py     ← PATCH recomputes calories on reps/weight/duration change;
+                                      uses estimate_strength_duration for strength entries
+
+── QA ──────────────────────────────────────────────────────────────
+qa/playwright/workout-states.js        ← 10-state interactive validation
+qa/playwright/workout-per-set.js       ← 8-state per-set model validation
+qa/playwright/workout-edit-sync.js     ← 5-state edit-sync + intensity-removal validation
+qa/evaluate_workout_states.py          ← Python evaluator (uses langflow venv Anthropic SDK)
+qa/evaluate_edit_sync.py               ← Python evaluator for edit-sync run
+```
+
+---
+
+##### QA Notes
+
+- Static audit (`page_audit.py /workout`): **P0: 8.17 PASS** — macbook 9.0, iphone-14 8.0, pixel-7 8.5, ipad 7.0, iphone-se 7.5
+- Interactive validation (`workout-states.js` → `evaluate_workout_states.py`): **avg 8.38/10, 10 bug fixes validated**
+- Per-set model validation (`workout-per-set.js`): **avg 9.1/10, all per-set behaviours confirmed**
+- Edit-sync validation (`workout-edit-sync.js` → `evaluate_edit_sync.py`): **avg 9.80/10, 10/10 PASS** — modal correctly has no intensity picker, calorie preview scales with weight, edits update volume and calories
+- Playwright SDK note: `@anthropic-ai/sdk` not installed in project `node_modules`. Evaluation scripts use Python evaluator (`evaluate_workout_states.py`, `evaluate_edit_sync.py`) via the langflow venv. To run: `/Users/i750332/.langflow/.langflow-venv/bin/python3 qa/evaluate_edit_sync.py`
+
+---
+
+##### Phase 6 Update (items that are now MOOT)
+
+The following items were listed under Phase 6 but are now **no longer needed** due to Phase 5C decisions:
+
+| Phase 6 item | Status |
+|---|---|
+| ~~Add `intensity VARCHAR(16)` column to `workout_logs`~~ | **REMOVED** — intensity feature deleted entirely in Phase 5C |
+| ~~Remove `[intensity]` notes prefix hack~~ | **DONE** — notes no longer store intensity prefix |
+| ~~Use dedicated `intensity` column from backend~~ | **MOOT** — intensity removed |
+
+Phase 6 items that **remain valid**:
+- Add `image_url VARCHAR(512)` to `exercise_library` and fetch from wger
+- Replace coloured initial div with `<img src={image_url}>` in `WorkoutLogCard` and search results
+- Add muscle diagram overlay (wger SVG body outline)
+- License attribution footer
 
 #### 5D — Dishes
 
@@ -1047,21 +1189,23 @@ Key rules (Phase 5C scope):
 
 > Most Workout UX improvements have been moved into Phase 5C (they require no backend changes).
 > Phase 6 is now specifically about items that need backend work first.
+>
+> **Updated 2026-07-06 post Phase 5C:** The intensity column is no longer needed (intensity feature removed in 5C). Phase 6 scope is now images + muscle diagram only.
 
 **Backend prerequisites for Phase 6:**
 1. Add `image_url VARCHAR(512)` column to `exercise_library` table
 2. Re-fetch wger exercise data: `GET https://wger.de/api/v2/exerciseinfo/?format=json&language=2&limit=100` — extract `images[is_main=true].image` URL per exercise
-3. Add `intensity VARCHAR(16)` column to `workout_logs` table (currently stored as `[light/moderate/vigorous] ` prefix in `notes`)
 
 **Frontend changes in Phase 6 (after backend is ready):**
-- Replace emoji category fallbacks in `WorkoutLogCard` and `AddWorkoutModal` search results with `<img src={exercise.image_url} className="w-10 h-10 rounded-lg object-cover" />` (40×40 slot already reserved in 5C layout)
-- Add muscle diagram overlay to exercise detail: wger SVG overlays (`/static/images/muscles/main/muscle-{id}.svg`) over a body outline — shows primary muscles targeted
-- Remove `[intensity] ` notes prefix hack — use dedicated `intensity` column from backend
+- Replace coloured initial div in `WorkoutLogCard` and `AddWorkoutModal` search results with `<img src={exercise.image_url} className="w-9 h-9 rounded-xl object-cover" />` (slot already reserved in 5C layout)
+- Add muscle diagram overlay: wger SVG overlays (`/static/images/muscles/main/muscle-{id}.svg`) over a body outline — shows primary muscles targeted per exercise
 - License attribution: add "Exercise images © wger.de (CC-BY-SA 4.0)" to footer or exercise detail modal
 
-**Already done in Phase 5C (not Phase 6):**
+**Already done in Phase 5C (NOT Phase 6):**
 - ~~Rename "Duration (min)" → "Session time (min)"~~ ✅ done in 5C
-- ~~Intensity toggle (Light/Moderate/Vigorous)~~ ✅ done in 5C (stored as notes prefix)
+- ~~Intensity toggle (Light/Moderate/Vigorous)~~ ✅ **removed entirely in 5C** — not deferred to Phase 6
+- ~~`intensity` column in `workout_logs`~~ ✅ **no longer needed** — intensity feature deleted
+- ~~Remove `[intensity]` notes prefix hack~~ ✅ **done** — notes no longer used for intensity
 - ~~Separate volume display from calories~~ ✅ done in 5C
 - ~~Notes field~~ ✅ done in 5C (already in backend schema)
 
@@ -1138,10 +1282,10 @@ Key rules (Phase 5C scope):
 | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Date navigation        | Same DateNavigator as tracker                                                                                   |
 | Exercise search        | Debounced search with dropdown: name, muscle group, equipment, category pill (colored), MET value               |
-| Add workout modal      | Sets/reps/weight fields (strength), session time field, live calorie burn preview (MET formula), confirm → log |
-| Workout log            | Grouped by exercise: sets as mini-table, weight, volume, calories burned per entry                              |
+| Add workout modal      | Sets/reps/weight fields (strength), session time field (cardio), live calorie burn preview (MET formula + barbell load factor), confirm → logs N separate rows (one per set) |
+| Workout log            | Grouped by exercise: per-set rows (editable inline), volume summary (uniform: exact / mixed: avg with ~), calories burned per exercise |
 | Calories burned banner | Orange banner showing total burned when > 0                                                                     |
-| Exercise intensity     | Light/Moderate/Vigorous toggle (strength only) → adjusts MET value for calorie calc                            |
+| ~~Exercise intensity~~ | **Removed in Phase 5C.** Calorie estimation uses objective data: reps × weight × load factor. No subjective intensity picker. |
 
 ### Custom Dishes
 

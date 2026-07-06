@@ -11,7 +11,7 @@ from app.models.user_profile import UserProfile
 from app.schemas.workout import (
     ExerciseSearchResult, WorkoutLogCreate, WorkoutLogUpdate, WorkoutLogRead, DailyWorkoutRead
 )
-from app.services.workout_service import calculate_calories_burned
+from app.services.workout_service import calculate_calories_burned, estimate_strength_duration
 
 router = APIRouter()
 
@@ -129,15 +129,25 @@ def update_workout_log(
     if body.notes is not None:
         entry.notes = body.notes
 
-    # Recompute calories if duration changed
-    if body.duration_min is not None and entry.exercise_id:
+    # Recompute calories whenever reps, weight, or duration changes
+    if any(v is not None for v in [body.reps, body.weight_kg, body.duration_min]) and entry.exercise_id:
         exercise = db.get(ExerciseLibrary, entry.exercise_id)
         profile = db.query(UserProfile).filter_by(user_id=user_id).first()
-        weight_kg = float(profile.current_weight_kg) if profile else 70.0
-        if exercise and entry.duration_min and entry.duration_min > 0:
-            entry.calories_burned = calculate_calories_burned(
-                float(exercise.met_value), weight_kg, float(entry.duration_min)
-            )
+        body_kg = float(profile.current_weight_kg) if profile else 70.0
+        if exercise:
+            # For strength: re-estimate duration from updated reps + barbell weight
+            reps = entry.reps or 0
+            barbell = float(entry.weight_kg) if entry.weight_kg else 0.0
+            is_cardio = exercise.category.lower() in ("cardio", "yoga", "stretching")
+            if is_cardio:
+                dur = float(entry.duration_min) if entry.duration_min else 0.0
+            else:
+                dur = estimate_strength_duration(reps, barbell, body_kg)
+                entry.duration_min = dur
+            if dur > 0:
+                entry.calories_burned = calculate_calories_burned(
+                    float(exercise.met_value), body_kg, dur
+                )
 
     db.commit()
     db.refresh(entry)

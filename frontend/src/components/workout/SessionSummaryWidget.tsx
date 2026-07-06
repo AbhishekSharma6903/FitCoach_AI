@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import Card from "@/components/ui/Card";
-import { calcCategoryBreakdown, calcVolume, formatVolume, isStrengthCategory } from "@/lib/workoutUtils";
+import { calcCategoryBreakdown, isStrengthCategory } from "@/lib/workoutUtils";
 import type { WorkoutLogEntry } from "@/types/workout";
 import { cn } from "@/lib/utils";
 
@@ -13,11 +13,11 @@ export default function SessionSummaryWidget({ entries, totalKcal }: SessionSumm
   if (entries.length === 0) return null;
 
   const exerciseCount = new Set(entries.map(e => e.exercise_name)).size;
+  // Each entry = 1 set performed
   const strengthEntries = entries.filter(e => isStrengthCategory(e.category));
-  const totalVolume = calcVolume(strengthEntries);
+  const totalSets = strengthEntries.length;
+  const totalReps = strengthEntries.reduce((s, e) => s + (e.reps ?? 0), 0);
   const breakdown = calcCategoryBreakdown(entries);
-
-  const totalSets = entries.filter(e => e.sets).length;
 
   return (
     <Card padding="md" className="space-y-3">
@@ -25,7 +25,7 @@ export default function SessionSummaryWidget({ entries, totalKcal }: SessionSumm
         Session Summary
       </p>
 
-      {/* Primary stats grid — AG-4 fills column width */}
+      {/* Primary stats */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-2xl font-black text-white tabular-nums">
@@ -41,13 +41,12 @@ export default function SessionSummaryWidget({ entries, totalKcal }: SessionSumm
         </div>
       </div>
 
-      {/* Volume (strength only) */}
-      {totalVolume > 0 && (
-        <div className="text-xs text-muted-foreground">
-          <span>{totalSets} sets</span>
-          <span className="mx-1.5 text-muted-foreground/30">·</span>
-          <span>{formatVolume(totalVolume)} lifted</span>
-          <span className="ml-1 text-muted-foreground/40">(sets×reps×kg)</span>
+      {/* Sets summary — only when strength work logged */}
+      {totalSets > 0 && (
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span><span className="text-foreground font-semibold">{totalSets}</span> sets</span>
+          <span className="text-muted-foreground/30">·</span>
+          <span><span className="text-foreground font-semibold">{totalReps}</span> reps</span>
         </div>
       )}
 
@@ -58,8 +57,10 @@ export default function SessionSummaryWidget({ entries, totalKcal }: SessionSumm
           {breakdown.map(({ category, kcal, pct, style }) => (
             <div key={category} className="space-y-1">
               <div className="flex items-center justify-between">
-                <span className={cn("text-[10px] font-medium", style.text)}>{category}</span>
-                <span className="text-[10px] text-muted-foreground tabular-nums">{pct}%</span>
+                <span className={cn("text-[10px] font-medium capitalize", style.text)}>{category}</span>
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {Math.round(kcal)} kcal · {pct}%
+                </span>
               </div>
               <div className="h-1.5 w-full rounded-full bg-[#2A2A2A] overflow-hidden">
                 <motion.div
@@ -76,3 +77,4 @@ export default function SessionSummaryWidget({ entries, totalKcal }: SessionSumm
     </Card>
   );
 }
+

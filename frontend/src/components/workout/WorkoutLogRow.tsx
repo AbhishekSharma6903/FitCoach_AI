@@ -116,10 +116,10 @@ export default function WorkoutLogRow({ entry, index, onDelete, onUpdate }: Work
             </span>
           ) : (
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="w-12 tabular-nums">Set {index}</span>
-              <span className="w-14 tabular-nums">{entry.reps ?? "—"} reps</span>
-              <span className="tabular-nums">
-                {entry.weight_kg ? `${entry.weight_kg} kg` : "body"}
+              <span className="w-10 font-medium text-foreground/70 tabular-nums">Set {index}</span>
+              <span className="w-16 tabular-nums">{entry.reps ?? "—"} reps</span>
+              <span className="tabular-nums font-medium text-foreground/80">
+                {entry.weight_kg ? `${entry.weight_kg} kg` : "bodyweight"}
               </span>
             </div>
           )}
