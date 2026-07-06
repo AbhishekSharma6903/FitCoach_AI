@@ -1931,10 +1931,511 @@ None.
 
 ---
 
-## Page 4: Dishes (`/dishes`)
+## Page 6: Onboarding (`/onboarding`)
 
-> Design spec to be written before Phase 5D implementation begins.
-> Placeholder — do not build until spec is reviewed and signed off.
+> Goal: collect the 11 required profile fields across 4 focused steps, submit once, redirect to dashboard.
+> Inspiration: Linear/Vercel onboarding (clean centred card, big step headline, minimal fields per step), Apple Health setup flow (large toggle options, clear hierarchy).
+> **Standalone layout — no TopNav, no BottomNav, no PageShell.** Both nav components already suppress on `/onboarding` via `HIDDEN_ON_ROUTES`.
+
+---
+
+### Why Onboarding Is Architecturally Different
+
+Every other page uses `PageShell` which provides `max-w-6xl` centred content. Onboarding should NOT use PageShell for two reasons:
+
+1. **A full-width scrolling page is wrong for a wizard.** The content is a single card with 4 steps. It should be vertically centred on screen, not top-aligned in a scrollable column.
+2. **Centred-card focus.** Removing nav chrome (TopNav, BottomNav) keeps the user's attention on the setup task. Both nav components already return `null` for `/onboarding`.
+
+**Layout:** `min-h-dvh flex flex-col items-start sm:items-center justify-start sm:justify-center px-4 py-8 bg-[#0A0A0A]` — top-aligned on SE (scrollable), vertically centred on 390px+.
+
+The wizard lives in a single `max-w-md` card, centred both horizontally and vertically. On mobile it fills width minus padding; on desktop it stays ~448px wide in the middle of the screen.
+
+---
+
+### Architecture: Single-card wizard vs multi-page
+
+**Decision: Single card, step state in React (`useState`), NOT separate routes (`/onboarding/step-1` etc.).**
+
+Reasons:
+- 4 steps = 4 states. React state is trivial. Separate routes mean separate pages, layouts, loading states — overkill.
+- Back/forward doesn't need URL history for onboarding — users don't deep-link to "step 3".
+- Single `POST /api/v1/profile/onboarding` at the end — all form state is collected first, then submitted once. No per-step API calls.
+- Scroll position resets naturally on step change (card height changes, user is already at top).
+
+**Form state:** Single `OnboardingFormData` object held in the wizard component, passed down as `data` + `onChange` props to each step. Errors are a `Partial<Record<keyof OnboardingFormData, string>>` map, cleared field-by-field as user types.
+
+---
+
+### Data & API
+
+**POST `POST /api/v1/profile/onboarding`** — body matches `OnboardingInput` schema exactly:
+
+| Field | Type | Step |
+|---|---|---|
+| `name` | string | 1 |
+| `age` | int | 1 |
+| `gender` | "male" \| "female" \| "other" | 1 |
+| `height_cm` | float | 1 |
+| `current_weight_kg` | float | 2 |
+| `goal_weight_kg` | float | 2 |
+| `time_to_reach_goal_weeks` | int ≥ 4 | 2 |
+| `experience_level` | "beginner" \| "intermediate" \| "pro" | 3 |
+| `activity_level` | "sedentary" \| "light" \| "moderate" \| "intense" \| "very_intense" | 3 |
+| `diet_type` | "veg" \| "egg" \| "non_veg" | 4 |
+| `wants_workout_split` | bool (default false) | 4 |
+| `wants_diet_plan` | bool (default false) | 4 |
+
+**Backend computes on receipt:** BMR, TDEE, target calories, BMI, macro targets — same as `PUT /profile`. No frontend calculation needed.
+
+**On success:** `router.push("/dashboard")` — SWR caches are empty, dashboard will load fresh.
+
+**Re-onboarding:** `/onboarding` is also used when user taps "Re-do Onboarding" from Profile. In that case the existing profile values should be pre-filled (not blank). The wizard should check `useProfile()` on mount and seed form state if a profile exists. User can then change only what they want and submit.
+
+---
+
+### AG Checklist
+
+- [x] **AG-1 (N/A):** Onboarding is standalone — no PageShell, no max-w-6xl. The card is `max-w-md mx-auto` which is correct for a wizard form. This is a deliberate exception documented here.
+- [x] **AG-2:** No right panel — single card wizard.
+- [x] **AG-3 (N/A):** No "card order" on a single-card wizard — step order is the flow.
+- [x] **AG-4:** Card fills its max-width (`max-w-md`). Step content fills the card.
+- [x] **AG-7:** `Input`, `Button`, `Badge`, `Skeleton` — no Select (use card toggles instead, see below).
+- [x] **AG-8:** All form state in local `useState` — not Zustand (onboarding form is not shared state). SWR `useProfile()` only for pre-filling on re-onboarding.
+
+**Note on AG-1 exception:** The `max-w-md` wizard card is NOT a violation of AG-1. AG-1 governs the main app content column. Onboarding is a standalone full-screen entry experience with its own layout pattern. The spec explicitly carves this out in 5F.
+
+---
+
+### Layout
+
+The outer wrapper centres the card on screens where it fits, and scrolls from top when it doesn't (SE with Step 4).
+
+```
+Mobile SE (375px):  card starts at top, page scrolls if needed
+iPhone 14+ (390px+): card vertically centred if it fits
+Desktop (1280px):  card centred, loads of breathing room either side
+```
+
+```tsx
+// Outer wrapper — centre on tall screens, top-align + scroll on short ones
+<div className="min-h-dvh flex flex-col
+                items-start justify-start
+                sm:items-center sm:justify-center
+                px-4 py-8 bg-[#0A0A0A]">
+  {/* Card */}
+  <div className="w-full max-w-md bg-[#111111] border border-[#2A2A2A] rounded-2xl p-6 sm:p-8">
+
+    {/* Logo + tagline */}
+    <div className="flex items-center gap-2.5 mb-2">
+      <div className="w-8 h-8 rounded-lg bg-primary/10 ring-1 ring-primary/20
+                      flex items-center justify-center shrink-0">
+        <span className="text-sm font-black text-primary select-none">F</span>
+      </div>
+      <span className="text-lg font-bold text-foreground">FitCoach</span>
+    </div>
+    <p className="text-sm text-muted-foreground mb-6">
+      Your personalised fitness journey starts here
+    </p>
+
+    {/* Step indicator */}
+    <StepIndicator currentStep={step} totalSteps={4} labels={STEP_LABELS} />
+
+    {/* Step content — AnimatePresence for horizontal slide transition */}
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={step}
+        initial={{ opacity: 0, x: direction * 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -direction * 20 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+      >
+        {step === 0 && <Step1Personal {...stepProps} />}
+        {step === 1 && <Step2Weight  {...stepProps} />}
+        {step === 2 && <Step3Fitness {...stepProps} />}
+        {step === 3 && <Step4Diet    {...stepProps} />}
+      </motion.div>
+    </AnimatePresence>
+
+    {/* API error */}
+    {apiError && (
+      <p className="text-sm text-red-400 mt-3 text-center">{apiError}</p>
+    )}
+
+    {/* Navigation buttons */}
+    <div className="flex gap-3 mt-6">
+      {step > 0 && (
+        <button onClick={handleBack}
+          className="flex-1 h-11 rounded-xl bg-[#222222] border border-[#2A2A2A]
+                     text-sm font-semibold text-foreground hover:bg-[#2A2A2A]
+                     active:scale-[0.98] transition-all">
+          Back
+        </button>
+      )}
+      <button
+        onClick={step < 3 ? handleNext : handleSubmit}
+        disabled={submitting}
+        className="flex-1 h-11 rounded-xl bg-primary text-black font-semibold text-sm
+                   hover:bg-green-400 active:scale-[0.98] transition-all
+                   disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        {submitting ? "Setting up your plan…" : step < 3 ? "Continue" : "Start my journey"}
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+**`direction` ref:** updated in `handleNext` (`direction.current = 1`) and `handleBack` (`direction.current = -1`) before calling `setStep`. Use `useRef(1)` — not state (doesn't need to trigger re-render).
+
+---
+
+### Component Breakdown
+
+---
+
+#### StepIndicator
+
+Horizontal row of numbered circles + connecting lines + step labels (hidden on SE, shown sm+).
+
+```
+●──────●──────○──────○
+Personal  Weight  Fitness  Diet
+```
+
+- Completed step: `bg-primary rounded-full w-8 h-8` with `✓` icon, `text-white`
+- Current step: same + `ring-4 ring-primary/20` outer glow + step number in `font-bold`
+- Future step: `bg-[#1A1A1A] border border-[#2A2A2A] rounded-full w-8 h-8` + muted step number
+- Connector line: `flex-1 h-0.5` — `bg-primary` when complete, `bg-[#2A2A2A]` when not
+- Labels below circles: `hidden sm:block text-[10px] font-medium text-center` — `text-primary` when active/done, `text-muted-foreground/40` when future. Hidden on SE to avoid overflow at 375px.
+
+---
+
+#### Step content typography standard
+
+**Every step component must follow this structure:**
+
+```tsx
+<div className="space-y-5 pt-2">
+  {/* Step heading */}
+  <div>
+    <h2 className="text-2xl font-bold text-foreground">Tell us about yourself</h2>
+    <p className="text-sm text-muted-foreground mt-1">
+      We'll use this to personalise your fitness plan.
+    </p>
+  </div>
+  {/* Fields follow */}
+</div>
+```
+
+`space-y-5` between all field groups ensures consistent vertical rhythm. `pt-2` gives a small gap after the step indicator.
+
+---
+
+#### Step 1 — Personal (`"Tell us about yourself"`)
+
+Fields: Name · Age + Height (2-col) · Gender toggle
+
+**Gender:** 3 equal-width pill buttons, not a dropdown. Toggles are faster on mobile than dropdowns for a 3-option choice.
+
+```
+Name       [ Arjun Sharma                    ]
+Age        [ 28  ]    Height (cm)  [ 175     ]
+Gender     [ Male ]  [ Female ]  [ Other  ]
+```
+
+**Name field:** `type="text"`. Placeholder: `"e.g. Arjun Sharma"`. `autoComplete="name"` for mobile keyboard autofill. Input: `bg-[#222222] border-[#2A2A2A] focus:border-primary`.
+
+**Age + Height:** `grid-cols-2` side-by-side. Both `type="number"`. Age min=10/max=120. Height min=100/max=250.
+
+**Gender pills:** Full-width row, `grid-cols-3`. `h-11` tall (44px — min touch target). Active: `border-primary bg-primary/10 text-primary font-semibold`. Inactive: `border-[#2A2A2A] text-muted-foreground hover:border-[#3A3A3A] hover:text-foreground`.
+
+**Error display:** `text-xs text-red-400 mt-1.5` below each field. Input gets `border-red-500/50` when errored.
+
+**Validation (on Continue):**
+- Name: non-empty after trim
+- Age: 10–120, non-empty
+- Gender: selected
+- Height: 100–250, non-empty
+
+---
+
+#### Step 2 — Weight Goals (`"Your weight goals"`)
+
+Fields: Current weight + Goal weight (2-col) · Live goal delta banner · Timeline (weeks) + pace hint
+
+**Goal delta banner:** Appears as soon as both weights are filled. Full-width pill, animated fade-in (`motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}`). Three states:
+- Losing: `bg-blue-500/10 border border-blue-500/30 text-blue-400` — `"Goal: Lose 8.0 kg"`
+- Gaining: `bg-amber-500/10 border border-amber-500/30 text-amber-400` — `"Goal: Gain 3.0 kg"`
+- Maintain: `bg-primary/10 border border-primary/30 text-primary` — `"Goal: Maintain weight"`
+
+This is the most motivating moment in onboarding. The banner makes the goal feel real and confirmed.
+
+**Timeline field:** Below the delta banner. `type="number"` min=4 max=104. Helper text below: `"Minimum 4 weeks for safe, sustainable progress."` When both `delta` (weight difference) and `weeks` are non-zero, show inline pace: `"≈ X.X kg/week required"` — always visible (no viewport condition), `text-xs text-muted-foreground/60`.
+
+**Validation (on Continue):**
+- Current weight: ≥ 30 kg
+- Goal weight: ≥ 30 kg
+- Timeline: ≥ 4 weeks
+
+---
+
+#### Step 3 — Fitness Level (`"Your fitness level"`)
+
+Fields: Experience level (3-card toggle) · Activity level (Select)
+
+**Experience cards:** `grid-cols-3`. Each card: level name (`font-semibold`) + sub-label (`text-xs text-muted-foreground`). Height: `py-4` to fit two lines. Active: `border-primary bg-primary/10 text-primary`. Inactive: `border-[#2A2A2A] text-muted-foreground hover:border-[#3A3A3A]`.
+
+```
+[ Beginner    ] [ Intermediate ] [ Pro         ]
+  0–1 year        2–4 years        4+ years
+```
+
+**Activity level:** 5 options warrant a Select. Must apply AG-7 gotchas: `onValueChange={(v: string | null) => v && onChange({ activity_level: v })}` (null guard) and render the label in the trigger via `ACTIVITY_OPTIONS.find(o => o.value === data.activity_level)?.label`. Style trigger to match other inputs: `bg-[#222222] border-[#2A2A2A] h-11 rounded-xl`.
+
+**Validation (on Continue):**
+- Experience level: selected
+- Activity level: selected
+
+---
+
+#### Step 4 — Diet & Plans (`"Diet preferences"`)
+
+Fields: Diet type (3-card with icon) · Additional plans (2 toggle rows)
+
+**Diet type cards:** `grid-cols-3`. Each card: emoji icon `text-2xl mb-1` + type name `text-sm font-semibold` + sub-label `text-xs text-muted-foreground`. Active: `border-primary bg-primary/10`. Taller than experience cards — `py-4`.
+
+```
+[    🥦     ] [    🥚     ] [    🍗     ]
+ Vegetarian   Eggetarian    Non-Veg
+ No meat/eggs  Veg + eggs   All foods
+```
+
+**Additional plan toggles:** Two full-width buttons with a left-side checkbox square. `min-h-[56px]` to fit two text lines.
+
+```tsx
+<button
+  onClick={() => onChange({ wants_workout_split: !data.wants_workout_split })}
+  className={cn(
+    "w-full flex items-start gap-3 px-4 py-3.5 rounded-xl border text-left transition-all",
+    data.wants_workout_split
+      ? "border-primary bg-primary/10"
+      : "border-[#2A2A2A] hover:border-[#3A3A3A]"
+  )}
+>
+  {/* Checkbox indicator */}
+  <div className={cn(
+    "mt-0.5 w-5 h-5 rounded flex items-center justify-center shrink-0 transition-all",
+    data.wants_workout_split ? "bg-primary" : "bg-[#2A2A2A]"
+  )}>
+    {data.wants_workout_split && <Check size={12} className="text-black" />}
+  </div>
+  <div>
+    <p className="text-sm font-medium text-foreground">
+      Generate a personalised workout split
+    </p>
+    <p className="text-xs text-muted-foreground mt-0.5">
+      Based on your goal and experience
+    </p>
+  </div>
+</button>
+```
+
+Use `lucide-react` `<Check size={12} />` — not a `✓` string (inconsistent sizing).
+
+**Validation (on Submit):**
+- Diet type: selected
+- Toggles: optional, no validation
+
+---
+
+### Form State Management
+
+```ts
+const DEFAULT_FORM: OnboardingFormData = {
+  name: "", age: "", gender: "",
+  height_cm: "", current_weight_kg: "", goal_weight_kg: "",
+  time_to_reach_goal_weeks: "", experience_level: "",
+  activity_level: "", diet_type: "",
+  wants_workout_split: false, wants_diet_plan: false,
+}
+
+// In wizard:
+const [step, setStep]       = useState(0)
+const [form, setForm]       = useState<OnboardingFormData>(DEFAULT_FORM)
+const [errors, setErrors]   = useState<Partial<Record<keyof OnboardingFormData, string>>>({})
+const [submitting, setSub]  = useState(false)
+const [apiError, setApiErr] = useState("")
+```
+
+**Pre-filling for Re-do Onboarding:**
+```ts
+const { profile } = useProfile()
+useEffect(() => {
+  if (profile) {
+    setForm({
+      name: profile.name,
+      age: String(profile.age),
+      gender: profile.gender,
+      height_cm: String(profile.height_cm),
+      current_weight_kg: String(profile.current_weight_kg),
+      goal_weight_kg: String(profile.goal_weight_kg),
+      time_to_reach_goal_weeks: String(profile.time_to_reach_goal_weeks),
+      experience_level: profile.experience_level,
+      activity_level: profile.activity_level,
+      diet_type: profile.diet_type,
+      wants_workout_split: profile.wants_workout_split,
+      wants_diet_plan: profile.wants_diet_plan,
+    })
+  }
+}, [profile])  // only seed once — guard with a seeded ref if needed
+```
+
+**onChange pattern:** Merges partial updates into form, clears errors for changed keys:
+```ts
+function handleChange(updates: Partial<OnboardingFormData>) {
+  setForm(prev => ({ ...prev, ...updates }))
+  setErrors(prev => {
+    const next = { ...prev }
+    Object.keys(updates).forEach(k => delete next[k as keyof OnboardingFormData])
+    return next
+  })
+}
+```
+
+**Submit:** Numbers are stored as strings in form state (Input value must be string). Cast on submit:
+```ts
+await api.post("/api/v1/profile/onboarding", {
+  ...form,
+  age: Number(form.age),
+  height_cm: Number(form.height_cm),
+  current_weight_kg: Number(form.current_weight_kg),
+  goal_weight_kg: Number(form.goal_weight_kg),
+  time_to_reach_goal_weeks: Number(form.time_to_reach_goal_weeks),
+})
+```
+
+---
+
+### Validation Per Step
+
+```ts
+function validateStep(step: number, data: OnboardingFormData): Record<string, string> {
+  const e: Record<string, string> = {}
+  if (step === 0) {
+    if (!data.name.trim())                                   e.name = "Name is required"
+    if (!data.age || Number(data.age) < 10 || Number(data.age) > 120)
+                                                             e.age = "Enter age 10–120"
+    if (!data.gender)                                        e.gender = "Select a gender"
+    if (!data.height_cm || Number(data.height_cm) < 100 || Number(data.height_cm) > 250)
+                                                             e.height_cm = "Height 100–250 cm"
+  }
+  if (step === 1) {
+    if (!data.current_weight_kg || Number(data.current_weight_kg) < 30)
+                                                             e.current_weight_kg = "Enter current weight"
+    if (!data.goal_weight_kg || Number(data.goal_weight_kg) < 30)
+                                                             e.goal_weight_kg = "Enter goal weight"
+    if (!data.time_to_reach_goal_weeks || Number(data.time_to_reach_goal_weeks) < 4)
+                                                             e.time_to_reach_goal_weeks = "Minimum 4 weeks"
+  }
+  if (step === 2) {
+    if (!data.experience_level) e.experience_level = "Select experience level"
+    if (!data.activity_level)   e.activity_level   = "Select activity level"
+  }
+  if (step === 3) {
+    if (!data.diet_type) e.diet_type = "Select a diet type"
+  }
+  return e
+}
+```
+
+Error display: inline `text-xs text-red-400` below the field or toggle group. Input border turns `border-red-500/50` when error present.
+
+---
+
+### Animation
+
+Step transitions use Motion `AnimatePresence mode="wait"` with a directional horizontal slide. Direction is tracked with `useRef(1)` updated before `setStep`.
+
+```tsx
+const direction = useRef(1)  // 1 = forward, -1 = backward
+
+function handleNext() {
+  direction.current = 1
+  // validate then setStep(s => s + 1)
+}
+function handleBack() {
+  direction.current = -1
+  setStep(s => s - 1)
+}
+
+// In JSX:
+<AnimatePresence mode="wait" initial={false}>
+  <motion.div
+    key={step}
+    initial={{ opacity: 0, x: direction.current * 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -direction.current * 20 }}
+    transition={{ duration: 0.2, ease: "easeOut" }}
+  >
+    {/* step content */}
+  </motion.div>
+</AnimatePresence>
+```
+
+`direction.current` = 1 on Next, -1 on Back — content slides in from right on Next, from left on Back.
+
+---
+
+### Loading / Error States
+
+| State | Visual |
+|---|---|
+| `submitting` | Button shows spinner + "Setting up your plan…", disabled |
+| API error | Red text below the nav buttons (not a toast — user needs to see it while still on the form) |
+| `useProfile` loading (re-onboarding) | Skeleton of the card while profile loads — avoids flashing empty form then replacing with pre-filled values |
+
+---
+
+### What We Are NOT Doing
+
+- No animations on individual fields — only step-level transitions
+- No per-step API calls — single POST at the very end
+- No back-button browser navigation handling — users don't deep-link into steps
+- No "skip" option — all 11 fields are required by the backend
+- No image/photo upload in Step 1 — initials avatar is used throughout the app
+- No separate routes (`/onboarding/1`, `/onboarding/2`) — single page, React state only
+
+---
+
+### Files to Create
+
+```
+src/components/onboarding/
+  OnboardingWizard.tsx   ← top-level: step state, form state, validation, submit, pre-fill
+  StepIndicator.tsx      ← numbered circles + connecting lines + labels
+  Step1Personal.tsx      ← name, age+height (2-col), gender pills
+  Step2Weight.tsx        ← current+goal weight (2-col), delta badge, timeline
+  Step3Fitness.tsx       ← experience cards (3-col), activity select
+  Step4Diet.tsx          ← diet type cards (3-col), optional plan toggles
+
+src/app/onboarding/page.tsx  ← renders <OnboardingWizard /> with no layout wrapper
+```
+
+**`app/onboarding/page.tsx`** — intentionally simple:
+```tsx
+import OnboardingWizard from "@/components/onboarding/OnboardingWizard"
+export default function OnboardingPage() {
+  return <OnboardingWizard />
+}
+```
+
+No `PageShell`. No layout imports. The wizard is its own complete page.
+
+---
+
+### Open Questions Before Building
+
+None. Backend `POST /api/v1/profile/onboarding` exists. `OnboardingFormData` type exists in `types/profile.ts`. Nav suppression on `/onboarding` already working (`HIDDEN_ON_ROUTES` in both `TopNav.tsx` and `BottomNav.tsx`).
 
 ---
 
