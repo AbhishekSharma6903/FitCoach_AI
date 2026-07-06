@@ -1933,10 +1933,485 @@ None.
 
 ## Page 4: Dishes (`/dishes`)
 
-> Design spec to be written before implementation begins.
+> Design spec to be written before Phase 5D implementation begins.
+> Placeholder — do not build until spec is reviewed and signed off.
 
 ---
 
 ## Page 5: Profile (`/profile`)
 
-> Design spec to be written before implementation begins.
+> Goal: let users understand their current stats and update their goals — without the cognitive overhead of re-running onboarding.
+> Inspiration: Bevel profile / settings screen (clean stat rows, avatar, minimal form), Apple Health summary cards (computed metrics displayed prominently).
+> Single column. No right panel (AG-2: no natural primary/utility split on this page).
+>
+> **Phase 5E COMPLETE (2026-07-06). P0: 8.0/10 PASS. See `UI_REFACTOR_PLAN_V2.md §5E` for full build log.**
+
+---
+
+### Implementation Corrections (vs pre-build spec)
+
+**Stats grid breakpoint:** Changed `lg:grid-cols-4` → `sm:grid-cols-4`. The 4-column layout now fires at 640px (covers iPhone 14 landscape, Pixel 7, iPad) instead of waiting for 1024px. This was the biggest score driver for iPad (7.5 → 8.5).
+
+**Macro bars fill logic:** Changed from calorie-% fill to largest-macro-relative fill. A 30% calorie share on a 1000px track = 300px filled = visually empty. Bars now fill relative to whichever macro has the most grams (usually carbs), so Protein/Carbs/Fat bars look proportional to each other. The calorie-% number is shown as a text label `N%` alongside. See MacrosCard.tsx.
+
+**Select trigger labels:** `SelectValue` renders the raw stored value (`veg` not `Vegetarian`). Fixed by rendering the matched option label inline inside the trigger. See P3 in build log.
+
+**No progress bar on WeightGoalCard:** Pre-build spec showed a progress bar. Removed — profile doesn't have weight log history available without an extra SWR call. Shows goal summary + required pace instead. Dashboard has the authoritative progress chart.
+
+---
+
+### Why Profile Matters (architect note)
+
+Every calorie on the dashboard, every macro target in the tracker, every workout calorie estimate — all trace back to values in `user_profiles`. If `current_weight_kg` is 6 months out of date, the ring is showing the wrong number. If `activity_level` was set wrong at onboarding, every TDEE calc is off. Profile is the calibration page. It must be dead simple to update.
+
+---
+
+### Data Available
+
+| Source | Data |
+|---|---|
+| `useProfile()` → `GET /api/v1/profile` | Full `UserProfile` — all identity, weight, goals, computed values |
+| `PUT /api/v1/profile` | Partial update — backend recomputes BMR/TDEE/macros/BMI on save |
+
+**What the backend recomputes on PUT:** BMR (Mifflin-St Jeor), TDEE (BMR × activity multiplier), target calories (TDEE ± weekly delta), BMI, protein/carbs/fat targets. The frontend never needs to compute these — just display what comes back.
+
+**What `PUT` accepts (all optional):** `name`, `age`, `gender`, `height_cm`, `current_weight_kg`, `goal_weight_kg`, `time_to_reach_goal_weeks`, `experience_level`, `activity_level`, `diet_type`, `wants_workout_split`, `wants_diet_plan`.
+
+**No backend changes needed for Phase 5E.**
+
+---
+
+### AG Checklist
+
+- [x] AG-1: `w-full px-4 pb-24` mobile / `lg:max-w-6xl lg:mx-auto lg:px-8` desktop — single column both
+- [x] AG-2: No right panel — profile is a form + stats page, no utility sidebar adds value here
+- [x] AG-3: Mobile card order — Identity (who am I) → Computed stats (what do they mean) → Edit goals (action) → Account (danger/admin)
+- [x] AG-4: Stat cards fill column width — 2-col or 3-col grids for computed values
+- [x] AG-7: shadcn `Input`, `Select`, `Button`, `Badge`, `Separator`, `Skeleton`, `AlertDialog`
+- [x] AG-8: SWR for profile data, local `useState` for form inputs (not Zustand — form state is local to this page)
+- [x] AG-9: No desktop-only panels — everything shown on both viewports
+
+---
+
+### Layout — Mobile + Desktop (single column, no grid split)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  [F] FitCoach   Home · Tracker · Workout · Dishes  [D] │  ← TopNav
+├─────────────────────────────────────────────────────┤
+│  max-w-6xl mx-auto px-8 (desktop) / px-4 (mobile)  │
+│                                                     │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  [D]                                        │    │  ← Identity card
+│  │  Dev User                                   │    │
+│  │  28 · Male · 175 cm                         │    │
+│  │  [Moderate]  [Vegetarian]  [Intermediate]   │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  YOUR STATS                                         │
+│  ┌──────────┬──────────┬───────────┬──────────┐    │
+│  │  25.5    │ 2,352    │ 1,800     │  176g    │    │  ← 4-stat grid
+│  │  BMI     │ TDEE     │ TARGET    │ Protein  │    │
+│  │ [Normal] │ kcal/day │ kcal/day  │  /day    │    │
+│  └──────────┴──────────┴───────────┴──────────┘    │
+│                                                     │
+│  WEIGHT GOAL                                        │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  78 kg  →  72 kg  in 16 weeks               │    │
+│  │  [▓▓▓▓▓▓▓░░░░░░░░] 42% there               │    │
+│  │  At −0.4 kg/week · on track ✅               │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  MACROS                                             │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  P  176g  ●────────── 30% of calories       │    │
+│  │  C  235g  ●────────── 40% of calories       │    │
+│  │  F   78g  ●────────── 30% of calories       │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  UPDATE GOALS                                       │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  Current weight  [78.5    ] kg              │    │
+│  │  Goal weight     [72.0    ] kg              │    │
+│  │  Timeline        [16      ] weeks           │    │
+│  │  Activity        [Moderate ▼]               │    │
+│  │  Diet            [Vegetarian ▼]             │    │
+│  │                                             │    │
+│  │  [Save Changes]                             │    │
+│  └─────────────────────────────────────────────┘    │
+│                                                     │
+│  ACCOUNT                                            │
+│  ┌─────────────────────────────────────────────┐    │
+│  │  Re-do Onboarding   →                       │    │
+│  │  Sign Out           →  [red text]           │    │
+│  └─────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────┘
+```
+
+**Max width at desktop:** content is naturally narrow for a form. Constrain the Update Goals form to `max-w-lg mx-auto` on desktop so inputs don't stretch to 1152px — that would look awful. The Identity card and Stats grid can be full-width (`max-w-6xl`).
+
+---
+
+### Component Breakdown
+
+---
+
+#### 1. Identity Card
+
+Large avatar initial. Read-only identity fields displayed as pills.
+
+```
+┌────────────────────────────────────────────────────┐
+│  ┌───┐                                             │
+│  │ D │  Dev User                                   │
+│  └───┘  28 years  ·  Male  ·  175 cm               │
+│                                                    │
+│  [Moderate activity]  [Vegetarian]  [Intermediate] │
+└────────────────────────────────────────────────────┘
+```
+
+```tsx
+// Avatar: 56px circle, initials, green ring (same as TopNav avatar but larger)
+<div className="w-14 h-14 rounded-full bg-primary/10 ring-2 ring-primary/30
+               flex items-center justify-center text-xl font-black text-primary">
+  {profile.name[0].toUpperCase()}
+</div>
+
+// Identity row
+<div className="text-sm text-muted-foreground">
+  {profile.age} years · {profile.gender} · {profile.height_cm} cm
+</div>
+
+// Lifestyle badges
+<div className="flex flex-wrap gap-2 mt-3">
+  <Badge variant="outline">{ACTIVITY_LABELS[profile.activity_level]}</Badge>
+  <Badge variant="outline">{DIET_LABELS[profile.diet_type]}</Badge>
+  <Badge variant="outline">{EXPERIENCE_LABELS[profile.experience_level]}</Badge>
+</div>
+```
+
+**Label maps (frontend display only):**
+```ts
+const ACTIVITY_LABELS = {
+  sedentary: "Sedentary", light: "Light activity", moderate: "Moderate",
+  intense: "Intense", very_intense: "Very intense"
+}
+const DIET_LABELS = { veg: "Vegetarian", egg: "Eggetarian", non_veg: "Non-veg" }
+const EXPERIENCE_LABELS = { beginner: "Beginner", intermediate: "Intermediate", pro: "Advanced" }
+```
+
+Identity card is **display-only**. To change name/age/height/gender: Re-do Onboarding (bottom of page). This split keeps the "Update Goals" form focused on the fields users actually change day-to-day.
+
+---
+
+#### 2. Stats Grid
+
+Four computed values in a `grid-cols-2 lg:grid-cols-4` grid. Each cell: big number + label + optional badge.
+
+```
+┌──────────┬──────────┬──────────────┬──────────┐
+│  25.5    │ 2,352    │    1,800     │  176g    │
+│  BMI     │ TDEE     │   TARGET     │  Protein │
+│ [Normal] │ kcal/day │  kcal/day    │  target  │
+└──────────┴──────────┴──────────────┴──────────┘
+```
+
+**BMI cell:**
+```tsx
+const bmiCategory = getBmiCategory(profile.bmi)
+// getBmiCategory: < 18.5 → "Underweight", 18.5–24.9 → "Normal", 25–29.9 → "Overweight", ≥ 30 → "Obese"
+<span className="text-3xl font-black text-white tabular-nums">{profile.bmi?.toFixed(1)}</span>
+<span className="text-xs text-muted-foreground">BMI</span>
+<Badge variant="outline" className={bmiColor}>{bmiCategory}</Badge>
+// Colours: Underweight=blue, Normal=green, Overweight=amber, Obese=red
+```
+
+**TARGET cell:** Highlighted — this is the number that drives everything.
+```tsx
+<span className="text-3xl font-black text-primary tabular-nums">
+  {Math.round(profile.target_calories_kcal ?? 0).toLocaleString()}
+</span>
+<span className="text-xs text-muted-foreground">Target kcal/day</span>
+```
+
+**TDEE cell:** Shown alongside target so user understands the deficit/surplus.
+```tsx
+<span className="text-3xl font-black text-white tabular-nums">
+  {Math.round(profile.tdee_kcal ?? 0).toLocaleString()}
+</span>
+<span className="text-xs text-muted-foreground">Maintenance</span>
+// Below: show deficit or surplus in muted text
+const delta = (profile.target_calories_kcal ?? 0) - (profile.tdee_kcal ?? 0)
+<span className={cn("text-[10px]", delta < 0 ? "text-primary" : "text-amber-400")}>
+  {delta < 0 ? `${Math.abs(Math.round(delta))} kcal deficit` : `${Math.round(delta)} kcal surplus`}
+</span>
+```
+
+---
+
+#### 3. Weight Goal Card
+
+Progress bar + pace insight. Reuses the same computation as `dashboardUtils.ts`.
+
+```tsx
+// Progress: (current_weight - start) / (goal - start)
+// Use profile.current_weight_kg as "current" (last logged weight from dashboard is better
+// but profile is what's available here without an extra API call)
+const totalDelta = profile.goal_weight_kg - profile.current_weight_kg  // negative for loss
+const startWeight = profile.current_weight_kg  // approximate — actual start from weight log
+const pct = 0  // Can't compute without weight log history on this page — show 0 or hide bar
+
+// Show what IS computable:
+// "78 kg → 72 kg in 16 weeks" — always available
+// "−0.375 kg/week required" — computed from delta/weeks
+const weeklyRequired = totalDelta / profile.time_to_reach_goal_weeks
+```
+
+**Display:**
+```
+78.0 kg  →  72.0 kg
+−0.4 kg/week required over 16 weeks
+```
+
+No progress bar here — we don't have historical weight log data on this page without an extra SWR call. Keep it simple: goal summary + required pace. Link to dashboard for the actual progress chart.
+
+---
+
+#### 4. Macros Card
+
+Three rows (P/C/F) with calorie % split. Read-only — these are computed outputs, not inputs.
+
+```tsx
+const macroRows = [
+  { label: "Protein", g: profile.protein_g, color: "bg-blue-500", textColor: "text-blue-400",
+    pct: Math.round((profile.protein_g * 4) / (profile.target_calories_kcal ?? 1) * 100) },
+  { label: "Carbs",   g: profile.carbs_g,   color: "bg-amber-400", textColor: "text-amber-400",
+    pct: Math.round((profile.carbs_g * 4) / (profile.target_calories_kcal ?? 1) * 100) },
+  { label: "Fat",     g: profile.fat_g,     color: "bg-orange-500", textColor: "text-orange-400",
+    pct: Math.round((profile.fat_g * 9) / (profile.target_calories_kcal ?? 1) * 100) },
+]
+```
+
+Each row: `label · Xg/day · N% of calories · progress bar (% of target_calories)`.
+Same component pattern as Dashboard MacroBarsCard — can reuse or simplify.
+
+Caption below: `"Recalculated each time you save goals"` — sets expectation that macros are derived, not manually set.
+
+---
+
+#### 5. Update Goals Form
+
+**Scope:** Only the fields users change post-onboarding. NOT name/age/gender/height — those go through Re-do Onboarding.
+
+**Fields:**
+| Field | Input | Validation |
+|---|---|---|
+| Current weight (kg) | `Input` type=number, step=0.1, min=30, max=250 | Required |
+| Goal weight (kg) | `Input` type=number, step=0.1, min=30, max=250 | Required |
+| Timeline (weeks) | `Input` type=number, step=1, min=4, max=104 | Required, ≥4 |
+| Activity level | `Select` (5 options) | Required |
+| Diet type | `Select` (3 options) | Required |
+
+**NOT included in this form:** `experience_level`, `wants_workout_split`, `wants_diet_plan` — these are set once at onboarding, rarely changed. Adding them would clutter the form for no benefit.
+
+```tsx
+// Pre-fill from profile on load
+const [form, setForm] = useState({
+  current_weight_kg: String(profile.current_weight_kg),
+  goal_weight_kg: String(profile.goal_weight_kg),
+  time_to_reach_goal_weeks: String(profile.time_to_reach_goal_weeks),
+  activity_level: profile.activity_level,
+  diet_type: profile.diet_type,
+})
+
+async function handleSave() {
+  setSaving(true)
+  try {
+    await api.put("/api/v1/profile", {
+      current_weight_kg: Number(form.current_weight_kg),
+      goal_weight_kg: Number(form.goal_weight_kg),
+      time_to_reach_goal_weeks: Number(form.time_to_reach_goal_weeks),
+      activity_level: form.activity_level,
+      diet_type: form.diet_type,
+    })
+    mutateProfile()
+    mutateDashboard()  // revalidate dashboard — TDEE/macros changed
+    toast("Goals updated", { duration: 3000 })
+  } finally {
+    setSaving(false)
+  }
+}
+```
+
+**Critical:** After save, must call `mutate()` on both `useProfile` AND `useDashboard` — otherwise the calorie ring still shows the old number until next page load.
+
+**Live preview of impact:** Below the form, show a small preview card that updates as user types:
+```
+If you save these changes:
+  Target:  1,950 kcal/day  (was 2,352)     ← computed client-side from form values
+  Deficit: −402 kcal/day
+```
+This uses the same formulas as the backend (`calculate_bmr` → `calculate_tdee` → `calculate_target_calories`) implemented in a `profileUtils.ts` pure function. The preview removes the "surprise" of seeing all stats change after save.
+
+```ts
+// src/lib/profileUtils.ts
+export function previewTargetCalories(
+  weightKg: number, goalKg: number, weeks: number,
+  activityLevel: string, age: number, height: number, gender: string
+): number {
+  const bmr = calcBMR(weightKg, height, age, gender)   // Mifflin-St Jeor
+  const tdee = bmr * ACTIVITY_MULTIPLIERS[activityLevel]
+  const weeklyDelta = (goalKg - weightKg) / weeks
+  const dailyDelta = (weeklyDelta * 7700) / 7
+  const FLOOR = gender === "male" ? 1400 : gender === "female" ? 1200 : 1300
+  return Math.max(Math.round(tdee + dailyDelta), FLOOR)
+}
+```
+
+**Save button:** Primary green, full width on mobile, `max-w-xs` on desktop. Shows spinner while saving. Disabled when no changes from original profile values.
+
+---
+
+#### 6. Account Section
+
+Two rows. No card — just a clean list with right-chevron affordance.
+
+```tsx
+<div className="space-y-1 border-t border-[#2A2A2A] pt-4">
+  <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
+    Account
+  </p>
+  {/* Re-do Onboarding */}
+  <Link href="/onboarding"
+    className="flex items-center justify-between h-11 px-4 rounded-xl
+               bg-[#111111] border border-[#2A2A2A] hover:bg-[#1A1A1A] transition-colors">
+    <span className="text-sm text-foreground">Re-do Onboarding</span>
+    <ChevronRight size={16} className="text-muted-foreground/50" />
+  </Link>
+
+  {/* Sign Out */}
+  <button onClick={handleSignOut}
+    className="flex items-center justify-between w-full h-11 px-4 rounded-xl
+               bg-[#111111] border border-[#2A2A2A] hover:bg-red-500/5
+               hover:border-red-500/20 transition-colors">
+    <span className="text-sm text-red-400">Sign Out</span>
+    <LogOut size={16} className="text-red-400/50" />
+  </button>
+</div>
+```
+
+**Sign Out behaviour:**
+- Production (Clerk ON): `await signOut()` from `useClerk()`
+- Dev mode: `router.push("/sign-in")` — no Clerk session to clear
+
+---
+
+### State Management
+
+```
+useProfile() → SWR              — source of truth for all displayed data
+local useState (form)           — form inputs (current_weight_kg, goal_weight_kg, etc.)
+local useState (saving, dirty)  — UI state: saving spinner, changed flag
+```
+
+No Zustand needed — form state is entirely local to this page.
+
+**Dirty tracking:** Compare current form values against `profile` to know if anything changed → disable Save button when nothing has changed (prevents accidental saves).
+
+```ts
+const isDirty = useMemo(() => (
+  Number(form.current_weight_kg) !== profile.current_weight_kg ||
+  Number(form.goal_weight_kg) !== profile.goal_weight_kg ||
+  Number(form.time_to_reach_goal_weeks) !== profile.time_to_reach_goal_weeks ||
+  form.activity_level !== profile.activity_level ||
+  form.diet_type !== profile.diet_type
+), [form, profile])
+```
+
+**Re-sync form when profile loads:** Profile data comes from SWR and may not be available on first render. Use `useEffect` to seed form values once `profile` arrives:
+```ts
+useEffect(() => {
+  if (profile) {
+    setForm({
+      current_weight_kg: String(profile.current_weight_kg),
+      // ...
+    })
+  }
+}, [profile])  // only re-seed if profile changes externally (e.g. another tab saves)
+```
+
+---
+
+### Empty / Error States
+
+| State | Visual |
+|---|---|
+| `isLoading` | Skeleton: 64px avatar row + 4-cell stat grid + form fields |
+| Profile 404 (no onboarding done) | Card: "Complete onboarding to set up your profile" + `[Start Onboarding →]` button |
+| Save error | `sonner` toast: "Failed to save. Try again." |
+
+---
+
+### Loading State
+
+```tsx
+{isLoading ? (
+  <div className="space-y-5">
+    <Skeleton className="h-24 w-full rounded-2xl" />    {/* Identity card */}
+    <Skeleton className="h-28 w-full rounded-2xl" />    {/* Stats grid */}
+    <Skeleton className="h-20 w-full rounded-2xl" />    {/* Goal card */}
+    <Skeleton className="h-36 w-full rounded-2xl" />    {/* Update form */}
+    <Skeleton className="h-24 w-full rounded-2xl" />    {/* Account */}
+  </div>
+) : <content />}
+```
+
+---
+
+### Animation Summary
+
+| Element | Animation | Spec |
+|---|---|---|
+| Stats grid numbers | Count up on load | `CountUp` (reuse from dashboard) |
+| Macro bars | Fill on load | `motion.div width`, `duration: 0.5` |
+| Live preview card | Fade in when values differ | `AnimatePresence opacity`, `duration: 0.2` |
+| Save button success | Green checkmark for 2s | local `useState(saved)`, reset after timeout |
+
+---
+
+### What We Are NOT Doing
+
+- No inline editing of name/age/gender/height — use Re-do Onboarding. Mixing identity fields with goal fields creates cognitive clutter.
+- No wants_workout_split / wants_diet_plan toggles here — set at onboarding, changed via Re-do Onboarding.
+- No experience_level edit here — same reason.
+- No password/email edit — Clerk handles account management.
+- No unit toggle (kg → lbs) — Phase 7 / settings page.
+- No profile photo upload — initials avatar only for now.
+
+---
+
+### Files to Create
+
+```
+src/lib/profileUtils.ts              ← previewTargetCalories (Mifflin-St Jeor + activity
+                                        multiplier), getBmiCategory, ACTIVITY_LABELS,
+                                        DIET_LABELS, EXPERIENCE_LABELS, ACTIVITY_MULTIPLIERS
+
+src/components/profile/
+  IdentityCard.tsx                   ← avatar + name + age/gender/height + lifestyle badges
+  StatsGrid.tsx                      ← 2-col/4-col grid: BMI (badge) | TDEE | Target | Protein
+  WeightGoalCard.tsx                 ← goal summary + required pace (no progress bar)
+  MacrosCard.tsx                     ← P/C/F rows with calorie % — read-only
+  UpdateGoalsForm.tsx                ← 5 fields, live preview, dirty tracking, PUT on save
+  AccountSection.tsx                 ← Re-do Onboarding link + Sign Out button
+
+src/app/profile/page.tsx             ← page: useProfile, single column, all 6 sections
+```
+
+Reuse: `CountUp` from dashboard, `Card.tsx`, `Badge`, `Input`, `Select`, `Button`, `Separator`, `Skeleton`, `sonner`.
+
+---
+
+### Open Questions Before Building
+
+None. Backend `PUT /api/v1/profile` exists and recomputes all derived values. Hook `useProfile` exists. Types in `types/profile.ts` are complete.

@@ -95,6 +95,8 @@ A card in a 720px column must use that 720px. Do not put a small widget (200px r
 - Full-width progress bar below a centred element
 - Two-column stat blocks separated by a `Separator` (vertical)
 
+**AG-4 does NOT mean every inner element must stretch to card edges.** Form inputs inside a card should be constrained to a comfortable reading/input width. A `max-w-lg mx-auto` on a form's inner container is correct — input fields stretched to 1152px are unusable. The card surface fills the column (AG-4 ✅). What's inside the card can be narrower by design. This is the same technique used on CalorieHeroCard (`max-w-2xl mx-auto` inner layout) and UpdateGoalsForm (`max-w-lg mx-auto` form container).
+
 ---
 
 ### AG-5 · Sticky Right Column Constraints
@@ -138,6 +140,16 @@ Always use shadcn primitives over custom implementations. Current installed set:
 | Badges (BMI, diet type) | `shadcn Badge` with `variant="outline"` + custom colour |
 | Avatar | `shadcn Avatar` (install if not present) |
 | Top nav links | Plain `<Link>` with `cn()` active styling — NOT `shadcn NavigationMenu` (heavyweight, uncertain Base UI API) |
+
+**Base UI gotchas (discovered during implementation):**
+
+1. **`Button` has no `asChild` prop.** Our shadcn build uses Base UI, not Radix. `asChild` / `Slot` is a Radix pattern. Do NOT write `<Button asChild><Link>...</Link></Button>` — it will TypeScript-error. Instead give the `<Link>` direct button-style classes, or wrap the link in a `<button onClick={() => router.push(...)}>`
+
+2. **`Select.onValueChange` passes `string | null`.** Base UI's `Select.Root.onValueChange` callback type is `(value: string | null) => void`. Always guard: `(v: string | null) => v && set(field, v)` — never `(v) => set(field, v)`.
+
+3. **`SelectValue` renders the raw value, not the display label.** `<SelectValue />` inside `SelectTrigger` shows the stored value string (e.g. `"veg"`) not the matching `SelectItem` child text (`"Vegetarian"`). Fix: replace `<SelectValue />` with `<span>{OPTIONS.find(o => o.value === currentValue)?.label}</span>`.
+
+4. **`shadcn Tabs` wrappers have opinionated defaults.** `TabsList` has hardcoded `h-8` and `TabsTrigger` has `whitespace-nowrap`. If your tab layout uses icons+labels stacked vertically, drop to Base UI primitives directly: `Tabs.Root`, `Tabs.List`, `Tabs.Tab`, `Tabs.Panel` from `@base-ui/react/tabs`.
 
 ---
 
@@ -1163,17 +1175,101 @@ Phase 6 items that **remain valid**:
 
 #### 5D — Dishes
 
-1. Info banner
-2. Dish list + client-side search
-3. DishBuilder (create/edit) — SearchCommand for ingredients, smart units, live nutrition preview
-4. DeleteConfirmDialog for deletion
+**See `docs/DESIGN_OVERVIEW.md §Page 4` for spec (to be written before building).**
 
-#### 5E — Profile
+Scope: info banner · dish list + client-side search · DishBuilder (create/edit with SearchCommand for ingredients, smart units, live nutrition preview) · DeleteConfirmDialog. Single column, no right panel (AG-2).
 
-1. Identity card (avatar initials, name, age/gender/height)
-2. Stats grid (BMI, TDEE, target kcal, macros)
-3. Update Goals form → PUT profile
-4. Account section: Re-do Onboarding + Sign Out
+#### 5E — Profile ✅ DONE (2026-07-06) · P0: 8.0/10 PASS
+
+**See `docs/DESIGN_OVERVIEW.md §Page 5` for updated component-level spec (authoritative source).**
+
+---
+
+##### Problems Encountered and Fixes Applied
+
+**P1 · `Button` component has no `asChild` prop**
+The spec assumed shadcn's `asChild` pattern (Radix `Slot`) for wrapping a `<Link>` in a `<Button>`. Our shadcn build uses Base UI, which does not expose `asChild`. TypeScript error: `Property 'asChild' does not exist on type 'ButtonProps'`.
+Fix: replaced `<Button asChild><Link>...</Link></Button>` with a plain `<Link>` carrying button-style Tailwind classes inline. Documented in AG-7: never assume `asChild` is available — check the actual component source.
+
+**P2 · Base UI `Select.onValueChange` passes `string | null`, not `string`**
+The spec's `onValueChange={v => set("field", v)}` failed TypeScript because Base UI's callback can pass `null` when the selection is cleared. Fix: typed the handler `(v: string | null) => v && set(...)` — the null guard prevents clearing a required field.
+
+**P3 · `SelectValue` renders raw DB value, not human label**
+`SelectValue` inside `SelectTrigger` displayed the stored value (`veg`) instead of the option label (`Vegetarian`). All LLM QA auditors flagged this as inconsistent. Root cause: Base UI's `SelectValue` renders whatever string the `Root` receives as `value`, not the child text from the matching `SelectItem`.
+Fix: replaced `<SelectValue />` with an inline `<span>` that looks up the label from the options array: `DIET_OPTIONS.find(o => o.value === form.diet_type)?.label`. This correctly shows "Vegetarian" in the trigger while the underlying form state stays `"veg"`.
+
+**P4 · `Separator` import unused after removing divider**
+First draft had a `<Separator>` between the weight fields and the activity/diet selects. The QA auditor flagged it as "visual noise without clear purpose." Removed the divider and its import — cleaner form flow.
+
+**P5 · Macro bars looked empty on wide viewports**
+Using calorie percentage (protein=30%) as the bar fill width meant a ~350px filled segment in a 1000px track at desktop — visually underwhelming. The LLM audit consistently flagged "bars look short / filled portion tiny."
+Fix: bars now fill relative to the *largest macro target* (protein/carbs/fat whichever is highest). Protein and carbs (highest grams) fill ~100% of the track; fat (fewer grams but 9kcal/g) fills proportionally less. This matches what the dashboard macro bars do, and looks visually proportional. The calorie-% figure is still shown as a text label `N%`.
+
+**P6 · Stats grid stayed 2-col on tablet (768px)**
+Spec said `grid-cols-2 lg:grid-cols-4` — firing the 4-col layout only at 1024px. On iPad (768px) this showed a 2×2 grid in a very wide container. Fix: changed to `grid-cols-2 sm:grid-cols-4` — 4-col fires at 640px+, which covers iPad, pixel-7, and iphone-14 landscape. Audit score for iPad jumped from 7.5 → 8.5 after this fix.
+
+**P7 · Weight inputs too narrow on SE (375px) with side-by-side layout**
+Original `grid-cols-2` for current/goal weight made each input ~170px on SE — cramped. Fix: `grid-cols-1 sm:grid-cols-2` — stacked single-column on SE, side-by-side on 640px+. The auditor confirmed SE is inherently dense (long single-column form) which holds iPhone SE at 7.5 — this is acceptable given the content volume.
+
+---
+
+##### Architectural Decisions (with reasoning)
+
+**Decision A · Scope split: identity vs goals**
+The original spec plan was confirmed correct in implementation. Identity fields (name/age/gender/height) are read-only on the profile page — changed only via Re-do Onboarding. This keeps the Update Goals form to 5 fields, uncluttered. Users change weight/activity/diet weekly; they change name/height almost never. Mixing them would make the form feel heavyweight and intimidating.
+
+**Decision B · Live impact preview — AnimatePresence, not toast**
+The spec planned a "preview card" below the form that appears when form values diverge from the current profile. Implemented as an `AnimatePresence` `motion.div` that fades in. This is better than a toast (which is ephemeral) because the user can see "Target will change from 2,352 → 1,950 kcal" while still editing — before committing. The preview computes using `profileUtils.previewTargetCalories()` which mirrors the backend `calculation_engine.py` exactly (same Mifflin-St Jeor + ACTIVITY_MULTIPLIERS + floor).
+
+**Decision C · `max-w-lg mx-auto` on the form inner container (not card)**
+AG-4 says "cards must fill column width." This seems to conflict with the form having `max-w-lg mx-auto` inside the card, leaving empty side gutters. Architect verdict: **form inputs stretching to 1152px are a UX problem, not an AG-4 violation.** The card itself fills the full column (AG-4 ✅). The form inputs inside it are intentionally constrained to ~512px — the same technique used on the dashboard CalorieHeroCard with `max-w-2xl mx-auto` for the inner layout. AG-4 is about the card surface filling space, not every inner element stretching to card edges. This decision stands.
+
+---
+
+##### AG Compliance Audit
+
+| AG | Status | Note |
+|---|---|---|
+| AG-1 (two-tier width) | ✅ | `w-full px-4 pb-24` mobile, `lg:max-w-6xl` desktop — single column both |
+| AG-2 (no right panel) | ✅ | Single column. `max-w-lg mx-auto` on form inner container — not a right panel |
+| AG-3 (mobile card order) | ✅ | Identity → Stats → Goal → Macros → Update Form → Account |
+| AG-4 (cards fill width) | ✅ | Cards span full column. Form inner `max-w-lg` is intentional (see Decision C) |
+| AG-6 (animation rules) | ✅ | `motion.div width` for macro bars, `AnimatePresence` for live preview card |
+| AG-7 (shadcn defaults) | ✅ | `Input`, `Select` (Base UI), `Badge`, `Button`, `Skeleton`, `Separator`, `sonner` |
+| AG-8 (state ownership) | ✅ | SWR for profile data, local `useState` for form inputs — no Zustand (form is page-local) |
+| AG-9 (parity exceptions) | ✅ | All 6 sections visible on mobile and desktop — no desktop-only panels on this page |
+
+---
+
+##### Files Created
+
+```
+src/lib/profileUtils.ts              ← previewTargetCalories (Mifflin-St Jeor mirror),
+                                        getBmiCategory, BMI_COLOURS, ACTIVITY_LABELS,
+                                        DIET_LABELS, EXPERIENCE_LABELS,
+                                        ACTIVITY_MULTIPLIERS, ACTIVITY_OPTIONS, DIET_OPTIONS
+
+src/components/profile/
+  IdentityCard.tsx                   ← avatar + name/age/gender/height + lifestyle badges
+  StatsGrid.tsx                      ← 2-col mobile / 4-col sm+: BMI | TDEE | Target | Protein
+  WeightGoalCard.tsx                 ← goal summary + required weekly pace
+  MacrosCard.tsx                     ← P/C/F bars (fill relative to max macro, not calorie %)
+  UpdateGoalsForm.tsx                ← 5 fields, dirty tracking, AnimatePresence live preview,
+                                        select labels render from options array (not raw value),
+                                        dual mutate on save
+  AccountSection.tsx                 ← Re-do Onboarding link + dev-safe Sign Out
+
+src/app/profile/page.tsx             ← page: skeleton, 404 state, 6 sections, desktop heading
+```
+
+---
+
+##### QA Notes
+
+- Final run: **P0: 8.0/10 PASS** — macbook 8.5, ipad 8.5, pixel-7 8.0, iphone-14 8.0, iphone-se 7.5
+- iPhone SE 7.5 is structural — single-column profile with 6 sections is inherently long at 375px. Not worth sacrificing desktop quality to fix. Acceptable as P1 issue.
+- Recurring LLM note about form gutters on desktop ("empty sides inside card") — addressed in Decision C above: intentional, correct per AG-4 interpretation.
+- QA evaluator: `/Users/i750332/.langflow/.langflow-venv/bin/python3 qa/page_audit.py /profile`
 
 #### 5F — Onboarding (standalone layout — no PageShell, no BottomNav)
 
