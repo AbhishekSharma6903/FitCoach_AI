@@ -39,6 +39,9 @@ Desktop (lg+, ≥ 1024px):            max-w-6xl mx-auto px-8 pb-8
 
 **For mobile: never add any `lg:` constraints that force content narrower than full viewport.** Let mobile be full-width. `pb-24` is the only mobile-specific override needed.
 
+**Exception — Onboarding (`/onboarding`):**
+Onboarding is a standalone full-screen entry experience, not a regular app page. It uses its own layout: `min-h-dvh flex items-center justify-center px-4 py-8` with a `max-w-md` centred card. No PageShell, no TopNav, no BottomNav. Both nav components already suppress on `/onboarding` via `HIDDEN_ON_ROUTES`. This is the only AG-1 exception in the app.
+
 ---
 
 ### AG-2 · Two-Column Grid — When to Use a Right Panel
@@ -1271,9 +1274,31 @@ src/app/profile/page.tsx             ← page: skeleton, 404 state, 6 sections, 
 - Recurring LLM note about form gutters on desktop ("empty sides inside card") — addressed in Decision C above: intentional, correct per AG-4 interpretation.
 - QA evaluator: `/Users/i750332/.langflow/.langflow-venv/bin/python3 qa/page_audit.py /profile`
 
-#### 5F — Onboarding (standalone layout — no PageShell, no BottomNav)
+#### 5F — Onboarding
 
-4-step wizard: Personal → Weight Goals → Fitness → Diet → POST → redirect `/dashboard`
+**See `docs/DESIGN_OVERVIEW.md §Page 6` for full component-level spec (authoritative source).**
+
+Key rules for Phase 5F:
+
+**Standalone layout — no PageShell, no BottomNav, no TopNav.**
+Both nav components already suppress via `HIDDEN_ON_ROUTES = ["/onboarding", ...]`. The page renders `<OnboardingWizard />` directly — no layout wrapper. This is the only page with this pattern.
+
+**Single card, `max-w-md`, vertically centred.**
+Outer: `min-h-dvh flex items-center justify-center px-4 py-8 bg-[#0A0A0A]`. Card: `max-w-md w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl p-6 sm:p-8`. This is an explicit exception to AG-1 (which governs the main app content column, not standalone entry experiences).
+
+**4 steps, single POST at the end.**
+All form state held in `useState<OnboardingFormData>`. No per-step API calls. Cast numeric strings to numbers on submit. On success: `router.push("/dashboard")`.
+
+**Pre-fill for Re-do Onboarding.**
+On mount, check `useProfile()`. If a profile exists, seed form state from it. The user can change only what they want and resubmit — same endpoint handles both first-time setup and re-onboarding.
+
+**Responsive outer wrapper:** `items-start sm:items-center` — SE (375px) starts the card at top and scrolls if needed; 390px+ centres vertically. Fixed `min-h-[320px]` removed — card height is natural (content-driven). Step 4 with diet cards + 2 toggle rows would overflow a fixed-height container on SE.
+
+**AnimatePresence step transitions:** `key={step}` on a `motion.div` wrapper inside `AnimatePresence mode="wait"`. Direction is tracked with `useRef(1)` — set to `1` before `setStep(s+1)`, `-1` before `setStep(s-1)`. The ref doesn't trigger re-render (performance) but is available when the animation evaluates.
+
+**Checkbox indicator:** Use `<Check size={12} />` from lucide-react inside the toggle square — not a `✓` string character (inconsistent font sizing).
+
+**Pace hint:** Shown always (not viewport-conditional) when delta and weeks are both non-zero. The card width never changes so there's no "tablet layout" to condition on.
 
 #### 5G — Admin (low priority, build last)
 

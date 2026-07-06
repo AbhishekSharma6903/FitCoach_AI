@@ -313,6 +313,24 @@
       "avg_score": 8.1,
       "p0_pass": true,
       "timestamp": "2026-07-06T23:51:23.194641"
+    },
+    {
+      "run_id": "20260707-001745",
+      "page": "/onboarding",
+      "state": "default",
+      "p0_score": 8.33,
+      "avg_score": 8.4,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T00:18:27.670989"
+    },
+    {
+      "run_id": "20260707-001915",
+      "page": "/onboarding",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.2,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T00:19:57.466003"
     }
   ]
 }
