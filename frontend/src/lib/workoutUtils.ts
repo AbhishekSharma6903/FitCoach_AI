@@ -67,11 +67,12 @@ export function extractIntensity(notes: string | null): Intensity {
 }
 
 // ── Volume calculation ────────────────────────────────────────────────────────
+// Each entry is now one set (sets=1). Volume = sum of reps × weight per set.
 
 export function calcVolume(entries: WorkoutLogEntry[]): number {
   return entries.reduce((sum, e) => {
-    if (!e.sets || !e.reps || !e.weight_kg) return sum;
-    return sum + e.sets * e.reps * e.weight_kg;
+    if (!e.reps || !e.weight_kg) return sum;
+    return sum + e.reps * e.weight_kg;
   }, 0);
 }
 
@@ -84,24 +85,30 @@ export function formatVolume(kg: number): string {
 
 export function calcCaloriePreview(
   met: number,
-  weightKg: number,
+  bodyWeightKg: number,
   durationMin: number,
 ): number {
-  return Math.round(met * weightKg * (durationMin / 60));
+  return Math.round(met * bodyWeightKg * (durationMin / 60));
 }
 
-// Strength-specific: estimate active time from sets × reps (each rep ~3s) + rest (sets × 90s)
-// Returns kcal estimate that scales with actual volume
+// Strength calorie estimate per single set.
+// Load factor: barbell adds ~0.3 kcal per kg of external load per set.
+// Formula: base (MET × bodyWeight × active_time) × load_multiplier
+// Each set: reps × 3s active + 90s rest.
 export function calcStrengthCaloriePreview(
   met: number,
-  weightKg: number,
+  bodyWeightKg: number,
   sets: number,
   reps: number,
+  barbellKg: number = 0,
 ): number {
-  const activeTimeSec = sets * reps * 3;          // ~3s per rep
-  const restTimeSec   = sets * 90;                // ~90s rest between sets
+  const activeTimeSec = sets * reps * 3;       // ~3s per rep
+  const restTimeSec   = sets * 90;             // ~90s rest between sets
   const totalMin = (activeTimeSec + restTimeSec) / 60;
-  return Math.round(met * weightKg * (totalMin / 60));
+  const base = met * bodyWeightKg * (totalMin / 60);
+  // Load multiplier: each kg of barbell adds proportional effort
+  const loadFactor = barbellKg > 0 ? 1 + (barbellKg / bodyWeightKg) * 0.3 : 1;
+  return Math.round(base * loadFactor);
 }
 
 // ── Grouping ──────────────────────────────────────────────────────────────────

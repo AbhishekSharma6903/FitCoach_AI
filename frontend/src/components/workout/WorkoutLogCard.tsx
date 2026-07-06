@@ -11,7 +11,6 @@ import {
   isStrengthCategory,
   stripIntensityPrefix,
   calcVolume,
-  formatVolume,
 } from "@/lib/workoutUtils";
 import type { WorkoutLogEntry } from "@/types/workout";
 
@@ -35,18 +34,29 @@ export default function WorkoutLogCard({
   const isStrength = isStrengthCategory(category);
   const muscleGroup = entries[0] ? null : null; // muscle_group not in WorkoutLogEntry; use category only
 
-  // Aggregate stats
+  // Each entry = 1 performed set.
   const totalKcal = entries.reduce((s, e) => s + (e.calories_burned ?? 0), 0);
-  const setsWithData = entries.filter(e => e.sets && e.sets > 0);
-  const totalSets = setsWithData.length;
+  const setCount = entries.length;
   const totalReps = entries.reduce((s, e) => s + (e.reps ?? 0), 0);
-  const totalVolume = calcVolume(entries);
+  const totalVolume = calcVolume(entries); // reps × weight per set, summed
 
-  // Volume label — only show sets/reps when they have real data
-  const volumeLabel = isStrength
-    ? totalSets > 0
-      ? `${totalSets} sets · ${totalReps} reps${totalVolume > 0 ? ` · ${formatVolume(totalVolume)}` : ""}`
-      : entries[0]?.duration_min ? `${entries[0].duration_min} min` : "—"
+  // Volume summary: uniform sets get "3 sets × 10 reps @ 20 kg"
+  // Mixed sets (different weights or reps) get "3 sets · 28 reps"
+  const allWeights = entries.map(e => e.weight_kg ?? 0);
+  const allReps    = entries.map(e => e.reps ?? 0);
+  const uniformWeight = allWeights.every(w => w === allWeights[0]);
+  const uniformReps   = allReps.every(r => r === allReps[0]);
+  const isMixed = !uniformWeight || !uniformReps;
+
+  const avgReps   = setCount > 0 ? Math.round(totalReps / setCount) : 0;
+  const avgWeight = setCount > 0
+    ? Math.round(allWeights.reduce((s, w) => s + w, 0) / setCount * 10) / 10
+    : 0;
+
+  const volumeLabel = isStrength && setCount > 0
+    ? isMixed
+      ? `${setCount} sets × ~${avgReps} reps${avgWeight > 0 ? ` @ ~${avgWeight} kg` : " (bodyweight)"}`
+      : `${setCount} sets × ${allReps[0]} reps${allWeights[0] > 0 ? ` @ ${allWeights[0]} kg` : " (bodyweight)"}`
     : entries[0]?.duration_min ? `${entries[0].duration_min} min` : "—";
 
   // Note from first entry (strip intensity prefix)
@@ -86,7 +96,7 @@ export default function WorkoutLogCard({
         </div>
       </div>
 
-      {/* Stats row — Volume | Calories */}
+      {/* Stats row */}
       <div className="grid grid-cols-2 gap-3 py-2 border-t border-[#2A2A2A]">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
@@ -94,10 +104,9 @@ export default function WorkoutLogCard({
           </p>
           <p className="text-sm font-bold text-white">{volumeLabel}</p>
           {isStrength && totalVolume > 0 && (
-            <p className="text-[10px] text-muted-foreground/50 mt-0.5">sets × reps × kg</p>
-          )}
-          {isStrength && totalVolume === 0 && totalReps > 0 && (
-            <p className="text-[10px] text-muted-foreground/50 mt-0.5">bodyweight</p>
+            <p className="text-[10px] text-muted-foreground/50 mt-0.5">
+              {Math.round(totalVolume)} kg total{isMixed ? " (avg)" : " lifted"}
+            </p>
           )}
         </div>
         <div>
@@ -116,7 +125,7 @@ export default function WorkoutLogCard({
           <AnimatePresence initial={false}>
             {entries.map((entry, i) => (
               <WorkoutLogRow
-                key={entry.id}
+                key={`${entry.id}-${entry.reps}-${entry.weight_kg}-${entry.calories_burned}`}
                 entry={entry}
                 index={i + 1}
                 onDelete={onDeleteEntry}

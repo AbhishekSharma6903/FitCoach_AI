@@ -1148,9 +1148,288 @@ None. All data, hooks, and components are available. Modal.tsx breakpoint fix is
 > Inspiration: **Hevy** (grouped exercise cards, volume tracking), **Strong** (clean set rows), **Bevel** (big numbers, dark breathing room).
 > UI must NOT copy the legacy workout layout.
 >
-> **Phase 5C builds the core UI. Phase 6 adds wger images + proper intensity column.**
+> **Phase 5C COMPLETE (2026-07-06). See `UI_REFACTOR_PLAN_V2.md §5C` for full build log.**
 
 ---
+
+### Key Architectural Decisions (post Phase 5C)
+
+**Data model: one row per performed set**
+`sets=3, reps=10, weight=20kg` → 3 POST calls → 3 DB rows, each `sets=1, reps=10, weight_kg=20`.
+This is the correct model for individual set editing, accurate volume, and progressive overload tracking.
+Every row is independently editable (inline pencil → save). The frontend sums rows for volume/kcal.
+
+**Intensity: removed**
+The Light/Moderate/Vigorous picker is gone. Calorie estimation uses barbell load factor instead:
+`kcal = MET(3.5) × body_kg × duration × (1 + barbell_kg / body_kg × 0.3)`
+This is objective and auto-computed from data the user already enters.
+
+**Volume display: uniform vs mixed**
+- All sets same weight + reps: `3 sets × 10 reps @ 20 kg`
+- Different weights or reps after editing: `3 sets × ~9 reps @ ~13 kg` (avg, `~` prefix)
+- Secondary: `366 kg total lifted` or `366 kg total (avg)` when mixed
+
+---
+
+### Data Available
+
+| Source | Data |
+|---|---|
+| `useWorkoutLog(selectedDate)` | `DailyWorkout { entries[], total_calories_burned }` |
+| `/api/v1/workout/search?q=` | `Exercise { id, name, category, muscle_group, equipment, level, met_value }` |
+| `useTrackerStore` | Shared date store with Tracker |
+| `useProfile()` | `profile.current_weight_kg` — for calorie preview |
+
+**`WorkoutLogEntry`:** `id`, `exercise_name`, `category`, `sets` (always 1), `reps`, `weight_kg`, `duration_min`, `calories_burned`, `notes`
+
+**Each entry = 1 performed set.** Volume per exercise = `Σ reps × weight_kg` across its entries.
+
+---
+
+### AG Checklist
+
+- [x] AG-1: `w-full px-4 pb-24` mobile / `lg:max-w-6xl lg:mx-auto lg:px-8` desktop
+- [x] AG-2: Right panel at `xl:` — left=workout log, right=exercise search + session summary
+- [x] AG-3 (corrected): Mobile order — Date nav → Calories banner (when >0) → **[+ Log Exercise] CTA** → Exercise log. CTA always visible, never buried.
+- [x] AG-4: Cards use full column width
+- [x] AG-7: `Modal.tsx`, `SearchCommand`, `sonner`, `Badge`, `Skeleton` throughout
+
+---
+
+### Layout — Mobile (< 1024px)
+
+```
+┌─────────────────────────────┐
+│  [←]   Sunday, 5 July  [→] │  ← DateNavigator
+│              [Today]        │
+├─────────────────────────────┤
+│  [🔥 312 kcal burned today] │  ← orange banner — only when total > 0
+├─────────────────────────────┤
+│  [+ Log 3 Sets / Log Exercise] │  ← PRIMARY CTA — above the log
+├─────────────────────────────┤
+│  WORKOUT LOG                │
+│                             │
+│  ┌─ Push Up ──────────────┐ │
+│  │  [S]  Push Up  Strength│ │
+│  │  3 sets × 10 reps      │ │  ← uniform: exact
+│  │  @ 20 kg               │ │
+│  │  480 kg total lifted   │ │
+│  │  ─────────────────── │ │
+│  │  Set 1  10 reps  20 kg │ │  ← per-row, editable
+│  │  Set 2  10 reps  20 kg │ │
+│  │  Set 3  10 reps  20 kg │ │
+│  └────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+---
+
+### Layout — Desktop (≥ 1024px, 2-column at ≥ 1280px)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  [F] FitCoach   Home · Tracker · Workout (active) · Dishes   [D]  │
+├────────────────────────────────────────────────────────────────────┤
+│                   max-w-6xl mx-auto px-8                           │
+│  [←]  Sunday, 5 July  [→]  [Today]                               │
+│                                                                    │
+│  ┌──── left column (~800px) ───────┐  ┌── right col 300px ──────┐ │
+│  │  [🔥 312 kcal burned today]    │  │  SEARCH EXERCISES       │ │
+│  │                                │  │  [🔍 Search...]          │ │
+│  │  [+ Log 3 Sets]                │  │   ↳ contained dropdown  │ │
+│  │                                │  │  ─────────────────────  │ │
+│  │  WORKOUT LOG                   │  │  SESSION SUMMARY        │ │
+│  │  ┌─ Push Up ────────────────┐  │  │  312 kcal  ·  4 moves   │ │
+│  │  │ 3 sets × 10 reps @ 20kg │  │  │  8 sets · 80 reps       │ │
+│  │  │ 480 kg total lifted      │  │  │  [Strength ██ 80%]      │ │
+│  │  │ Set 1  10 reps  20 kg   │  │  │  [Cardio   ██ 20%]      │ │
+│  │  │ Set 2  10 reps  20 kg   │  │  └─────────────────────────┘ │
+│  │  │ Set 3  10 reps  20 kg   │  │                               │
+│  │  └──────────────────────────┘  │                               │
+│  └────────────────────────────────┘                               │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Grid:** `grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6`
+Right column: `sticky top-20 space-y-4`
+
+---
+
+### Component Breakdown
+
+---
+
+#### 1. DateNavigator
+**Reuse `src/components/tracker/DateNavigator.tsx`** — same Zustand store.
+
+---
+
+#### 2. Calories Burned Banner
+Conditional — only when `total_calories_burned > 0`. Full width, orange. See `CaloriesBurnedBanner.tsx`.
+
+---
+
+#### 3. Log Exercise CTA
+
+```tsx
+<button
+  onClick={() => setModalOpen(true)}
+  className="flex items-center justify-center gap-2 w-full lg:w-auto lg:px-6
+             h-11 rounded-xl bg-primary text-black font-semibold text-sm
+             hover:bg-green-400 active:scale-[0.98] transition-all"
+>
+  <Plus size={15} />
+  Log Exercise
+</button>
+```
+
+Positioned ABOVE the exercise log (AG-3 fix).
+
+---
+
+#### 4. WorkoutLogCard (per exercise, grouped)
+
+**Volume logic:**
+```ts
+// Uniform: all sets same reps + weight
+if (!isMixed) → "3 sets × 10 reps @ 20 kg"
+// Mixed: any set differs in reps or weight
+if (isMixed)  → "3 sets × ~9 reps @ ~13 kg"  (avg, prefixed with ~)
+// Secondary subtitle
+totalVolume > 0 → "480 kg total lifted"  (or "(avg)" when mixed)
+```
+
+**Sets table (strength only):**
+- Each entry = one row: `Set N | reps | weight` (or "bodyweight")
+- Hover/tap row → pencil icon → inline edit (reps + weight inputs → ✓ save / × cancel)
+- Edit triggers PATCH → backend recomputes calories → SWR revalidates → row remounts with fresh data
+- `key` includes `entry.reps-entry.weight_kg-entry.calories_burned` to force remount after edit
+
+---
+
+#### 5. Add Workout Modal
+
+**No intensity picker.** Fields for strength: Sets, Reps/set, Weight (kg).
+
+```
+LOG EXERCISE
+
+[🔍 Search push up, running...]
+
+── Once selected ─────────────────────
+  [S]  Push Up                    [×]
+       Strength
+
+  Sets [3]   Reps/set [10]   Weight [20]
+                                    (kg)
+
+  Will log 3 separate sets of 10 reps @ 20 kg
+
+ESTIMATED BURN
+  ≈ 14 kcal
+  3 sets × 10 reps @ 20 kg
+
+  [+ Add a note]
+
+[Log 3 Sets]  ← button label reflects set count
+```
+
+**Calorie preview formula:**
+```ts
+// Per-set: reps × 3s active + 90s rest. Load factor for barbell.
+const activeMin = (sets * reps * 3 + sets * 90) / 60
+const loadFactor = barbellKg > 0 ? 1 + (barbellKg / bodyKg) * 0.3 : 1
+kcal = MET(3.5) × bodyKg × (activeMin / 60) × loadFactor
+```
+
+**Logging flow:** `sets=N` → `for (let i=0; i<N; i++) await onAdd({sets:1, reps, weight_kg, ...})`
+Button label is dynamic: `Log 1 Set` / `Log 3 Sets` etc.
+
+---
+
+#### 6. SessionSummaryWidget (right column desktop only)
+
+```
+SESSION SUMMARY
+
+  ┌──────────────┬──────────────┐
+  │   312        │      4       │
+  │  kcal        │  exercises   │
+  └──────────────┴──────────────┘
+
+  8 sets  ·  80 reps           ← plain counts, no tonnage
+
+  BREAKDOWN
+  strength  ████████████  80%  · 250 kcal
+  cardio    ████░░░░░░░░  20%  · 62 kcal
+```
+
+- Volume tonnage removed — replaced with `N sets · M reps` (counts users actually care about)
+- Breakdown bars use `style.bgSolid` (solid colour, not `/10` opacity)
+- Category labels use `capitalize` — DB stores lowercase
+
+---
+
+### Empty States
+
+| State | Visual |
+|---|---|
+| No exercises logged | 64px dumbbell icon in `bg-[#1A1A1A]` square + "Start your workout" + body copy |
+| Search returns nothing | "No exercises found." in SearchCommand |
+
+---
+
+### Loading State
+
+```tsx
+<Skeleton className="h-10 w-full rounded-xl" />     // DateNavigator
+<Skeleton className="h-11 w-full rounded-xl" />     // CTA
+<Skeleton className="h-28 w-full rounded-2xl" />    // Exercise card
+<Skeleton className="h-20 w-full rounded-2xl" />    // Second card
+```
+
+---
+
+### Phase 6 Upgrade Path
+
+| Item | What to change in 5C code |
+|---|---|
+| `image_url` available | Swap `div` initial in `WorkoutLogCard` and search results for `<img src={image_url} className="w-9 h-9 rounded-xl object-cover" />` |
+| ~~`intensity` column~~ | **No longer needed** — intensity removed in Phase 5C |
+| Muscle diagram | New `MuscleDiagram.tsx` — wger SVG overlays on body outline |
+
+---
+
+### Files Created
+
+```
+src/lib/workoutUtils.ts
+src/components/workout/
+  CaloriesBurnedBanner.tsx
+  WorkoutLogCard.tsx
+  WorkoutLogRow.tsx
+  AddWorkoutModal.tsx
+  SessionSummaryWidget.tsx
+src/app/workout/page.tsx
+
+Backend:
+  app/schemas/workout.py       (WorkoutLogUpdate added)
+  app/services/workout_service.py  (estimate_strength_duration added)
+  app/routers/workout.py       (PATCH recomputes calories)
+
+QA:
+  qa/playwright/workout-states.js
+  qa/playwright/workout-per-set.js
+  qa/playwright/workout-edit-sync.js
+  qa/evaluate_workout_states.py
+  qa/evaluate_edit_sync.py
+```
+
+---
+
+> ⚠️ **SUPERSEDED — Pre-build spec below (2026-07-05). Phase 5C is complete. See updated spec above.**
+> Items below are kept for historical reference only. Do not implement from this section.
+> Key reversals: intensity picker removed; sets=N → N DB rows (not one row with sets=N).
 
 ### Phase 6 Pre-decisions (affects Phase 5C layout)
 
