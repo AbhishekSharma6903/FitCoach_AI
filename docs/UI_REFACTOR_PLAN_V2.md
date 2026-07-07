@@ -1793,7 +1793,7 @@ src/components/tracker/DateNavigator.tsx  ← motion.div drag="x" wrapper on nav
 - Profile: **P0: 8.0 PASS** — stagger on 6 sections confirmed by audit
 - Dishes: **P0: 8.0 PASS** — stagger on dish cards confirmed
 - Onboarding: **P0: 8.33 PASS** — unchanged (no stagger added, correct per spec)
-- Lighthouse Accessibility: not yet run (requires full headless Chrome audit pipeline — deferred to Phase 8 when the app is deployed or running in a stable environment)
+- Lighthouse Accessibility: **100/100 on all 5 pages** ✅ — run 2026-07-07 against localhost:3001 with `npx lighthouse@13.4.0 --only-categories=accessibility`. See Phase 8 / Lighthouse section below for full fix log.
 - TypeScript: `tsc --noEmit` clean throughout
 
 #### Pre-work: Confirmed baseline before Phase 7 starts
@@ -2040,6 +2040,39 @@ src/components/tracker/DateNavigator.tsx   ← drag="x" swipe to change date
 - **Reduced motion:** Test manually: macOS System Preferences → Accessibility → Reduce Motion → ON. All animations should stop.
 - **Swipe:** Playwright `devices['iPhone 14']` context — simulate touch swipe on DateNavigator, confirm date changes.
 
+---
+
+### Phase 8 — Lighthouse Accessibility Audit ✅ DONE (2026-07-07)
+
+> Run 2026-07-07. `npx lighthouse@13.4.0 --only-categories=accessibility` against `localhost:3001`.
+> All 5 pages hit **100/100**. Zero failing audits.
+
+**Before / After:**
+
+| Page | Before | After |
+|---|---|---|
+| `/dashboard` | 94 | **100** |
+| `/tracker` | 90 | **100** |
+| `/workout` | 98 | **100** |
+| `/dishes` | 94 | **100** |
+| `/profile` | 83 | **100** |
+
+**Fixes applied (14 files):**
+
+| Audit | Fix | Files |
+|---|---|---|
+| `landmark-one-main` | `PageShell`: outer `<div>` → `<main>` | `PageShell.tsx` |
+| `button-name` (tracker) | `Tabs.Tab`: added `aria-label={label}` — tab text is `hidden lg:block` so mobile has no visible name | `MealTabs.tsx` |
+| `button-name` (profile) | `SelectTrigger`: added `aria-label="Activity level"` + `aria-label="Diet type"` | `UpdateGoalsForm.tsx` |
+| `label` (profile) | Numeric inputs: added `id` + `htmlFor` to 3 weight/timeline inputs | `UpdateGoalsForm.tsx` |
+| `color-contrast` | `text-[10px]` elements: `/40` and `/50` opacity → `/80` minimum. `text-[9px]` → `text-[10px]`. BottomNav inactive: `#4B5563` → `#9CA3AF` (gray-400) | 10 component files |
+
+**Why `/80` not `/70`:** WCAG AA requires 4.5:1 for text under 18pt normal / 14pt bold. `text-[10px]` (7.5pt) is well below the "large text" threshold. Even `/70` failed the 4.5:1 check against `#111111`. `/80` passes.
+
+**`tsc --noEmit` clean** throughout.
+
+---
+
 
 ## Part 4 — Feature Inventory (Complete Reference)
 
@@ -2277,7 +2310,7 @@ Build page → python3 qa/page_audit.py /{page} → read issues → fix → repe
 | Phase 2 (bottom nav + shell) | P0 ≥ 7.5 overall                         | ✅ Achieved                                    |
 | Phase 5 (all pages rebuilt)  | P0 ≥ 8.5 on all pages                    | ✅ All pages 8.0–8.17 with data (empty-state variance acknowledged) |
 | Phase 6 (wger images)        | P0 ≥ 8.5 /workout with real data         | ✅ P0 = 8.33/10 (iphone-14: 8.5, macbook-13: 9.0) |
-| Phase 7 (final polish)       | P0 ≥ 9.0, Lighthouse Accessibility ≥ 90  | P0 held at 8.0–8.33. Lighthouse pending (needs stable deployment). ARIA + reducedMotion + stagger completed. |
+| Phase 7 (final polish)       | P0 ≥ 9.0, Lighthouse Accessibility ≥ 90  | P0 held at 8.0–8.33. **Lighthouse: 100/100** on all 5 pages (run 2026-07-07). ARIA + reducedMotion + stagger completed. |
 
 ---
 
