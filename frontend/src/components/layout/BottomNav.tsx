@@ -7,16 +7,18 @@ import {
   Utensils,
   Dumbbell,
   ChefHat,
+  TrendingUp,
   User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/tracker",   icon: Utensils,        label: "Tracker" },
-  { href: "/workout",   icon: Dumbbell,        label: "Workout" },
-  { href: "/dishes",    icon: ChefHat,         label: "Dishes" },
-  { href: "/profile",   icon: User,            label: "Profile" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Home"     },
+  { href: "/tracker",   icon: Utensils,        label: "Tracker"  },
+  { href: "/workout",   icon: Dumbbell,        label: "Workout"  },
+  { href: "/dishes",    icon: ChefHat,         label: "Dishes"   },
+  { href: "/progress",  icon: TrendingUp,      label: "Progress" },
+  { href: "/profile",   icon: User,            label: "Profile"  },
 ] as const;
 
 const HIDDEN_ON_ROUTES = ["/onboarding", "/sign-in", "/sign-up"];

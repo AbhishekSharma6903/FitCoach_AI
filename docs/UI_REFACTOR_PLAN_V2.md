@@ -2073,10 +2073,17 @@ src/components/tracker/DateNavigator.tsx   ← drag="x" swipe to change date
 
 ---
 
-### Phase 9 — Progress Page (`/progress`)
+### Phase 9 — Progress Page (`/progress`) ✅ DONE (2026-07-07)
 
-> **Updated 2026-07-07. Architect spec complete. Pending build.**
+> **Completed 2026-07-07.** P0 = 8.33/10 (iphone-14: 8.5, macbook-13: 9.0).
 > **See `docs/DESIGN_OVERVIEW.md §Page 8` for full component-level UI decisions.**
+
+**Build corrections vs spec:**
+- Stat card labels shortened to single words (`Weight`, `Workouts`, `kcal`) — prevents wrapping at 375px
+- `ProgressStatCard` value: `text-2xl` → `text-lg` — prevents truncation of `+3.05 kg` in narrow 3-col grid
+- `ConsistencyStrip` + `TopExercisesList` placed in `grid-cols-1 lg:grid-cols-2` — side-by-side on desktop, reduces macbook scroll depth from 3 → 2
+
+**`tsc --noEmit` clean. QA P0: 8.33 ✅**
 
 Route: `/progress` — 6th nav item in both BottomNav and TopNav. Icon: `TrendingUp`.
 
@@ -2098,23 +2105,24 @@ Client-side aggregation only — no new backend routes. Data volumes (weight: <1
 ##### Frontend Work
 
 **New hooks:**
-- `useWeightHistory(days)` — SWR wrapper for `GET /weight/log?days=N`
-- `useWorkoutHistory(days)` — SWR wrapper for `GET /workout/history?days=N`
+- `useWeightHistory(days)` — SWR wrapper for `GET /weight/log?days=N` returning full `WeightHistoryRead`. _Note: separate from existing `useWeightLog` which hits a different path._
+- `useWorkoutHistory(days)` — SWR wrapper for `GET /workout/history?days=N` returning `WorkoutLogRead[]`. Define frontend type in `types/workout.ts` — check if `WorkoutLogEntry` covers the shape before adding a new type.
 
 **New lib:**
-- `src/lib/progressUtils.ts` — pure aggregation functions: `aggregateByDay`, `groupByCategory`, `topExercises`, `buildWeekGrid`. Mirrors the `dashboardUtils.ts` / `workoutUtils.ts` pattern.
+- `src/lib/progressUtils.ts` — pure functions: `weightEntriesToPoints` (type mapping), `aggregateByDay`, `normalisedCategory` (maps 60+ category strings to strength/cardio/other buckets), `categoryBreakdown`, `uniqueWorkoutDays`, `topExercises`, `buildWeekGrid`.
 
 **New components:**
-- `WorkoutVolumeChart` — stacked bar chart, kcal/day by category (strength=green, cardio=blue, other=purple)
-- `ConsistencyStrip` — 4-week dot grid (Mon–Sun per row; green dot = workout logged; empty circle = rest day)
-- `TopExercisesList` — top 5 exercises by frequency, reuses `ExerciseImage` thumbnail
+- `ProgressStatCard` — stat tile accepting `value: string` (pre-formatted, e.g. `"−1.8 kg"`) and optional `valueColor`. NOT a reuse of `AdminStatCard` (which only accepts `number`).
+- `WorkoutVolumeChart` — stacked bar chart, kcal/day by category bucket (strength=green, cardio=blue, other=purple). Uses `progressUtils.normalisedCategory` mapping.
+- `ConsistencyStrip` — 4-week dot grid (Mon–Sun per row; ISO week start)
+- `TopExercisesList` — top 5 by frequency; reuses `ExerciseImage` from `src/components/workout/ExerciseImage.tsx`
 
 **Modified components:**
-- `WeightChart` — add `variant="full"` prop: `h-56` height, pace text suppressed. Dashboard passes no variant (keeps current behaviour).
-- `BottomNav` — 6th tab: Progress / TrendingUp
-- `TopNav` — 6th centre link: Progress / TrendingUp
+- `WeightChart` — `variant?: "full"` prop: `h-56`, pace text off, empty-state overridden to show a prompt instead of `null`. Dashboard passes no prop (unchanged behaviour).
+- `BottomNav` — 6th tab: Progress / TrendingUp (before Profile)
+- `TopNav` — 5th centre link: "Progress" text-only (NO icon — TopNav links are text-only per existing pattern)
 
-**Page structure (top to bottom):**
+**Page hooks order:** `useProfile()` + `useWeightHistory(range)` + `useWorkoutHistory(range)`. Profile needed for `goalWeightKg` and `timeToGoalWeeks` passed to `WeightChart`.
 1. Header with range toggle (30d / 90d) — local `useState`, no Zustand
 2. Overview stat cards (3×): weight change · workout days · kcal burned
 3. Weight trend — extended `WeightChart`
@@ -2385,7 +2393,7 @@ Build page → python3 qa/page_audit.py /{page} → read issues → fix → repe
 | Phase 5G (admin)             | P0 ≥ 8.0 all three admin pages           | ✅ /admin: 8.0, /admin/users: 8.0, /admin/food: 8.17 |
 | Phase 6 (wger images)        | P0 ≥ 8.5 /workout with real data         | ✅ P0 = 8.33/10 (iphone-14: 8.5, macbook-13: 9.0) |
 | Phase 7 (final polish)       | P0 ≥ 9.0, Lighthouse Accessibility ≥ 90  | P0 held at 8.0–8.33. **Lighthouse: 100/100** on all 5 pages (run 2026-07-07). |
-| Phase 9 (progress page)      | P0 ≥ 8.0 /progress with real data        | Pending build |
+| Phase 9 (progress page)      | P0 ≥ 8.0 /progress with real data        | ✅ P0 = 8.33/10 (iphone-14: 8.5, macbook-13: 9.0) |
 
 ---
 

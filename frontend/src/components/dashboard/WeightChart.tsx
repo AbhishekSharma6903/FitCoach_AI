@@ -19,6 +19,13 @@ interface WeightChartProps {
   entries: WeightPoint[];
   goalWeightKg: number;
   timeToGoalWeeks: number;
+  /**
+   * "full" — /progress page variant.
+   * · taller chart (h-56)
+   * · pace text suppressed
+   * · shows prompt card when entries < 2 (instead of returning null)
+   */
+  variant?: "full";
 }
 
 function formatChartDate(dateStr: string): string {
@@ -30,23 +37,37 @@ export default function WeightChart({
   entries,
   goalWeightKg,
   timeToGoalWeeks,
+  variant,
 }: WeightChartProps) {
-  if (entries.length === 0) return null; // empty state: hide card entirely
+  const isFull = variant === "full";
+
+  // Dashboard: hide entirely when empty. Progress: show a prompt.
+  if (entries.length < 2) {
+    if (!isFull) return null;
+    return (
+      <Card padding="md">
+        <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-2">
+          Weight Trend
+        </p>
+        <p className="text-sm text-muted-foreground py-6 text-center">
+          Log your weight from the Dashboard to start seeing your trend.
+        </p>
+      </Card>
+    );
+  }
 
   const trend = computeWeeklyTrend(entries);
-  const pace = computePaceVsGoal(entries, goalWeightKg, timeToGoalWeeks);
+  const pace  = isFull ? null : computePaceVsGoal(entries, goalWeightKg, timeToGoalWeeks);
 
   const chartData = entries.map((e) => ({
     date: formatChartDate(e.log_date),
     weight: e.weight_kg,
   }));
 
-  // Y-axis domain: min/max with small padding
   const weights = entries.map((e) => e.weight_kg);
   const yMin = Math.floor(Math.min(...weights, goalWeightKg) - 1);
   const yMax = Math.ceil(Math.max(...weights) + 1);
 
-  // Trend text
   let trendText: string | null = null;
   let trendColor = "text-muted-foreground";
   if (trend !== null) {
@@ -62,9 +83,8 @@ export default function WeightChart({
     }
   }
 
-  // Pace text
   let paceText: string | null = null;
-  let paceColor = "text-muted-foreground/70";
+  let paceColor = "text-muted-foreground/80";
   if (pace !== null) {
     const suffix =
       pace.deltaWeeks > 0
@@ -73,7 +93,7 @@ export default function WeightChart({
         ? `${Math.abs(pace.deltaWeeks)} weeks behind ⚠️`
         : "on schedule";
     paceText = `At current pace: goal in ~${pace.weeksAtPace} weeks · ${suffix}`;
-    paceColor = pace.deltaWeeks >= 0 ? "text-primary/70" : "text-amber-400/70";
+    paceColor = pace.deltaWeeks >= 0 ? "text-primary/80" : "text-amber-400/80";
   }
 
   return (
@@ -82,7 +102,6 @@ export default function WeightChart({
         Weight Trend
       </p>
 
-      {/* Trend + pace insight lines */}
       {trendText && (
         <p className={cn("text-xs font-medium", trendColor)}>{trendText}</p>
       )}
@@ -90,8 +109,7 @@ export default function WeightChart({
         <p className={cn("text-[10px]", paceColor)}>{paceText}</p>
       )}
 
-      {/* Chart */}
-      <div className="h-44">
+      <div className={isFull ? "h-56" : "h-44"}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#2A2A2A" vertical={false} />
@@ -119,7 +137,6 @@ export default function WeightChart({
               }}
               formatter={(v) => [`${v ?? ""} kg`, "Weight"]}
             />
-            {/* Goal reference line */}
             <ReferenceLine
               y={goalWeightKg}
               stroke="#22c55e"
