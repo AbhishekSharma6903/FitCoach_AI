@@ -1,8 +1,9 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Tabs } from "@base-ui/react/tabs";
 import { Coffee, Sun, Moon, Cookie, Plus } from "lucide-react";
+import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/lib/motionVariants";
 import FoodLogEntryRow from "./FoodLogEntry";
 import { cn } from "@/lib/utils";
 import type { FoodLogEntry } from "@/types/nutrition";
@@ -95,13 +96,21 @@ export default function MealTabs({
                 <EmptyMealState slot={id} onAdd={() => onAdd(id)} />
               ) : (
                 <>
-                  <AnimatePresence initial={false}>
-                    <div className="divide-y divide-[#2A2A2A]">
+                  {/* Stagger on initial load; AnimatePresence handles individual add/remove */}
+                  <motion.div
+                    className="divide-y divide-[#2A2A2A]"
+                    variants={STAGGER_CONTAINER}
+                    initial="hidden"
+                    animate="show"
+                  >
+                    <AnimatePresence initial={false}>
                       {slotEntries.map((entry) => (
-                        <FoodLogEntryRow key={entry.id} entry={entry} onDelete={onDelete} />
+                        <motion.div key={entry.id} variants={STAGGER_ITEM}>
+                          <FoodLogEntryRow entry={entry} onDelete={onDelete} />
+                        </motion.div>
                       ))}
-                    </div>
-                  </AnimatePresence>
+                    </AnimatePresence>
+                  </motion.div>
                   <div className="border-t border-[#2A2A2A] px-4 py-3">
                     <button
                       onClick={() => onAdd(id)}

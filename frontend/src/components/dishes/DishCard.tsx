@@ -61,7 +61,7 @@ export default function DishCard({ dish, onEdit, onDelete }: DishCardProps) {
             className="w-10 h-10 flex items-center justify-center rounded-xl
                        text-muted-foreground/40 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
           >
-            <Pencil size={14} />
+            <Pencil size={14} aria-hidden="true" />
           </button>
           <button
             onClick={onDelete}
@@ -69,7 +69,7 @@ export default function DishCard({ dish, onEdit, onDelete }: DishCardProps) {
             className="w-10 h-10 flex items-center justify-center rounded-xl
                        text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
-            <Trash2 size={14} />
+            <Trash2 size={14} aria-hidden="true" />
           </button>
         </div>
       </div>

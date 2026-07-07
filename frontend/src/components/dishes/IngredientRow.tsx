@@ -87,7 +87,7 @@ export default function IngredientRow({
         className="w-8 h-8 flex items-center justify-center rounded-lg
                    text-muted-foreground/30 hover:text-red-400 transition-colors shrink-0"
       >
-        <X size={14} />
+        <X size={14} aria-hidden="true" />
       </button>
     </motion.div>
   );

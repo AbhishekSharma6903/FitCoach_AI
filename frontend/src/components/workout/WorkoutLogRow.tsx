@@ -96,14 +96,14 @@ export default function WorkoutLogRow({ entry, index, onDelete, onUpdate }: Work
             aria-label="Save"
             className="flex h-6 w-6 items-center justify-center rounded text-primary hover:text-green-400 transition-colors"
           >
-            <Check size={13} />
+            <Check size={13} aria-hidden="true" />
           </button>
           <button
             onClick={handleCancel}
             aria-label="Cancel"
             className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/40 hover:text-muted-foreground transition-colors"
           >
-            <X size={12} />
+            <X size={12} aria-hidden="true" />
           </button>
         </div>
       ) : (
@@ -131,7 +131,7 @@ export default function WorkoutLogRow({ entry, index, onDelete, onUpdate }: Work
                 className="flex h-6 w-6 items-center justify-center rounded
                            text-muted-foreground/30 hover:text-blue-400 transition-colors"
               >
-                <Pencil size={11} />
+                <Pencil size={11} aria-hidden="true" />
               </button>
             )}
             <button
@@ -140,7 +140,7 @@ export default function WorkoutLogRow({ entry, index, onDelete, onUpdate }: Work
               className="flex h-6 w-6 items-center justify-center rounded
                          text-muted-foreground/30 hover:text-red-400 transition-colors"
             >
-              <X size={12} />
+              <X size={12} aria-hidden="true" />
             </button>
           </div>
         </>

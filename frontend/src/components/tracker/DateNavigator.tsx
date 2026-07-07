@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useTrackerStore } from "@/store/useTrackerStore";
@@ -91,7 +92,17 @@ export default function DateNavigator() {
 
   return (
     <div className="relative" ref={calRef}>
-      {/* ── Navigation bar ─────────────────────────────────────────── */}
+      {/* ── Navigation bar — swipeable on mobile ──────────────────── */}
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        className="touch-pan-y select-none"
+        onDragEnd={(_, info) => {
+          if (info.offset.x < -50 && !isToday()) goToNextDay();
+          if (info.offset.x >  50) goToPrevDay();
+        }}
+      >
       <div className="flex items-center justify-between gap-2 py-1">
         {/* Prev arrow */}
         <button
@@ -99,7 +110,7 @@ export default function DateNavigator() {
           aria-label="Previous day"
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111111] border border-[#2A2A2A] text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A] transition-colors active:scale-95 shrink-0"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={18} aria-hidden="true" />
         </button>
 
         {/* Centre: date + calendar trigger */}
@@ -134,9 +145,10 @@ export default function DateNavigator() {
               : "bg-[#111111] border-[#2A2A2A] text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A]",
           )}
         >
-          <ChevronRight size={18} />
+          <ChevronRight size={18} aria-hidden="true" />
         </button>
       </div>
+      </motion.div>
 
       {/* ── Calendar popover ───────────────────────────────────────── */}
       {calOpen && (
@@ -152,7 +164,7 @@ export default function DateNavigator() {
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A] transition-colors"
               aria-label="Previous month"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
             <span className="text-sm font-semibold text-foreground">
               {MONTHS[viewMonth]} {viewYear}
@@ -168,7 +180,7 @@ export default function DateNavigator() {
               )}
               aria-label="Next month"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
 
@@ -225,7 +237,7 @@ export default function DateNavigator() {
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Close calendar"
             >
-              <X size={12} />
+              <X size={12} aria-hidden="true" />
               Close
             </button>
           </div>
