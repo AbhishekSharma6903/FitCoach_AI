@@ -48,7 +48,7 @@ export default function FoodLogEntry({ entry, onDelete }: FoodLogEntryProps) {
           aria-label={`Delete ${entry.food_name}`}
           className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
         >
-          <X size={13} />
+          <X size={13} aria-hidden="true" />
         </button>
       </div>
     </motion.div>

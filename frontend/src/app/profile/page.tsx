@@ -1,8 +1,8 @@
 "use client";
 
+import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Card from "@/components/ui/Card";
-import { Button } from "@/components/ui/button";
 import PageShell from "@/components/layout/PageShell";
 import IdentityCard from "@/components/profile/IdentityCard";
 import StatsGrid from "@/components/profile/StatsGrid";
@@ -10,6 +10,7 @@ import WeightGoalCard from "@/components/profile/WeightGoalCard";
 import MacrosCard from "@/components/profile/MacrosCard";
 import UpdateGoalsForm from "@/components/profile/UpdateGoalsForm";
 import AccountSection from "@/components/profile/AccountSection";
+import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/lib/motionVariants";
 import { useProfile } from "@/hooks/useProfile";
 import { useDashboard } from "@/hooks/useDashboard";
 import Link from "next/link";
@@ -61,17 +62,39 @@ export default function ProfilePage() {
         )}
 
         {profile && (
-          <>
-            {/* Desktop page heading (mobile gets it from PageShell title) */}
-            <h1 className="hidden lg:block text-2xl font-bold text-foreground">Profile</h1>
+          <motion.div
+            className="space-y-5"
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            animate="show"
+          >
+            {/* Desktop page heading */}
+            <motion.h1
+              variants={STAGGER_ITEM}
+              className="hidden lg:block text-2xl font-bold text-foreground"
+            >
+              Profile
+            </motion.h1>
 
-            <IdentityCard profile={profile} />
-            <StatsGrid profile={profile} />
-            <WeightGoalCard profile={profile} />
-            <MacrosCard profile={profile} />
-            <UpdateGoalsForm profile={profile} onSaved={handleSaved} />
-            <AccountSection />
-          </>
+            <motion.div variants={STAGGER_ITEM}>
+              <IdentityCard profile={profile} />
+            </motion.div>
+            <motion.div variants={STAGGER_ITEM}>
+              <StatsGrid profile={profile} />
+            </motion.div>
+            <motion.div variants={STAGGER_ITEM}>
+              <WeightGoalCard profile={profile} />
+            </motion.div>
+            <motion.div variants={STAGGER_ITEM}>
+              <MacrosCard profile={profile} />
+            </motion.div>
+            <motion.div variants={STAGGER_ITEM}>
+              <UpdateGoalsForm profile={profile} onSaved={handleSaved} />
+            </motion.div>
+            <motion.div variants={STAGGER_ITEM}>
+              <AccountSection />
+            </motion.div>
+          </motion.div>
         )}
 
       </div>

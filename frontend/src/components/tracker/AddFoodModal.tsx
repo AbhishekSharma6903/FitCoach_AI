@@ -152,7 +152,7 @@ export default function AddFoodModal({
               aria-label="Remove selected food"
               className="text-primary/50 hover:text-primary shrink-0"
             >
-              <X size={13} />
+              <X size={13} aria-hidden="true" />
             </button>
           </div>
         )}

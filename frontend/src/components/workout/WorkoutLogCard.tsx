@@ -91,7 +91,7 @@ export default function WorkoutLogCard({
             className="text-muted-foreground/30 hover:text-red-400 transition-colors
                        flex h-6 w-6 items-center justify-center rounded"
           >
-            <X size={13} />
+            <X size={13} aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -170,7 +170,7 @@ export default function AddWorkoutModal({
               aria-label="Remove exercise"
               className="text-muted-foreground/40 hover:text-muted-foreground transition-colors shrink-0"
             >
-              <X size={13} />
+              <X size={13} aria-hidden="true" />
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { MotionConfig } from "motion/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthProvider from "@/components/AuthProvider";
 import TopNav from "@/components/layout/TopNav";
@@ -32,13 +33,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const content = (
     <html lang="en" className={`${inter.variable} dark`} suppressHydrationWarning>
       <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
-        <TooltipProvider>
-          <AuthProvider>
-            <TopNav />    {/* desktop lg+ only — hidden on mobile */}
-            {children}
-            <BottomNav /> {/* mobile/tablet < lg — hidden on desktop */}
-          </AuthProvider>
-        </TooltipProvider>
+        <MotionConfig reducedMotion="user">
+          <TooltipProvider>
+            <AuthProvider>
+              <TopNav />    {/* desktop lg+ only — hidden on mobile */}
+              {children}
+              <BottomNav /> {/* mobile/tablet < lg — hidden on desktop */}
+            </AuthProvider>
+          </TooltipProvider>
+        </MotionConfig>
       </body>
     </html>
   );

@@ -57,7 +57,7 @@ export default function PageShell({
                 aria-label="Go back"
                 className="rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-[#1A1A1A] hover:text-foreground"
               >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={22} aria-hidden="true" />
               </Link>
             )}
 

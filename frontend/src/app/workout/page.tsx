@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { Plus, Dumbbell } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
+import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/lib/motionVariants";
 import { toast } from "sonner";
 import PageShell from "@/components/layout/PageShell";
 import DateNavigator from "@/components/tracker/DateNavigator";
@@ -84,18 +85,26 @@ export default function WorkoutPage() {
           <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
             Workout Log
           </p>
-          <AnimatePresence initial={false}>
-            {Array.from(grouped.entries()).map(([name, exEntries]) => (
-              <WorkoutLogCard
-                key={name}
-                exerciseName={name}
-                entries={exEntries}
-                onDeleteEntry={deleteEntry}
-                onUpdateEntry={updateEntry}
-                onDeleteAll={() => handleDeleteAll(name)}
-              />
-            ))}
-          </AnimatePresence>
+          <motion.div
+            className="space-y-4"
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            animate="show"
+          >
+            <AnimatePresence initial={false}>
+              {Array.from(grouped.entries()).map(([name, exEntries]) => (
+                <motion.div key={name} variants={STAGGER_ITEM}>
+                  <WorkoutLogCard
+                    exerciseName={name}
+                    entries={exEntries}
+                    onDeleteEntry={deleteEntry}
+                    onUpdateEntry={updateEntry}
+                    onDeleteAll={() => handleDeleteAll(name)}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         </div>
       )}
     </div>

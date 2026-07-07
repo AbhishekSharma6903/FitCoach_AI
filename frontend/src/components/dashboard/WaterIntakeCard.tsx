@@ -178,7 +178,7 @@ export default function WaterIntakeCard() {
                     aria-label={`Remove ${mlLabel(entry.amount_ml)}`}
                     className="text-muted-foreground/30 hover:text-red-400 transition-colors p-0.5"
                   >
-                    <X size={11} />
+                    <X size={11} aria-hidden="true" />
                   </button>
                 </div>
               ))}

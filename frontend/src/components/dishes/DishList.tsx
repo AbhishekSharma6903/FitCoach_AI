@@ -1,9 +1,11 @@
 "use client";
 
+import { motion } from "motion/react";
 import { Plus, ChefHat, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import DishCard from "./DishCard";
+import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/lib/motionVariants";
 import type { CustomDishListItem } from "@/types/dish";
 
 interface DishListProps {
@@ -115,14 +117,22 @@ export default function DishList({
           <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground">
             My Dishes ({filtered.length})
           </p>
-          {filtered.map(dish => (
-            <DishCard
-              key={dish.id}
-              dish={dish}
-              onEdit={() => onEdit(dish.id)}
-              onDelete={() => onDeleteRequest(dish)}
-            />
-          ))}
+          <motion.div
+            className="space-y-3"
+            variants={STAGGER_CONTAINER}
+            initial="hidden"
+            animate="show"
+          >
+            {filtered.map(dish => (
+              <motion.div key={dish.id} variants={STAGGER_ITEM}>
+                <DishCard
+                  dish={dish}
+                  onEdit={() => onEdit(dish.id)}
+                  onDelete={() => onDeleteRequest(dish)}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       )}
     </div>

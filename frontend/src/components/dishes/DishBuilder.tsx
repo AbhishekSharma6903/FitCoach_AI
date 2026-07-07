@@ -129,7 +129,7 @@ export default function DishBuilder({
                      bg-[#1A1A1A] border border-[#2A2A2A]
                      text-muted-foreground hover:text-foreground transition-colors shrink-0"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={16} aria-hidden="true" />
         </button>
         <h2 className="text-lg font-bold text-foreground">{title}</h2>
       </div>

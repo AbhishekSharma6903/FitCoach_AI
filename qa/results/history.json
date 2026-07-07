@@ -358,6 +358,69 @@
       "avg_score": 8.0,
       "p0_pass": true,
       "timestamp": "2026-07-07T10:47:14.348338"
+    },
+    {
+      "run_id": "20260707-113742",
+      "page": "/tracker",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.0,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T11:38:36.242241"
+    },
+    {
+      "run_id": "20260707-113849",
+      "page": "/dashboard",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.0,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T11:39:45.568649"
+    },
+    {
+      "run_id": "20260707-114034",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 7.83,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-07T11:41:15.735056"
+    },
+    {
+      "run_id": "20260707-114116",
+      "page": "/profile",
+      "state": "default",
+      "p0_score": 8.0,
+      "avg_score": 8.1,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T11:42:12.128644"
+    },
+    {
+      "run_id": "20260707-114213",
+      "page": "/dishes",
+      "state": "default",
+      "p0_score": 8.0,
+      "avg_score": 8.0,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T11:42:59.390942"
+    },
+    {
+      "run_id": "20260707-114300",
+      "page": "/onboarding",
+      "state": "default",
+      "p0_score": 8.33,
+      "avg_score": 8.5,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T11:43:39.987469"
+    },
+    {
+      "run_id": "20260707-114419",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 7.83,
+      "avg_score": 7.5,
+      "p0_pass": false,
+      "timestamp": "2026-07-07T11:45:01.939142"
     }
   ]
 }
