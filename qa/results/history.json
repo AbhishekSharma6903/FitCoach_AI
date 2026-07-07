@@ -421,6 +421,42 @@
       "avg_score": 7.5,
       "p0_pass": false,
       "timestamp": "2026-07-07T11:45:01.939142"
+    },
+    {
+      "run_id": "20260707-153935",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 7.9,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T15:40:33.383767"
+    },
+    {
+      "run_id": "20260707-161238",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 8.33,
+      "avg_score": 8.1,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T16:13:38.613303"
+    },
+    {
+      "run_id": "20260707-162837",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 8.0,
+      "avg_score": 7.7,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T16:29:24.279464"
+    },
+    {
+      "run_id": "20260707-163143",
+      "page": "/workout",
+      "state": "default",
+      "p0_score": 8.33,
+      "avg_score": 8.1,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T16:32:33.799415"
     }
   ]
 }

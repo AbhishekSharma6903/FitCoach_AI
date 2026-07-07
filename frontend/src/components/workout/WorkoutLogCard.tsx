@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Card from "@/components/ui/Card";
 import WorkoutLogRow from "./WorkoutLogRow";
+import ExerciseImage from "./ExerciseImage";
+import MuscleMap, { parseMuscleIds } from "./MuscleMap";
 import { cn } from "@/lib/utils";
 import {
   getCategoryStyle,
@@ -32,7 +34,9 @@ export default function WorkoutLogCard({
   const category = entries[0]?.category ?? "Strength";
   const style = getCategoryStyle(category);
   const isStrength = isStrengthCategory(category);
-  const muscleGroup = entries[0] ? null : null; // muscle_group not in WorkoutLogEntry; use category only
+  // Phase 6: parse muscle IDs from first entry (same exercise across all sets)
+  const primaryMuscleIds   = parseMuscleIds(entries[0]?.primary_muscle_ids);
+  const secondaryMuscleIds = parseMuscleIds(entries[0]?.secondary_muscle_ids);
 
   // Each entry = 1 performed set.
   const totalKcal = entries.reduce((s, e) => s + (e.calories_burned ?? 0), 0);
@@ -68,13 +72,13 @@ export default function WorkoutLogCard({
       {/* Header — two rows, no overflow at 375px */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          {/* Category initial square — Phase 6: replace with <img> */}
-          <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-black text-sm",
-            style.bg, style.text,
-          )}>
-            {exerciseName[0]?.toUpperCase() ?? "?"}
-          </div>
+          {/* Phase 6: exercise thumbnail (falls back to coloured initial) */}
+          <ExerciseImage
+            name={exerciseName}
+            imageUrl={entries[0]?.image_url_thumb}
+            category={category}
+            size="sm"
+          />
           <div className="min-w-0">
             <p className="text-sm font-bold text-foreground truncate">{exerciseName}</p>
             <p className="text-xs text-muted-foreground">{category}</p>
@@ -118,6 +122,19 @@ export default function WorkoutLogCard({
           </p>
         </div>
       </div>
+
+      {/* Phase 6: muscle diagram — only when muscle data is available */}
+      {(primaryMuscleIds.length > 0 || secondaryMuscleIds.length > 0) && (
+        <div className="border-t border-[#2A2A2A] pt-3 space-y-1.5">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Muscles worked
+          </p>
+          <MuscleMap
+            primaryIds={primaryMuscleIds}
+            secondaryIds={secondaryMuscleIds}
+          />
+        </div>
+      )}
 
       {/* Sets table (strength only) */}
       {isStrength && entries.length > 0 && (

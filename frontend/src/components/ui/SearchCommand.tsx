@@ -26,7 +26,8 @@ export interface SearchResultItem {
   badge?: string;
   badgeColor?: string;   // Tailwind text color class
   rightLabel?: string;
-  indicator?: string;    // Tailwind bg color class for dot
+  indicator?: string;    // Tailwind bg color class for dot (shown when no thumbnail)
+  thumbnail?: string;    // Phase 6: exercise image URL (replaces indicator dot)
 }
 
 interface SearchCommandProps<T> {
@@ -154,9 +155,19 @@ export default function SearchCommand<T>({
                       onSelect={() => handleSelect(item)}
                       className="flex items-center gap-3 px-3 py-2.5 cursor-pointer data-[selected=true]:bg-[#222222] rounded-lg mx-1 my-0.5"
                     >
-                      {r.indicator && (
+                      {/* Phase 6: thumbnail image when available, else colour dot */}
+                      {r.thumbnail ? (
+                        <img
+                          src={r.thumbnail}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          className="w-7 h-7 rounded-lg object-cover shrink-0"
+                          onError={(e) => { e.currentTarget.style.display = "none"; }}
+                        />
+                      ) : r.indicator ? (
                         <span className={cn("w-2 h-2 rounded-full shrink-0", r.indicator)} />
-                      )}
+                      ) : null}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-medium text-foreground truncate">

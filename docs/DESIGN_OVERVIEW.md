@@ -3552,6 +3552,206 @@ None. Backend `PUT /api/v1/profile` exists and recomputes all derived values. Ho
 
 ---
 
+## Phase 6: wger Exercise Images + Muscle Diagrams
+
+> Applies to the Workout page only.
+> Transforms exercise cards from letter initials to real exercise photography.
+> Backend work required first (migration + enrichment script). Frontend is a drop-in swap.
+> Full backend plan, architectural decisions, and execution order in `UI_REFACTOR_PLAN_V2.md §Phase 6`.
+
+---
+
+### What Changes Visually
+
+**Before (Phase 5C):**
+```
+┌─ Push Up ──────────────────────────────────────────┐
+│  [P]  Push Up                    Strength  [×]     │  ← letter initial, coloured bg
+└────────────────────────────────────────────────────┘
+```
+
+**After (Phase 6):**
+```
+┌─ Push Up ──────────────────────────────────────────┐
+│  [img]  Push Up                  Strength  [×]     │  ← real exercise photo thumbnail
+│  ───────────────────────────────────────────────   │
+│  MUSCLES WORKED   [chest lit] [triceps]            │  ← SVG muscle diagram
+└────────────────────────────────────────────────────┘
+```
+
+Thumbnail on both `WorkoutLogCard` and `AddWorkoutModal` search results. Muscle diagram on card only (not in modal — too much weight during logging flow).
+
+---
+
+### ExerciseImage Component
+
+**Location:** `src/components/workout/ExerciseImage.tsx`
+
+Smart component: renders `<img>` when `imageUrl` is available, falls back to the existing coloured initial on null or load failure. **Zero visual regression** — fallback is identical to current Phase 5C state.
+
+```tsx
+interface ExerciseImageProps {
+  name: string;
+  imageUrl?: string | null;
+  category: string;
+  size?: "sm" | "md";   // sm=36px (default), md=44px
+  className?: string;
+}
+```
+
+**`onError` pattern:** Both `<img>` and fallback `<div>` rendered in DOM simultaneously. Fallback starts hidden when `imageUrl` is set. `onError` on `<img>` hides the image and shows the fallback — no layout shift, no React re-render.
+
+**Sizes:**
+- `sm` (36px / `w-9 h-9`) — `WorkoutLogCard` header, same as current initial div
+- `md` (44px / `w-11 h-11`) — reserved for future detail view
+
+---
+
+### MuscleMap Component
+
+**Location:** `src/components/workout/MuscleMap.tsx`
+
+Compact muscle diagram using wger's hosted SVG system.
+
+```tsx
+interface MuscleMapProps {
+  primaryIds: number[];      // wger muscle IDs — green highlight
+  secondaryIds: number[];    // lighter green
+  size?: number;             // default 56px height
+}
+```
+
+**Layout:** Two body silhouettes (front + back) side by side, ~56px tall × ~100px wide total. Each silhouette is a `<img src="wger CDN URL">` with muscle overlay `<img>` elements stacked via `position: absolute`.
+
+**Colour via CSS filter** — not SVG DOM manipulation (external hosted SVGs can't be modified).
+wger muscle SVGs use `fill:#fc0000` (red). CSS `hue-rotate` converts red (0°) to green (120°) directly:
+- Primary: `filter: hue-rotate(120deg) saturate(1.5) brightness(0.9)` → red → green (#22c55e range)
+- Secondary: same filter + `opacity: 0.4` → lighter green tint
+
+**Why `hue-rotate(120deg)`?** Red = 0° on the colour wheel, green = ~120°. Direct rotation is clean — no intermediate hue artifacts. Confirmed via SVG inspection: wger uses `fill:#fc0000` on all muscle paths.
+
+**Returns null** when `primaryIds.length === 0` — no empty placeholder rendered.
+
+**SVG URLs used:**
+```
+Body outlines:
+  https://wger.de/static/images/muscles/muscular_system_front.svg   ← CORRECT
+  https://wger.de/static/images/muscles/muscular_system_back.svg    ← CORRECT
+
+Muscle overlays (primary):
+  https://wger.de/static/images/muscles/main/muscle-{id}.svg
+
+Muscle overlays (secondary):
+  https://wger.de/static/images/muscles/secondary/muscle-{id}.svg
+```
+
+---
+
+### Where Each Component Is Placed
+
+#### `WorkoutLogCard.tsx` — thumbnail in header
+
+```tsx
+{/* Replace the current coloured-initial div */}
+<ExerciseImage
+  name={exerciseName}
+  imageUrl={entry.image_url_thumb}   // from WorkoutLogEntry (new field from backend)
+  category={category}
+  size="sm"
+/>
+```
+
+#### `WorkoutLogCard.tsx` — muscle diagram below stats
+
+```tsx
+{primaryMuscleIds.length > 0 && (
+  <div className="border-t border-[#2A2A2A] pt-3 space-y-1.5">
+    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      Muscles worked
+    </p>
+    <MuscleMap primaryIds={primaryMuscleIds} secondaryIds={secondaryMuscleIds} />
+  </div>
+)}
+```
+
+`primaryMuscleIds` comes from parsing `entry.primary_muscle_ids` (semicolon-separated string from DB). Parsing done once per card render in `WorkoutLogCard`.
+
+#### `AddWorkoutModal.tsx` — thumbnail in search results
+
+`SearchCommand` gets a new `thumbnail` field in `SearchResultItem`. When `exercise.image_url_thumb` is set, renders a 28×28 rounded image instead of the colour dot indicator.
+
+```tsx
+// renderExercise() updated:
+thumbnail: ex.image_url_thumb ?? null,
+indicator: ex.image_url_thumb ? undefined : style.bgSolid,
+```
+
+`SearchCommand.tsx` updated: if `thumbnail` is set in the result item, render `<img src={thumbnail} className="w-7 h-7 rounded-lg object-cover shrink-0" />` instead of the dot.
+
+#### `workout/page.tsx` — license attribution (desktop right column)
+
+```tsx
+<p className="text-[10px] text-muted-foreground/30 text-center pt-2">
+  Exercise images ©{" "}
+  <a href="https://wger.de" target="_blank" rel="noopener noreferrer"
+     className="hover:text-muted-foreground/60 transition-colors">
+    wger.de
+  </a>{" "}
+  (CC-BY-SA 4.0)
+</p>
+```
+
+Barely visible (`/30` opacity). Present for licence compliance. Desktop right column only.
+
+---
+
+### Backend → Frontend Data Flow
+
+The `WorkoutLogEntry` type needs 3 new optional fields from the backend:
+
+```ts
+// src/types/workout.ts — additions
+image_url_thumb?:      string | null;
+primary_muscle_ids?:   string | null;  // "4;2" — semicolons, matches DB storage
+secondary_muscle_ids?: string | null;
+```
+
+Backend `WorkoutLogRead` schema: these are populated by a JOIN to `exercise_library` on `exercise_id` at read time. No new columns on `workout_logs` itself.
+
+`Exercise` type in search results:
+
+```ts
+// src/types/workout.ts — additions to Exercise
+image_url_thumb?:      string | null;
+primary_muscle_ids?:   string | null;
+secondary_muscle_ids?: string | null;
+```
+
+---
+
+### Loading & Error Behaviour
+
+| Scenario | Result |
+|---|---|
+| `image_url_thumb` is null (no wger match) | Coloured initial letter shown |
+| `image_url_thumb` set, CDN reachable | Photo thumbnail shown |
+| `image_url_thumb` set, CDN unreachable (`onError`) | Falls back to coloured initial |
+| `primary_muscle_ids` is null | No muscle diagram rendered (component returns null) |
+| wger SVG CDN unreachable | No muscle diagram, no error state, card unchanged |
+
+No skeleton loaders for images — image slot is fixed-size (`w-9 h-9`), `loading="lazy"` handles the async gracefully. No layout shift.
+
+---
+
+### What We Are NOT Doing
+
+- No exercise detail modal — thumbnail + muscle diagram on card is enough
+- No image upload for custom exercises — coloured initial fallback handles these
+- No client-side caching layer — browser cache handles CDN responses
+- No muscle diagram in `AddWorkoutModal` — too much weight in the logging flow
+
+---
+
 ## Phase 7: Polish & Accessibility ✅ DONE (2026-07-07)
 
 > Cross-cutting sprint — no new pages. Applies to all 6 existing pages.

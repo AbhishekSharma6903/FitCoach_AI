@@ -41,6 +41,9 @@ def search_exercises(
             id=e.id, name=e.name, category=e.category,
             muscle_group=e.muscle_group, equipment=e.equipment,
             level=e.level, met_value=float(e.met_value),
+            image_url_thumb=e.image_url_thumb,
+            primary_muscle_ids=e.primary_muscle_ids,
+            secondary_muscle_ids=e.secondary_muscle_ids,
         )
         for e in results
     ]
@@ -82,7 +85,7 @@ def log_workout(
     db.add(entry)
     db.commit()
     db.refresh(entry)
-    return _to_read(entry)
+    return _to_read(entry, exercise)
 
 
 @router.get("/log", response_model=DailyWorkoutRead)
@@ -99,10 +102,17 @@ def get_workout_log(
         .order_by(WorkoutLog.created_at)
         .all()
     )
+    # Batch-load exercise data to avoid N+1 (Phase 6: images + muscles)
+    exercise_ids = list({e.exercise_id for e in entries if e.exercise_id})
+    exercise_map: dict[int, ExerciseLibrary] = {}
+    if exercise_ids:
+        exs = db.query(ExerciseLibrary).filter(ExerciseLibrary.id.in_(exercise_ids)).all()
+        exercise_map = {ex.id: ex for ex in exs}
+
     total_cal = sum(float(e.calories_burned) for e in entries if e.calories_burned)
     return DailyWorkoutRead(
         log_date=log_date,
-        entries=[_to_read(e) for e in entries],
+        entries=[_to_read(e, exercise_map.get(e.exercise_id)) for e in entries],
         total_calories_burned=round(total_cal, 2),
     )
 
@@ -151,7 +161,8 @@ def update_workout_log(
 
     db.commit()
     db.refresh(entry)
-    return _to_read(entry)
+    exercise = db.get(ExerciseLibrary, entry.exercise_id) if entry.exercise_id else None
+    return _to_read(entry, exercise)
 
 
 @router.delete("/log/{entry_id}", status_code=200)
@@ -182,10 +193,15 @@ def get_workout_history(
         .order_by(WorkoutLog.log_date.desc())
         .all()
     )
-    return [_to_read(e) for e in entries]
+    exercise_ids = list({e.exercise_id for e in entries if e.exercise_id})
+    exercise_map: dict[int, ExerciseLibrary] = {}
+    if exercise_ids:
+        exs = db.query(ExerciseLibrary).filter(ExerciseLibrary.id.in_(exercise_ids)).all()
+        exercise_map = {ex.id: ex for ex in exs}
+    return [_to_read(e, exercise_map.get(e.exercise_id)) for e in entries]
 
 
-def _to_read(e: WorkoutLog) -> WorkoutLogRead:
+def _to_read(e: WorkoutLog, exercise: "ExerciseLibrary | None" = None) -> WorkoutLogRead:
     return WorkoutLogRead(
         id=e.id, user_id=e.user_id, log_date=e.log_date,
         exercise_id=e.exercise_id, exercise_name=e.exercise_name,
@@ -194,4 +210,8 @@ def _to_read(e: WorkoutLog) -> WorkoutLogRead:
         duration_min=float(e.duration_min) if e.duration_min else None,
         calories_burned=float(e.calories_burned) if e.calories_burned else None,
         notes=e.notes, created_at=e.created_at,
+        # Phase 6 — image + muscle data from exercise_library
+        image_url_thumb=exercise.image_url_thumb if exercise else None,
+        primary_muscle_ids=exercise.primary_muscle_ids if exercise else None,
+        secondary_muscle_ids=exercise.secondary_muscle_ids if exercise else None,
     )

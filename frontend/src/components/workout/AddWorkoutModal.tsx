@@ -45,7 +45,9 @@ function renderExercise(ex: Exercise) {
     secondary: [ex.muscle_group, ex.equipment].filter(Boolean).join(" · ") || ex.category,
     badge: ex.category,
     badgeColor: style.text,
-    indicator: style.bgSolid,
+    // Phase 6: use thumbnail when available, fall back to colour dot
+    thumbnail:  ex.image_url_thumb ?? undefined,
+    indicator:  ex.image_url_thumb ? undefined : style.bgSolid,
   };
 }
 

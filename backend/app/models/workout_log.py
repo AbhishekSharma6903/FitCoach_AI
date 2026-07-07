@@ -9,17 +9,23 @@ from app.database import Base
 class ExerciseLibrary(Base):
     __tablename__ = "exercise_library"
 
-    id:              Mapped[int]              = mapped_column(primary_key=True, autoincrement=True)
-    name:            Mapped[str]              = mapped_column(String(256), nullable=False)
-    name_normalized: Mapped[str]              = mapped_column(String(256), nullable=False)
-    category:        Mapped[str]              = mapped_column(String(32),  nullable=False)
-    muscle_group:    Mapped[Optional[str]]    = mapped_column(String(128), nullable=True)
-    equipment:       Mapped[Optional[str]]    = mapped_column(String(64),  nullable=True)
-    level:           Mapped[Optional[str]]    = mapped_column(String(16),  nullable=True)
-    met_value:       Mapped[Decimal]          = mapped_column(Numeric(4, 1), nullable=False)
-    instructions:    Mapped[Optional[str]]    = mapped_column(Text, nullable=True)
-    aliases:         Mapped[Optional[str]]    = mapped_column(Text, nullable=True)
-    is_custom:       Mapped[bool]             = mapped_column(Boolean, default=False)
+    id:                   Mapped[int]           = mapped_column(primary_key=True, autoincrement=True)
+    name:                 Mapped[str]           = mapped_column(String(256), nullable=False)
+    name_normalized:      Mapped[str]           = mapped_column(String(256), nullable=False)
+    category:             Mapped[str]           = mapped_column(String(32),  nullable=False)
+    muscle_group:         Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    equipment:            Mapped[Optional[str]] = mapped_column(String(64),  nullable=True)
+    level:                Mapped[Optional[str]] = mapped_column(String(16),  nullable=True)
+    met_value:            Mapped[Decimal]       = mapped_column(Numeric(4, 1), nullable=False)
+    instructions:         Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    aliases:              Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_custom:            Mapped[bool]          = mapped_column(Boolean, default=False)
+    # Phase 6 — wger image + muscle data
+    image_url:            Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    image_url_thumb:      Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    wger_id:              Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    primary_muscle_ids:   Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    secondary_muscle_ids: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
 class WorkoutLog(Base):
