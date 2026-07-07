@@ -2073,6 +2073,78 @@ src/components/tracker/DateNavigator.tsx   ← drag="x" swipe to change date
 
 ---
 
+### Phase 9 — Progress Page (`/progress`)
+
+> **Updated 2026-07-07. Architect spec complete. Pending build.**
+> **See `docs/DESIGN_OVERVIEW.md §Page 8` for full component-level UI decisions.**
+
+Route: `/progress` — 6th nav item in both BottomNav and TopNav. Icon: `TrendingUp`.
+
+---
+
+##### Backend Status — Zero New Work Required
+
+Both endpoints already exist and return all needed data:
+
+| Endpoint | Used for |
+|---|---|
+| `GET /api/v1/weight/log?days={30|90}` | Weight trend chart + overview weight change stat |
+| `GET /api/v1/workout/history?days={30|90}` | Workout volume chart, consistency strip, top exercises, kcal stat |
+
+Client-side aggregation only — no new backend routes. Data volumes (weight: <100 entries, workout: <500/month) make server-side aggregation unnecessary.
+
+---
+
+##### Frontend Work
+
+**New hooks:**
+- `useWeightHistory(days)` — SWR wrapper for `GET /weight/log?days=N`
+- `useWorkoutHistory(days)` — SWR wrapper for `GET /workout/history?days=N`
+
+**New lib:**
+- `src/lib/progressUtils.ts` — pure aggregation functions: `aggregateByDay`, `groupByCategory`, `topExercises`, `buildWeekGrid`. Mirrors the `dashboardUtils.ts` / `workoutUtils.ts` pattern.
+
+**New components:**
+- `WorkoutVolumeChart` — stacked bar chart, kcal/day by category (strength=green, cardio=blue, other=purple)
+- `ConsistencyStrip` — 4-week dot grid (Mon–Sun per row; green dot = workout logged; empty circle = rest day)
+- `TopExercisesList` — top 5 exercises by frequency, reuses `ExerciseImage` thumbnail
+
+**Modified components:**
+- `WeightChart` — add `variant="full"` prop: `h-56` height, pace text suppressed. Dashboard passes no variant (keeps current behaviour).
+- `BottomNav` — 6th tab: Progress / TrendingUp
+- `TopNav` — 6th centre link: Progress / TrendingUp
+
+**Page structure (top to bottom):**
+1. Header with range toggle (30d / 90d) — local `useState`, no Zustand
+2. Overview stat cards (3×): weight change · workout days · kcal burned
+3. Weight trend — extended `WeightChart`
+4. Workout volume — `WorkoutVolumeChart` (stacked bar)
+5. Weekly consistency — `ConsistencyStrip`
+6. Top exercises — `TopExercisesList`
+
+---
+
+##### Architectural Decisions
+
+**Decision A · No new backend** — client-side aggregation is sufficient at this data volume.
+
+**Decision B · `WeightChart` extended, not duplicated** — `variant="full"` prop adds height and removes pace text. Avoids a near-identical second component.
+
+**Decision C · 6 tabs in BottomNav is acceptable** — 375 ÷ 6 = 62.5px per tab, still above the 44px WCAG minimum. Strava, Garmin, Apple Fitness use this density.
+
+**Decision D · Single page, no sub-routes** — range toggle covers the time axis. No `/progress/weight` vs `/progress/workout` split needed.
+
+---
+
+##### QA Plan
+
+- `page_audit.py /progress` — target P0 ≥ 8.0 with real weight + workout data seeded
+- Manual: 30d ↔ 90d toggle re-fetches and re-renders both charts correctly
+- Manual: empty state (no weight entries) shows prompt; empty state (no workouts) shows prompt
+- `tsc --noEmit` clean
+
+---
+
 
 ## Part 4 — Feature Inventory (Complete Reference)
 
@@ -2309,8 +2381,11 @@ Build page → python3 qa/page_audit.py /{page} → read issues → fix → repe
 | ---------------------------- | ----------------------------------------- | ---------------------------------------------- |
 | Phase 2 (bottom nav + shell) | P0 ≥ 7.5 overall                         | ✅ Achieved                                    |
 | Phase 5 (all pages rebuilt)  | P0 ≥ 8.5 on all pages                    | ✅ All pages 8.0–8.17 with data (empty-state variance acknowledged) |
+| Phase 5F (onboarding)        | P0 ≥ 8.0 /onboarding                     | ✅ P0 = 8.5/10 (iphone-14: 9.0, macbook-13: 9.0) |
+| Phase 5G (admin)             | P0 ≥ 8.0 all three admin pages           | ✅ /admin: 8.0, /admin/users: 8.0, /admin/food: 8.17 |
 | Phase 6 (wger images)        | P0 ≥ 8.5 /workout with real data         | ✅ P0 = 8.33/10 (iphone-14: 8.5, macbook-13: 9.0) |
-| Phase 7 (final polish)       | P0 ≥ 9.0, Lighthouse Accessibility ≥ 90  | P0 held at 8.0–8.33. **Lighthouse: 100/100** on all 5 pages (run 2026-07-07). ARIA + reducedMotion + stagger completed. |
+| Phase 7 (final polish)       | P0 ≥ 9.0, Lighthouse Accessibility ≥ 90  | P0 held at 8.0–8.33. **Lighthouse: 100/100** on all 5 pages (run 2026-07-07). |
+| Phase 9 (progress page)      | P0 ≥ 8.0 /progress with real data        | Pending build |
 
 ---
 
