@@ -170,6 +170,20 @@ export default function WorkoutPage() {
         entries={entries}
         totalKcal={workout?.total_calories_burned ?? 0}
       />
+
+      {/* License attribution — required by CC-BY-SA 4.0 */}
+      <p className="text-[10px] text-muted-foreground/30 text-center pt-1">
+        Exercise images ©{" "}
+        <a
+          href="https://wger.de"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-muted-foreground/60 transition-colors"
+        >
+          wger.de
+        </a>
+        {" "}(CC-BY-SA 4.0)
+      </p>
     </div>
   );
 

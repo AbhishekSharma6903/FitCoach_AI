@@ -9,10 +9,14 @@ class ExerciseSearchResult(BaseModel):
     id: int
     name: str
     category: str
-    muscle_group: Optional[str] = None
-    equipment: Optional[str] = None
-    level: Optional[str] = None
-    met_value: float
+    muscle_group:         Optional[str]   = None
+    equipment:            Optional[str]   = None
+    level:                Optional[str]   = None
+    met_value:            float
+    # Phase 6 — wger image + muscle data
+    image_url_thumb:      Optional[str]   = None
+    primary_muscle_ids:   Optional[str]   = None
+    secondary_muscle_ids: Optional[str]   = None
 
 
 class WorkoutLogCreate(BaseModel):
@@ -40,6 +44,10 @@ class WorkoutLogRead(BaseModel):
     calories_burned: Optional[float] = None
     notes: Optional[str] = None
     created_at: datetime
+    # Phase 6 — denormalized from exercise_library at read time
+    image_url_thumb:      Optional[str]   = None
+    primary_muscle_ids:   Optional[str]   = None
+    secondary_muscle_ids: Optional[str]   = None
 
 
 class WorkoutLogUpdate(BaseModel):
