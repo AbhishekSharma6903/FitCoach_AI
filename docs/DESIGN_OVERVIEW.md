@@ -3889,3 +3889,333 @@ import { MotionConfig } from "motion/react"
 - **Per-component `useReducedMotion` hooks** — `MotionConfig` at root covers everything with zero per-component changes (see P7-C).
 
 ---
+
+## Page 8: Progress (`/progress`) — Phase 9
+
+> Written: 2026-07-07. Pre-build spec — authoritative source for Phase 9.
+> **See `UI_REFACTOR_PLAN_V2.md §Phase 9` for execution order, decisions, and QA plan.**
+
+---
+
+### Purpose
+
+Answers the question every fitness user asks: *"Am I actually making progress?"*
+
+The Dashboard shows today's calories and a 30-day weight chart. That's snapshot data. `/progress` shows the arc: weight trend over time, workout volume over time, personal records, and a weekly consistency summary. It turns raw logs into a story.
+
+---
+
+### Navigation
+
+`/progress` becomes the **6th nav item** — added to both BottomNav (replacing nothing — BottomNav goes from 5 to 6 tabs) and TopNav centre links.
+
+**Decision: 6 tabs, not a sub-page of dashboard or profile.**
+- Profile = goals and identity. Dashboard = today. Progress = history. These are meaningfully distinct.
+- A sub-route like `/dashboard/progress` or `/profile/progress` would bury it — users need one tap to reach their progress data.
+- BottomNav at 6 tabs is tight on 375px but each icon is still ≥44px wide (`flex-1`). Verified: 375 ÷ 6 = 62.5px per tab — acceptable.
+
+```
+BottomNav (mobile):  Home · Tracker · Workout · Dishes · Progress · Profile
+TopNav (desktop):    Home · Tracker · Workout · Dishes · Progress   [Avatar → Profile]
+```
+
+Icon: `TrendingUp` from lucide-react. Label: "Progress".
+
+---
+
+### Data Sources
+
+Two existing backend endpoints — zero new backend work required:
+
+| Endpoint | Returns | Used for |
+|---|---|---|
+| `GET /api/v1/weight/log?days=90` | `WeightHistoryRead` — `entries[]` (id, log_date, weight_kg), start/current/change_kg | Weight trend chart, weight summary cards |
+| `GET /api/v1/workout/history?days=30` | `WorkoutLogRead[]` — per-set entries with log_date, category, calories_burned, exercise_name, reps, weight_kg | Workout volume chart, weekly calorie summary, category breakdown |
+
+**Why no new backend?** The existing `/weight/log` and `/workout/history` endpoints return everything needed. Aggregation (weekly totals, category breakdown, volume sums) is done client-side — the datasets are small (weight: typically <100 entries; workout: <500 entries/month) so there is no performance concern.
+
+**Time range selector:** `?days=30` vs `?days=90`. Toggle shown in page header. Both endpoints already support the `days` query param.
+
+---
+
+### Layout
+
+Single column, AG-1 standard:
+```
+Mobile:  w-full px-4 pb-24
+Desktop: max-w-6xl mx-auto px-8
+```
+
+No right sidebar — all content is equally time-sensitive. The page scrolls top to bottom like a story: *summary → weight → workout → consistency*.
+
+**Desktop:** Content is wider than mobile but still single column. Cards fill their column width via `grid-cols-2` and `grid-cols-3` stat grids inside them (AG-4). No two-column page grid — progress is a reading experience, not a task flow.
+
+---
+
+### Page Structure (top to bottom)
+
+```
+┌────────────────────────────────────────────────┐
+│  Progress                    [30d ▾] [90d]      │  ← page header + range toggle
+├────────────────────────────────────────────────┤
+│  OVERVIEW                                       │
+│  ┌──────────┬──────────┬──────────┐             │
+│  │  −1.8 kg │  47 sets │ 1,744    │             │
+│  │  Weight  │ Workouts │ kcal     │             │
+│  │  change  │ logged   │ burned   │             │
+│  └──────────┴──────────┴──────────┘             │
+├────────────────────────────────────────────────┤
+│  WEIGHT TREND                                   │
+│  [Line chart — weight_kg over time]             │
+│  Goal reference line · trend insight text       │
+├────────────────────────────────────────────────┤
+│  WORKOUT VOLUME                                 │
+│  [Bar chart — kcal burned per day]              │
+│  Category breakdown pills below                 │
+├────────────────────────────────────────────────┤
+│  WEEKLY CONSISTENCY                             │
+│  [Heatmap-style week strip — 4-5 weeks]         │
+│  Each day: coloured dot if workout logged       │
+├────────────────────────────────────────────────┤
+│  TOP EXERCISES                                  │
+│  [List — top 5 by frequency in selected range]  │
+└────────────────────────────────────────────────┘
+```
+
+---
+
+### Section 1: Overview (Stat Cards)
+
+3 stat tiles in `grid-cols-3` (all viewports — values are short):
+
+| Tile | Value | Computation |
+|---|---|---|
+| Weight change | `change_kg` from `/weight/log` response | `current - start` over selected range. Shown as `−1.8 kg` (green) or `+1.2 kg` (amber). `—` if < 2 entries. |
+| Workouts logged | Count of unique `log_date` values in history | "Days worked out" — more meaningful than total sets |
+| Calories burned | Sum of all `calories_burned` in history | Rounded to nearest integer |
+
+Each tile: same `AdminStatCard` visual structure — icon + value + label. Icons: `Weight` (scale), `Dumbbell`, `Flame`.
+
+---
+
+### Section 2: Weight Trend Chart
+
+**Reuses `WeightChart` component from dashboard** — but with a larger height and the full `/weight/log` data instead of the dashboard's 30-day subset from `/dashboard`.
+
+Key differences from the dashboard version:
+- Height: `h-56` (vs `h-44` on dashboard) — more room to see the arc
+- No `pace` text — that's a dashboard concern. Here just show the line + goal + trend direction.
+- X-axis: if `days=90`, shows month labels (`Jan`, `Feb`) not day labels. If `days=30`, shows day+month (`1 Jun`).
+- Empty state: "No weight entries yet. Log your weight from the Dashboard." with a link.
+
+**The component is extended**, not duplicated. Add a `variant="full"` prop to `WeightChart` that enables the larger height and suppresses the pace text.
+
+---
+
+### Section 3: Workout Volume (Bar Chart)
+
+**New component: `WorkoutVolumeChart`**
+
+```
+src/components/progress/WorkoutVolumeChart.tsx
+```
+
+Bar chart — one bar per day, height = total kcal burned that day. Multiple categories stack in the same bar (Recharts `BarChart` with `stackId="a"` and one `Bar` per category).
+
+```tsx
+// Data shape (computed from WorkoutLogRead[]):
+type DayVolume = {
+  date: string;        // "1 Jul"
+  strength: number;    // kcal from strength exercises
+  cardio: number;      // kcal from cardio
+  other: number;       // yoga, stretching, etc.
+}
+```
+
+Colours:
+- Strength: `#22c55e` (brand green)
+- Cardio: `#3b82f6` (blue)
+- Other: `#a855f7` (purple)
+
+Below the chart: category breakdown as coloured pills showing percentage of total kcal:
+```
+● Strength  74%    ● Cardio  23%    ● Other  3%
+```
+
+Empty state: "No workouts logged yet." with a button → `/workout`.
+
+---
+
+### Section 4: Weekly Consistency (Heat strip)
+
+**New component: `ConsistencyStrip`**
+
+```
+src/components/progress/ConsistencyStrip.tsx
+```
+
+Compact week-by-week view of the last 4–5 weeks. Each row = one week (Mon–Sun). Each cell = one day — coloured dot if a workout was logged that day, empty circle if not.
+
+```
+        Mon  Tue  Wed  Thu  Fri  Sat  Sun
+Week 1   ●    ○    ●    ●    ○    ●    ○
+Week 2   ●    ●    ○    ●    ●    ○    ○
+Week 3   ●    ○    ●    ○    ●    ●    ○
+Week 4   ●    ●    ●    ●    ○    ●    ●
+```
+
+- Active day: `bg-primary` (green) circle `w-6 h-6 rounded-full`
+- Inactive day: `border border-[#2A2A2A]` circle, empty
+- Today: `ring-1 ring-primary/50` around the dot/circle
+- Week labels on left: "Wk 1", "Wk 2" etc (or actual date of Monday: "30 Jun")
+
+**Why no GitHub-style full-year grid?** The year grid is visually impressive but impractical at this scale — we only have 30–90 days of data. A 4-week strip is dense, readable, and fits on mobile. It also shows enough context to identify patterns (e.g. always skipping weekends).
+
+---
+
+### Section 5: Top Exercises
+
+**New component: `TopExercisesList`**
+
+```
+src/components/progress/TopExercisesList.tsx
+```
+
+Flat list — top 5 exercises by frequency (number of log entries) in the selected date range. Each row:
+- `ExerciseImage` thumbnail (reused from workout page, already built)
+- Exercise name
+- Category badge
+- `N sessions` count on the right
+
+```
+[img]  Push Up          Strength   ·  8 sessions
+[img]  Running          Cardio     ·  5 sessions
+[img]  Leg Press        Strength   ·  4 sessions
+[D]    Deadlift         Strength   ·  3 sessions   ← fallback initial when no image
+[img]  Swimming sprints Cardio     ·  3 sessions
+```
+
+Empty state: hidden entirely if `entries.length === 0` (already covered by workout volume empty state above).
+
+---
+
+### Range Toggle
+
+Simple two-button pill toggle in the page header. Controls `days` param for both SWR hooks:
+
+```tsx
+// Active:   bg-[#1A1A1A] text-foreground border border-[#2A2A2A]
+// Inactive: text-muted-foreground hover:text-foreground
+<button>30d</button>
+<button>90d</button>
+```
+
+Both hooks re-fetch when range changes. Zustand is NOT used — range is local `useState` on this page only (not shared with any other page).
+
+---
+
+### Loading States
+
+- Overview cards: 3× `Skeleton h-[88px] rounded-2xl` in `grid-cols-3`
+- Weight chart: `Skeleton h-56 rounded-2xl`
+- Workout volume: `Skeleton h-44 rounded-2xl`
+- Consistency strip: `Skeleton h-32 rounded-2xl`
+- Top exercises: 3× `Skeleton h-14 rounded-xl`
+
+---
+
+### Empty States
+
+| Section | Condition | Empty state |
+|---|---|---|
+| Weight trend | `entries.length < 2` | "Log your weight daily from the Dashboard to see your trend." |
+| Workout volume | `entries.length === 0` | "No workouts in this period. [Log a workout →]" (link to /workout) |
+| Top exercises | Always hidden when no data | — (covered by workout volume empty state) |
+| Overall | Both weight and workout empty | Single centred hero: TrendingUp icon + "Start tracking to see your progress." |
+
+---
+
+### Animations
+
+| Element | Animation |
+|---|---|
+| Stat cards on load | `STAGGER_CONTAINER` / `STAGGER_ITEM` (same as Profile) |
+| Chart sections | `motion.div` fade-in `opacity: 0→1, y: 8→0`, `duration: 0.3` |
+| Range toggle switch | none — instant re-fetch is the feedback |
+| Bar chart bars | Recharts built-in `isAnimationActive` — already animates on mount |
+
+---
+
+### Architectural Decisions
+
+**Decision A · No new backend endpoints**
+Both `/weight/log` and `/workout/history` already return everything needed. Client-side aggregation for weekly totals and category breakdown is trivial at this data volume. Adding a `/progress/summary` endpoint would be premature optimisation — add it in Phase 10 if performance becomes an issue.
+
+**Decision B · `WeightChart` extended with `variant` prop, not duplicated**
+The dashboard `WeightChart` is already tested and styled correctly. Adding a `variant="full"` prop (larger height, no pace text) avoids a near-identical second component. The dashboard and progress versions share the same underlying chart logic. If they diverge significantly in future, split then.
+
+**Decision C · Aggregation done in a `progressUtils.ts` lib file, not inline in pages**
+Weekly rollups, category grouping, and exercise frequency counting are pure functions. They belong in `src/lib/progressUtils.ts` so they're testable and not tangled with component render logic. Same pattern as `dashboardUtils.ts` and `workoutUtils.ts`.
+
+**Decision D · ConsistencyStrip uses Mon–Sun week start**
+ISO week standard (Monday start) matches how most users think about workout weeks. The grid is 7 cells wide, which divides evenly on all screen widths.
+
+**Decision E · 6-tab BottomNav is acceptable**
+375px ÷ 6 tabs = 62.5px per tab. At `h-16` (64px tall bar), the icon is `22px` and the label is `text-[10px]`. Touch target is 62.5px wide × 64px tall — comfortably above WCAG 44px minimum. Tested pattern: Strava, Garmin, Apple Fitness all use 5–6 tabs at this density.
+
+---
+
+### AG Compliance
+
+| AG | Decision |
+|---|---|
+| AG-1 (two-tier width) | ✅ `PageShell` standard — `w-full px-4 pb-24` / `lg:max-w-6xl` |
+| AG-2 (right panel) | ✅ Single column — no natural primary/utility split on this page |
+| AG-3 (mobile card order) | ✅ Overview (orientation) → Weight (primary metric) → Workout (secondary) → Consistency (pattern) → Top exercises (reference) |
+| AG-4 (cards fill width) | ✅ Charts are `ResponsiveContainer width="100%"`. Stat grid is `grid-cols-3`. |
+| AG-6 (animation) | ✅ Stagger on stat cards. Chart fade-in on mount. |
+| AG-7 (shadcn defaults) | ✅ `Skeleton`, `Badge`, `Card`. `ExerciseImage` reused from workout. |
+| AG-8 (state ownership) | ✅ SWR for server data. Local `useState` for range toggle. No Zustand. |
+
+---
+
+### What We Are NOT Building
+
+- No food/nutrition charts — Tracker already shows daily macros. A nutrition history chart would duplicate Tracker's purpose.
+- No PR (personal record) tracking — requires comparing max weight across all time per exercise. Complex data model, low immediate value.
+- No export / CSV download — Phase 10 backlog.
+- No full-year contribution grid — not enough data to make it meaningful. 4-week strip is sufficient.
+- No `/progress/weight` or `/progress/workout` sub-routes — single page, range toggle handles the time axis.
+
+---
+
+### Files to Create
+
+```
+src/app/progress/page.tsx              ← /progress page — wires all sections
+
+src/hooks/useWeightHistory.ts          ← SWR GET /weight/log?days={range}
+src/hooks/useWorkoutHistory.ts         ← SWR GET /workout/history?days={range}
+
+src/lib/progressUtils.ts               ← pure fns: aggregateByDay, groupByCategory,
+                                           topExercises, buildWeekGrid
+
+src/components/progress/WorkoutVolumeChart.tsx  ← stacked bar chart (kcal/day by category)
+src/components/progress/ConsistencyStrip.tsx    ← week-by-week workout dot grid
+src/components/progress/TopExercisesList.tsx    ← top 5 exercises by frequency
+```
+
+### Files to Modify
+
+```
+src/components/dashboard/WeightChart.tsx
+  ← add variant="full" prop: h-56, suppress pace text
+
+src/components/layout/BottomNav.tsx
+  ← add Progress tab (TrendingUp icon) — 6th item, before Profile
+
+src/components/layout/TopNav.tsx
+  ← add Progress link in centre nav (TrendingUp icon)
+```
+
+---
