@@ -66,6 +66,7 @@ export default function MealTabs({
             <Tabs.Tab
               key={id}
               value={id}
+              aria-label={label}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-0.5",
                 "py-2 rounded-lg cursor-pointer transition-colors outline-none",

@@ -58,7 +58,7 @@ export default function BottomNav() {
                   "flex h-full flex-col items-center justify-center gap-0.5 transition-colors",
                   isActive
                     ? "text-[#22c55e]"
-                    : "text-[#6B7280] hover:text-[#9CA3AF]",
+                    : "text-[#9CA3AF] hover:text-[#9CA3AF]",
                 )}
               >
                 {/* Active indicator dot */}
@@ -76,7 +76,7 @@ export default function BottomNav() {
                 <span
                   className={cn(
                     "text-[10px] font-semibold tracking-wide transition-colors",
-                    isActive ? "text-[#22c55e]" : "text-[#4B5563]",
+                    isActive ? "text-[#22c55e]" : "text-[#9CA3AF]",
                   )}
                 >
                   {label}

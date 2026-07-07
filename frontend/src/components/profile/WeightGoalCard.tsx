@@ -40,7 +40,7 @@ export default function WeightGoalCard({ profile }: WeightGoalCardProps) {
               </span>
             </span>
           </div>
-          <p className="text-[10px] text-muted-foreground/50">{weeks} weeks</p>
+          <p className="text-[10px] text-muted-foreground/80">{weeks} weeks</p>
         </div>
 
         <div className="text-center">
@@ -60,7 +60,7 @@ export default function WeightGoalCard({ profile }: WeightGoalCardProps) {
           </span>{" "}
           to hit goal in {weeks} weeks.
         </p>
-        <p className="text-[10px] text-muted-foreground/40 mt-1">
+        <p className="text-[10px] text-muted-foreground/80 mt-1">
           Check your weight trend on the dashboard for actual pace.
         </p>
       </div>

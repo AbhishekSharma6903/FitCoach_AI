@@ -54,7 +54,7 @@ export default function NutritionSummaryCard({
           </span>
           <span className="text-sm text-muted-foreground ml-2">kcal {remainLabel}</span>
         </div>
-        <span className="text-xs text-muted-foreground/60 shrink-0 pb-1">
+        <span className="text-xs text-muted-foreground/80 shrink-0 pb-1">
           of {Math.round(targets.calories_kcal).toLocaleString()} goal
         </span>
       </div>
@@ -100,7 +100,7 @@ export default function NutritionSummaryCard({
                   <span className="text-xs text-muted-foreground">
                     / {Math.round(targets[m.key])}g
                   </span>
-                  <span className="text-[10px] text-muted-foreground/60 w-7 text-right tabular-nums">
+                  <span className="text-[10px] text-muted-foreground/80 w-7 text-right tabular-nums">
                     {pct}%
                   </span>
                 </div>

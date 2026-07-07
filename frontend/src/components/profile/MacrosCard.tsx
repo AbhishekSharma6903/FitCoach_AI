@@ -42,7 +42,7 @@ function MacroRow({ label, grams, maxGrams, colour, textColour, kcalPerG, totalK
 
       <div className="flex items-baseline gap-1 shrink-0">
         <span className="text-sm font-bold text-white tabular-nums">{g}g</span>
-        <span className="text-[10px] text-muted-foreground/50">{calPct}%</span>
+        <span className="text-[10px] text-muted-foreground/80">{calPct}%</span>
       </div>
     </div>
   );
@@ -95,7 +95,7 @@ export default function MacrosCard({ profile }: MacrosCardProps) {
         />
       </div>
 
-      <p className="text-[10px] text-muted-foreground/40 mt-3">
+      <p className="text-[10px] text-muted-foreground/80 mt-3">
         Recalculated automatically each time you save your goals.
       </p>
     </Card>

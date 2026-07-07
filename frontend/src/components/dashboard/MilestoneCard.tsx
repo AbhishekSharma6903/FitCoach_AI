@@ -40,7 +40,7 @@ export default function MilestoneCard({
           <p className="text-xs text-muted-foreground mt-0.5">
             {targetWeight} kg — est. {formattedDate}
           </p>
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+          <p className="text-[10px] text-muted-foreground/80 mt-0.5">
             {milestone.weeks_away.toFixed(1)} weeks away
           </p>
         </div>

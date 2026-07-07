@@ -100,7 +100,7 @@ export default function AccountSection() {
           <RotateCcw size={14} className="text-muted-foreground/50 shrink-0" aria-hidden="true" />
           <div>
             <span className="text-sm text-foreground">Re-do Onboarding</span>
-            <p className="text-[10px] text-muted-foreground/50">
+            <p className="text-[10px] text-muted-foreground/80">
               Change name, age, height, experience
             </p>
           </div>

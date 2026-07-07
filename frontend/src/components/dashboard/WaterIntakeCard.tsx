@@ -101,7 +101,7 @@ export default function WaterIntakeCard() {
               transition={{ duration: 0.7, ease: "easeOut" }}
             />
           </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground/60">
+          <div className="flex justify-between text-[10px] text-muted-foreground/80">
             <span>Daily goal</span>
             <span>{mlLabel(goalMl)}</span>
           </div>
@@ -125,7 +125,7 @@ export default function WaterIntakeCard() {
             )}
           >
             <span className="font-semibold">{mlLabel(p.ml)}</span>
-            <span className="text-muted-foreground/50 mt-0.5">{p.label}</span>
+            <span className="text-muted-foreground/80 mt-0.5">{p.label}</span>
           </motion.button>
         ))}
       </div>
@@ -158,7 +158,7 @@ export default function WaterIntakeCard() {
         <div>
           <button
             onClick={() => setShowEntries((v) => !v)}
-            className="text-[11px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+            className="text-[11px] text-muted-foreground/70 hover:text-muted-foreground transition-colors"
           >
             {showEntries ? "Hide" : "Show"} entries ({water.entries.length})
           </button>

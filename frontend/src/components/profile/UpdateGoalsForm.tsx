@@ -119,10 +119,11 @@ export default function UpdateGoalsForm({ profile, onSaved }: UpdateGoalsFormPro
         {/* Weight inputs — stack on mobile (narrow), side-by-side on sm+ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="ug-current-weight" className="text-xs font-medium text-muted-foreground">
               Current weight (kg)
             </label>
             <Input
+              id="ug-current-weight"
               type="number" step={0.1} min={30} max={250}
               value={form.current_weight_kg}
               onChange={e => set("current_weight_kg", e.target.value)}
@@ -130,10 +131,11 @@ export default function UpdateGoalsForm({ profile, onSaved }: UpdateGoalsFormPro
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label htmlFor="ug-goal-weight" className="text-xs font-medium text-muted-foreground">
               Goal weight (kg)
             </label>
             <Input
+              id="ug-goal-weight"
               type="number" step={0.1} min={30} max={250}
               value={form.goal_weight_kg}
               onChange={e => set("goal_weight_kg", e.target.value)}
@@ -144,23 +146,24 @@ export default function UpdateGoalsForm({ profile, onSaved }: UpdateGoalsFormPro
 
         {/* Timeline */}
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
+          <label htmlFor="ug-timeline" className="text-xs font-medium text-muted-foreground">
             Timeline (weeks)
           </label>
           <Input
+            id="ug-timeline"
             type="number" step={1} min={4} max={104}
             value={form.time_to_reach_goal_weeks}
             onChange={e => set("time_to_reach_goal_weeks", e.target.value)}
             className={inputCls}
           />
-          <p className="text-[10px] text-muted-foreground/50">Minimum 4 weeks</p>
+          <p className="text-[10px] text-muted-foreground/80">Minimum 4 weeks</p>
         </div>
 
         {/* Activity level */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Activity level</label>
           <Select value={form.activity_level} onValueChange={(v: string | null) => v && set("activity_level", v)}>
-            <SelectTrigger className={cn("w-full", inputCls)}>
+            <SelectTrigger aria-label="Activity level" className={cn("w-full", inputCls)}>
               <span className="flex-1 text-left text-sm">
                 {ACTIVITY_OPTIONS.find(o => o.value === form.activity_level)?.label ?? form.activity_level}
               </span>
@@ -179,7 +182,7 @@ export default function UpdateGoalsForm({ profile, onSaved }: UpdateGoalsFormPro
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Diet type</label>
           <Select value={form.diet_type} onValueChange={(v: string | null) => v && set("diet_type", v)}>
-            <SelectTrigger className={cn("w-full", inputCls)}>
+            <SelectTrigger aria-label="Diet type" className={cn("w-full", inputCls)}>
               <span className="flex-1 text-left text-sm">
                 {DIET_OPTIONS.find(o => o.value === form.diet_type)?.label ?? form.diet_type}
               </span>
@@ -223,7 +226,7 @@ export default function UpdateGoalsForm({ profile, onSaved }: UpdateGoalsFormPro
                     : `${preview.deficitKcal} kcal surplus`}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground/40">
+              <p className="text-[10px] text-muted-foreground/80">
                 Was {Math.round(profile.target_calories_kcal ?? 0).toLocaleString()} kcal/day
               </p>
             </motion.div>
