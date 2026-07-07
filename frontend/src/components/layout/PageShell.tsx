@@ -37,7 +37,7 @@ export default function PageShell({
 }: PageShellProps) {
   return (
     <div className="min-h-dvh bg-background">
-      <div
+      <main
         className={cn(
           // ── Mobile (< lg): full width ────────────────────────────────────
           "w-full pb-24",
@@ -76,7 +76,7 @@ export default function PageShell({
         )}
 
         {children}
-      </div>
+      </main>
     </div>
   );
 }

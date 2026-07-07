@@ -62,7 +62,7 @@ export default function TDEEWidget({
 
       {/* Sub-labels */}
       <div className="pt-1 space-y-0.5 border-t border-[#2A2A2A]">
-        <p className="text-[10px] text-muted-foreground/60">
+        <p className="text-[10px] text-muted-foreground/80">
           Target: {Math.round(caloriesTarget)} kcal · Maintenance: {Math.round(tdeeKcal)} kcal
         </p>
       </div>

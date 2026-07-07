@@ -24,7 +24,7 @@ export default function StreakBMICard({ streakDays, bmi }: StreakBMICardProps) {
             {streakDays}
           </span>
           <span className="text-xs text-muted-foreground">day streak</span>
-          <span className="text-[10px] text-muted-foreground/60 text-center leading-tight mt-0.5">
+          <span className="text-[10px] text-muted-foreground/80 text-center leading-tight mt-0.5">
             {motivation}
           </span>
         </div>

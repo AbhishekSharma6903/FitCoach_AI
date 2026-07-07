@@ -55,7 +55,7 @@ export default function IdentityCard({ profile }: IdentityCardProps) {
         </div>
       </div>
 
-      <p className="text-[10px] text-muted-foreground/40 mt-3">
+      <p className="text-[10px] text-muted-foreground/80 mt-3">
         To change name, age, height or experience — use Re-do Onboarding below.
       </p>
     </Card>

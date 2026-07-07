@@ -59,7 +59,7 @@ function StatCell({ label, sublabel, value, decimals = 0, highlight, badge, extr
       <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
         {label}
       </span>
-      <span className="text-[10px] text-muted-foreground/50">{sublabel}</span>
+      <span className="text-[10px] text-muted-foreground/80">{sublabel}</span>
       {badge}
       {extra}
     </div>
@@ -98,7 +98,7 @@ export default function StatsGrid({ profile }: StatsGridProps) {
           value={profile.tdee_kcal}
           extra={
             delta !== 0 && profile.target_calories_kcal ? (
-              <span className={cn("text-[9px] mt-0.5", isDeficit ? "text-primary/70" : "text-amber-400/70")}>
+              <span className={cn("text-[10px] mt-0.5", isDeficit ? "text-primary" : "text-amber-400")}>
                 {isDeficit
                   ? `${Math.abs(Math.round(delta))} kcal deficit`
                   : `${Math.round(delta)} kcal surplus`}
