@@ -23,4 +23,10 @@ test-results/
 node_modules/
 /qa/results/
 frontend/package-lock.json
-backend/.env
+
+# ── Secrets — never commit ────────────────────────────────────────────────────
+# .env.example files ARE committed (they contain only placeholders)
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
