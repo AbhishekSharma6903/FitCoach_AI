@@ -1,19 +1,33 @@
 import { cn } from "@/lib/utils";
-import { HTMLAttributes } from "react";
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: "sm" | "md" | "lg";
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Inner padding size. Defaults to "md" (p-5). */
+  padding?: "none" | "sm" | "md" | "lg";
 }
 
-const paddingSizes = { sm: "p-3", md: "p-5", lg: "p-6" };
+const paddingMap = {
+  none: "",
+  sm:   "p-3",
+  md:   "p-5",
+  lg:   "p-6",
+};
 
-export default function Card({ className, padding = "md", children, ...props }: CardProps) {
+/**
+ * Base card surface — Level 1 (#111111) with subtle border.
+ * Follows the design token system: no shadow, border-only depth cue.
+ */
+export default function Card({
+  padding = "md",
+  className,
+  children,
+  ...props
+}: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-2xl bg-gray-900 border border-gray-800 shadow-card",
-        paddingSizes[padding],
-        className
+        "rounded-2xl bg-[#111111] border border-[#2A2A2A]",
+        paddingMap[padding],
+        className,
       )}
       {...props}
     >

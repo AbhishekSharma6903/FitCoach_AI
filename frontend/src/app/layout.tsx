@@ -1,24 +1,55 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { MotionConfig } from "motion/react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import AuthProvider from "@/components/AuthProvider";
+import TopNav from "@/components/layout/TopNav";
+import BottomNav from "@/components/layout/BottomNav";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
 export const metadata: Metadata = {
   title: "FitCoach AI",
   description: "Your personalised AI fitness coach",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0A0A",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // enables safe-area-inset on iOS
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider>
-      <html lang="en" className="dark">
-        <body className={`${inter.className} bg-[#0d0d0d] text-gray-100 min-h-screen`}>
-            <AuthProvider>{children}</AuthProvider>
-          </body>
-      </html>
-    </ClerkProvider>
+  const content = (
+    <html lang="en" className={`${inter.variable} dark`} suppressHydrationWarning>
+      <body className="min-h-dvh bg-background text-foreground antialiased font-sans">
+        <MotionConfig reducedMotion="user">
+          <TooltipProvider>
+            <AuthProvider>
+              <TopNav />    {/* desktop lg+ only — hidden on mobile */}
+              {children}
+              <BottomNav /> {/* mobile/tablet < lg — hidden on desktop */}
+            </AuthProvider>
+          </TooltipProvider>
+        </MotionConfig>
+      </body>
+    </html>
   );
+
+  if (DEV_MODE) return content;
+
+  // Production: wrap with ClerkProvider
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { ClerkProvider } = require("@clerk/nextjs");
+  return <ClerkProvider>{content}</ClerkProvider>;
 }

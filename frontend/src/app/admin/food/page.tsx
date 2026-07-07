@@ -1,193 +1,270 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Plus, Pencil, Trash2, X, Check } from "lucide-react";
-import api from "@/lib/api";
-import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
-import Spinner from "@/components/ui/Spinner";
 
-interface FoodItem {
-  id: number;
-  name: string;
-  category: string | null;
-  region: string | null;
-  serving_size_g: number;
-  calories_kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  fiber_g: number;
-  is_veg: boolean;
-  is_egg: boolean;
-}
+import { useState, useRef } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Plus, Search, UtensilsCrossed } from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import PageShell from "@/components/layout/PageShell";
+import AdminSubNav from "@/components/admin/AdminSubNav";
+import FoodRow, { FoodRowSkeleton } from "@/components/admin/FoodRow";
+import FoodForm from "@/components/admin/FoodForm";
+import DeleteConfirmDialog from "@/components/ui/DeleteConfirmDialog";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useAdminFood } from "@/hooks/useAdminFood";
+import { useDebounce } from "@/hooks/useDebounce";
+import { cn } from "@/lib/utils";
+import type { AdminFoodItem, AdminFoodCreate } from "@/hooks/useAdminFood";
 
-const EMPTY: Omit<FoodItem, "id"> = {
-  name: "", category: "", region: "", serving_size_g: 100,
-  calories_kcal: 0, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0,
-  is_veg: true, is_egg: false,
-};
+type FormMode = "create" | "edit";
+type MobileView = "list" | "form";
 
 export default function AdminFoodPage() {
-  const [items, setItems] = useState<FoodItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<FoodItem | null>(null);
-  const [form, setForm] = useState<Omit<FoodItem, "id">>(EMPTY);
-  const [saving, setSaving] = useState(false);
+  useAdminCheck(); // redirect if not admin
 
-  function loadItems(q = "") {
-    setLoading(true);
-    api.get("/api/v1/admin/food", { params: { search: q || undefined, limit: 200 } })
-      .then((r) => setItems(r.data))
-      .catch(() => setError("Failed to load food items."))
-      .finally(() => setLoading(false));
+  const [search, setSearch]         = useState("");
+  const debouncedSearch             = useDebounce(search, 350);
+  const { items, isLoading, loadingMore, hasMore, loadedCount, loadMore,
+          createFood, updateFood, deleteFood } = useAdminFood(debouncedSearch);
+
+  const [formMode, setFormMode]     = useState<FormMode>("create");
+  const [editItem, setEditItem]     = useState<AdminFoodItem | null>(null);
+  const [formVisible, setFormVisible] = useState(false);  // desktop form panel visible
+  const [mobileView, setMobileView] = useState<MobileView>("list");
+  const [deleteTarget, setDeleteTarget] = useState<AdminFoodItem | null>(null);
+
+  const dirRef = useRef(1);
+
+  function openCreate() {
+    setFormMode("create");
+    setEditItem(null);
+    setFormVisible(true);
+    dirRef.current = 1;
+    setMobileView("form");
   }
 
-  useEffect(() => { loadItems(); }, []);
-
-  function openNew() { setForm(EMPTY); setEditing(null); setShowForm(true); }
-  function openEdit(item: FoodItem) {
-    const { id, ...rest } = item;
-    setForm(rest); setEditing(item); setShowForm(true);
+  function openEdit(item: AdminFoodItem) {
+    setFormMode("edit");
+    setEditItem(item);
+    setFormVisible(true);
+    dirRef.current = 1;
+    setMobileView("form");
   }
-  function cancelForm() { setShowForm(false); setEditing(null); }
 
-  async function handleSave() {
-    setSaving(true);
+  function closeForm() {
+    setFormVisible(false);
+    dirRef.current = -1;
+    setMobileView("list");
+    setEditItem(null);
+  }
+
+  async function handleSave(payload: AdminFoodCreate, id?: number) {
     try {
-      if (editing) {
-        await api.put(`/api/v1/admin/food/${editing.id}`, form);
+      if (formMode === "edit" && id !== undefined) {
+        await updateFood(id, payload);
+        toast.success("Food item updated");
       } else {
-        await api.post("/api/v1/admin/food", form);
+        await createFood(payload);
+        toast.success("Food item added");
       }
-      setShowForm(false);
-      loadItems(search);
+      closeForm();
     } catch {
-      setError("Save failed.");
-    } finally {
-      setSaving(false);
+      toast.error("Failed to save. Please try again.");
     }
   }
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this food item?")) return;
-    await api.delete(`/api/v1/admin/food/${id}`);
-    loadItems(search);
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    try {
+      await deleteFood(deleteTarget.id);
+      toast.success(`"${deleteTarget.name}" deleted`);
+    } catch {
+      toast.error("Failed to delete. Please try again.");
+    } finally {
+      setDeleteTarget(null);
+    }
   }
 
-  const field = (key: keyof typeof form, label: string, type = "text") => (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs text-gray-500">{label}</label>
-      <input
-        type={type}
-        step={type === "number" ? "0.1" : undefined}
-        value={form[key] as string | number}
-        onChange={(e) => setForm((f) => ({ ...f, [key]: type === "number" ? Number(e.target.value) : e.target.value }))}
-        className="rounded-xl border border-gray-700 bg-gray-800 text-gray-100 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-      />
+  const SLIDE_VARIANTS = {
+    enter:  (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.22 } },
+    exit:   (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0, transition: { duration: 0.18 } }),
+  };
+
+  const listPanel = (
+    <div className="space-y-3">
+      {/* Search + Add */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              placeholder="Search food catalog…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              aria-label="Search food catalog"
+              className={cn(
+                "w-full h-10 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] text-foreground",
+                "pl-9 pr-3 text-sm placeholder:text-muted-foreground/50",
+                "outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors",
+              )}
+            />
+          </div>
+          <button
+            onClick={openCreate}
+            aria-label="Add food item"
+            className="h-10 px-3 rounded-xl bg-primary text-black text-sm font-semibold hover:bg-green-400 transition-colors flex items-center gap-1.5 shrink-0"
+          >
+            <Plus size={14} aria-hidden="true" />
+            <span className="hidden sm:inline">Add</span>
+          </button>
+        </div>
+        {!isLoading && items.length > 0 && (
+          <p className="text-[11px] text-muted-foreground/50 px-1">
+            {loadedCount.toLocaleString()} item{loadedCount !== 1 ? "s" : ""} loaded
+            {hasMore ? " — scroll down to load more" : ""}
+          </p>
+        )}
+      </div>
+
+      {/* Food list */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 8 }).map((_, i) => <FoodRowSkeleton key={i} />)}
+        </div>
+      ) : items.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#1A1A1A] flex items-center justify-center">
+            <UtensilsCrossed size={22} className="text-muted-foreground/30" aria-hidden="true" />
+          </div>
+          <p className="text-sm text-muted-foreground">No food items match your search.</p>
+        </div>
+      ) : (
+        <>
+          <AnimatePresence initial={false}>
+            <div className="space-y-1.5">
+              {items.map(item => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  exit={{ opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.18 } }}
+                >
+                  <FoodRow
+                    item={item}
+                    onEdit={openEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </AnimatePresence>
+
+          {/* Load more */}
+          <div className="flex items-center justify-center gap-3 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Showing {loadedCount} item{loadedCount !== 1 ? "s" : ""}
+              {!hasMore && search ? " for this search" : ""}
+            </p>
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="text-xs text-primary hover:text-green-400 transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? "Loading…" : "Load 100 more"}
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
-      <div className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/admin" className="text-gray-500 hover:text-gray-300 transition-colors">
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="text-lg font-bold text-gray-100">Food Dataset</h1>
-          <span className="text-xs text-gray-600">{items.length} items</span>
+    <PageShell title="Food Catalog">
+      <div className="space-y-6 pt-2">
+
+        {/* Header */}
+        <div className="space-y-3">
+          <h1 className="text-xl font-bold text-foreground lg:text-2xl">Admin Panel</h1>
+          <AdminSubNav />
         </div>
-        <Button size="sm" onClick={openNew}><Plus size={14} className="mr-1" />Add item</Button>
+
+        {/* ── Desktop: two-column (list | sticky form) ── */}
+        <div className="hidden xl:grid xl:grid-cols-[1fr_360px] xl:gap-6 xl:items-start">
+          {listPanel}
+
+          {/* Sticky form panel */}
+          <div className="sticky top-20 space-y-3">
+            {formVisible ? (
+              <FoodForm
+                mode={formMode}
+                initial={editItem}
+                onSave={handleSave}
+                onCancel={closeForm}
+              />
+            ) : (
+              <div className="rounded-2xl bg-[#111111] border border-[#2A2A2A] p-6 flex flex-col items-center justify-center gap-3 text-center min-h-40">
+                <UtensilsCrossed size={22} className="text-muted-foreground/20" aria-hidden="true" />
+                <p className="text-xs text-muted-foreground/50">
+                  Select a food to edit, or click Add Food to create one.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Mobile/tablet: state machine list ↔ form ── */}
+        <div className="xl:hidden overflow-hidden">
+          <AnimatePresence initial={false} custom={dirRef.current} mode="wait">
+            {mobileView === "list" ? (
+              <motion.div
+                key="list"
+                custom={dirRef.current}
+                variants={SLIDE_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                {listPanel}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form"
+                custom={dirRef.current}
+                variants={SLIDE_VARIANTS}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                <FoodForm
+                  mode={formMode}
+                  initial={editItem}
+                  onSave={handleSave}
+                  onCancel={closeForm}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-3 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={open => !open && setDeleteTarget(null)}
+        title={`Delete "${deleteTarget?.name}"?`}
+        description="This food item will be permanently removed from the catalog."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+      />
 
-        {/* Search */}
-        <input
-          placeholder="Search food items..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); loadItems(e.target.value); }}
-          className="w-full rounded-xl border border-gray-700 bg-gray-800 text-gray-100 placeholder-gray-600 px-4 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-        />
-
-        {/* Add/Edit form */}
-        {showForm && (
-          <Card className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-200">{editing ? "Edit item" : "New food item"}</h3>
-              <button onClick={cancelForm} className="text-gray-600 hover:text-gray-300"><X size={16} /></button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {field("name", "Name *")}
-              {field("category", "Category")}
-              {field("region", "Region")}
-              {field("serving_size_g", "Serving size (g)", "number")}
-              {field("calories_kcal", "Calories (kcal/100g)", "number")}
-              {field("protein_g", "Protein (g)", "number")}
-              {field("carbs_g", "Carbs (g)", "number")}
-              {field("fat_g", "Fat (g)", "number")}
-              {field("fiber_g", "Fiber (g)", "number")}
-            </div>
-            <div className="flex gap-4 text-sm text-gray-300">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_veg}
-                  onChange={(e) => setForm((f) => ({ ...f, is_veg: e.target.checked }))}
-                  className="accent-brand-500" />
-                Vegetarian
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={form.is_egg}
-                  onChange={(e) => setForm((f) => ({ ...f, is_egg: e.target.checked }))}
-                  className="accent-yellow-400" />
-                Contains egg
-              </label>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="secondary" size="sm" onClick={cancelForm}>Cancel</Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !form.name}>
-                <Check size={14} className="mr-1" />{saving ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Table */}
-        {loading && <div className="flex justify-center py-16"><Spinner className="w-8 h-8" /></div>}
-        {!loading && (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <Card key={item.id} padding="sm" className="flex items-center justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-gray-200 truncate">{item.name}</p>
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.is_veg ? "bg-brand-500" : item.is_egg ? "bg-yellow-400" : "bg-red-500"}`} />
-                  </div>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    {item.category} {item.region && `· ${item.region}`} · {item.calories_kcal} kcal · P:{item.protein_g}g C:{item.carbs_g}g F:{item.fat_g}g
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button onClick={() => openEdit(item)} className="text-gray-600 hover:text-brand-400 transition-colors p-1">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={() => handleDelete(item.id)} className="text-gray-600 hover:text-red-400 transition-colors p-1">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      <Toaster position="bottom-center" richColors />
+    </PageShell>
   );
 }

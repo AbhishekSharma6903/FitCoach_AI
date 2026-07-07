@@ -1,0 +1,2532 @@
+{
+  "run_id": "run-20260703-224612",
+  "timestamp": "2026-07-03T23:02:57.290242",
+  "p0_score": 7.4,
+  "overall_score": 6.81,
+  "p0_pass": false,
+  "total_screenshots": 90,
+  "scores": [
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 6.5,
+      "responsive_issues": [
+        "Top header row with greeting + '2352 kcal left' pill is cramped \u2014 pill likely wraps or clips at 375px",
+        "The macro section shows duplicate data (both progress bars and a second PROTEIN/CARBS/FAT list), suggesting a layout/render artifact that wastes vertical space",
+        "Quick-log toolbar (trophy icon, camera icon, weight input, Log button, D avatar) is very tight in one row at 375px \u2014 weight input field appears truncated",
+        "Weight progress chart x-axis labels (27 Jun, 29 Jun, 2 Jul) may be cramped"
+      ],
+      "good": [
+        "Dark theme renders consistently with no harsh contrast breaks",
+        "Calorie ring and remaining kcal display is clear and legible",
+        "Water intake quick-add buttons (150ml/250ml/500ml/750ml) are laid out in a 4-column grid that fits 375px",
+        "Card-based layout stacks vertically and is appropriate for mobile"
+      ],
+      "improvements": [
+        "Remove the duplicate macro display \u2014 keep only one (either the progress bars OR the labeled list, not both)",
+        "Move the '2352 kcal left' pill below the greeting or use a smaller font so the header row doesn't overflow",
+        "Increase weight input field min-width or move it to a second row to prevent truncation in the toolbar",
+        "Ensure all toolbar icon buttons are at least 44\u00d744px touch targets"
+      ],
+      "touch_targets_pass": false,
+      "overflow_detected": true
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 7.5,
+      "responsive_issues": [
+        "Diet type buttons (Veg / Non-Veg / Vegan) in a single row may be tight at 375px \u2014 'Non-Veg' and 'Vegan' could clip if font size is not reduced",
+        "Bottom action bar with 'Cancel' and 'Save Dish' side-by-side is narrow but likely still usable",
+        "Skeleton loading area inside dashed border takes significant vertical space, pushing content below fold on 667px height"
+      ],
+      "good": [
+        "Full-screen modal approach is appropriate for small screens",
+        "Dish name input has a clear green focus ring visible at this size",
+        "Search food input is full-width and adequately sized",
+        "Back arrow and close (\u00d7) are well-spaced touch targets",
+        "Clear empty-state hint text inside ingredient area"
+      ],
+      "improvements": [
+        "Wrap diet type buttons to two rows if combined width exceeds 375px, or reduce horizontal padding",
+        "Ensure 'Cancel' and 'Save Dish' buttons are each at least 44px tall",
+        "Reduce skeleton placeholder height so the helper text 'Your ingredients will appear here' is visible without scrolling on iPhone SE's 667px height"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 8.0,
+      "responsive_issues": [
+        "Page title 'My Dishes' and subtitle with '+ New Dish' button \u2014 button text may be slightly tight but likely fits",
+        "Info banner text is long and wraps to 4 lines, consuming a large portion of the 667px viewport height"
+      ],
+      "good": [
+        "Single dish card layout is clean and readable at 375px",
+        "Macro display (P/C/F) in colored text is clear",
+        "Edit and delete icon buttons appear adequately spaced",
+        "Search bar is full-width",
+        "'+ Add another dish' dashed CTA is clear and appropriately sized",
+        "Veg tag badge is compact and readable"
+      ],
+      "improvements": [
+        "Consider collapsing or truncating the info banner after first view to save vertical space on small screens",
+        "Ensure edit (pencil) and delete (trash) icon buttons have at least 44\u00d744px tap areas \u2014 they appear small in the screenshot",
+        "Add bottom padding so '+ Add another dish' is not cut off on iPhone SE viewport"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 7.0,
+      "responsive_issues": [
+        "Step indicator (1-2-3-4 with connecting lines) is wide and may be cramped at 375px \u2014 numbers and lines could overlap",
+        "On iPhone SE (667px height), the 'Continue' button at the bottom may require scrolling to reach if the keyboard is open while filling name/age/height fields",
+        "Gender buttons (Male/Female/Other) in a single row are tight at 375px \u2014 each button has reduced horizontal padding"
+      ],
+      "good": [
+        "Clean single-column form layout appropriate for mobile",
+        "Age and Height fields in a 2-column row is a reasonable space-saving choice",
+        "Large green 'Continue' CTA button is full-width and well above 44px",
+        "Clear section heading and subtitle",
+        "Input placeholders give helpful examples"
+      ],
+      "improvements": [
+        "Reduce step-indicator circle size or spacing so all 4 steps fit within 375px without overlap",
+        "Use 'position: sticky; bottom: 0' for the Continue button so it stays visible when keyboard is open",
+        "If 3 gender buttons are too cramped at 375px, consider a 2+1 wrapping layout or a segmented control",
+        "Ensure Gender buttons meet 44px height requirement"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 6.0,
+      "responsive_issues": [
+        "Stats grid (3-column \u00d7 2-row) with BMI/Maintenance/Goal/Protein/Carbs/Fat tiles is very dense at 375px \u2014 values like '2765 kcal' are likely truncated or use very small font",
+        "Dev Mode banner at the bottom with monospace code text is very small and likely unreadable at 375px",
+        "Weight goal fields (Current Weight / Goal Weight) in a 2-column layout may be cramped",
+        "Overall page is very long with multiple sections \u2014 no sticky save button means user must scroll far to save"
+      ],
+      "good": [
+        "Profile header with avatar, name, and stats is clear",
+        "Section labels (YOUR STATS, UPDATE GOALS, LIFESTYLE, ACCOUNT) provide clear hierarchy",
+        "Dropdown selects for Activity Level, Diet Type, Timeline are full-width and touch-friendly",
+        "Save Changes button is full-width green CTA",
+        "Sign Out button is clearly styled distinctly in red outline"
+      ],
+      "improvements": [
+        "Reduce stats grid to 2-column layout at 375px so values have more space and don't truncate",
+        "Make the Dev Mode banner collapsible or increase its font size to at least 11px",
+        "Consider making 'Save Changes' sticky at the bottom of the form section",
+        "Current Weight / Goal Weight inputs should stack vertically on 375px instead of side-by-side",
+        "Increase tap target for 'Re-do Onboarding' row to at least 44px height"
+      ],
+      "touch_targets_pass": false,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 7.5,
+      "responsive_issues": [
+        "Quick Add grid (3 columns \u00d7 2 rows) food cards have long names like 'Paneer Sabzi' and 'Steamed Rice' that may wrap awkwardly within card width at 375px",
+        "Bottom macro summary row showing '150g Protein 0g / 250g Carbs 0g / 65g Fat 0g' is dense and may be hard to read at this size",
+        "Date navigation bar with prev/next chevrons + date text + TODAY badge is slightly crowded but functional"
+      ],
+      "good": [
+        "Search bar is full-width and prominent",
+        "Quick Add section title with 'Popular Indian meals' subtitle is clear",
+        "Food cards have consistent emoji icons and calorie display",
+        "Calorie summary (0 / 2454 kcal) with remaining in large green text is very readable",
+        "Date navigation is clear with TODAY badge",
+        "Filter icon (sliders) in top-right is appropriately placed"
+      ],
+      "improvements": [
+        "Reduce Quick Add to 2-column grid at 375px so food names don't wrap or truncate within cards",
+        "Show macro summary (Protein/Carbs/Fat) in a 3-column card layout with larger text rather than a single dense row",
+        "Ensure each Quick Add food card tap target is at least 44px tall",
+        "Consider truncating long food names with ellipsis rather than wrapping"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 7.5,
+      "responsive_issues": [
+        "Quick Add grid uses 3 columns on 375px \u2014 each card is ~110px wide, leaving tight padding and small emoji icons",
+        "Card labels like 'Steamed Rice' wrap to two lines due to narrow column width, increasing row height inconsistently",
+        "Macro row (Protein/Carbs/Fat) with inline numbers and labels feels cramped at 375px \u2014 'Ng' avatar overlaps the 150g label"
+      ],
+      "good": [
+        "Dark theme renders cleanly with good contrast on small screen",
+        "Search bar is full-width and adequately tall (~44px)",
+        "Calorie summary section is readable and well-spaced",
+        "'Log your first meal' CTA button is full-width and clearly tappable (>44px height)",
+        "Date navigator with chevrons provides adequate touch targets",
+        "Overall vertical scroll layout is appropriate for mobile"
+      ],
+      "improvements": [
+        "Switch Quick Add grid to 2 columns on 375px to give each card more breathing room and prevent label wrapping",
+        "Increase card min-height to ensure consistent sizing regardless of label line count",
+        "Move macro labels below their values in a stacked layout to prevent crowding with the avatar element",
+        "Add explicit min-width to avoid the 'Ng' avatar overlapping the '150g' target label"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Search dropdown results partially overlap the Quick Add cards below without a clear visual separator or scroll boundary",
+        "Calorie section remains visible below the dropdown, which may confuse focus \u2014 a dimmed overlay would help",
+        "Bottom Quick Add row (206/140/190 kcal) is partially visible behind the dropdown, creating visual noise"
+      ],
+      "good": [
+        "Search bar has a clear green focus ring indicating active state",
+        "Dropdown list items have generous row height (~60px+), easily tappable",
+        "Each result shows food name, category, and kcal/100g clearly readable at this size",
+        "Green dot indicators for each result add visual consistency",
+        "Full-width dropdown fits naturally within 375px without horizontal overflow"
+      ],
+      "improvements": [
+        "Add a semi-transparent dark overlay behind the dropdown to suppress background content and improve focus",
+        "Set dropdown max-height with overflow-y: scroll so it doesn't push content awkwardly on short screens like SE (667px height)",
+        "Ensure dropdown z-index fully covers the Quick Add cards so partial card visibility doesn't occur"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 8.5,
+      "responsive_issues": [
+        "On iPhone SE (667px height), the empty state icon and text sit mid-screen with large empty space below \u2014 feels sparse but not broken",
+        "Floating 'N' avatar in bottom-left corner may overlap future content or nav elements if added"
+      ],
+      "good": [
+        "Clean, minimal layout appropriate for empty state",
+        "Search bar is full-width and appears adequately tall for touch",
+        "Date navigator is well-sized and readable",
+        "Empty state icon + message + subtext hierarchy is clear and readable",
+        "No horizontal overflow detected",
+        "Text sizes appear \u226513px throughout"
+      ],
+      "improvements": [
+        "Add a subtle 'Quick Add' exercise suggestions section (like the food tracker) to reduce empty space and improve onboarding",
+        "Consider repositioning or removing the floating 'N' avatar if it's a debug/profile element, as it sits over content area without clear purpose",
+        "Vertically center the empty state relative to the available space below the search bar for better visual balance on SE's shorter screen"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-se",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 8.5,
+      "responsive_issues": [
+        "MET value text ('MET 3.5') is visually secondary/gray but close to the blue 'Strength' tag \u2014 could be mistaken for a tappable element",
+        "Floating 'N' avatar in bottom-left may visually conflict with any future bottom navigation bar"
+      ],
+      "good": [
+        "Search bar has clear green focus ring consistent with food tracker",
+        "Each result row is generously tall (~70px+), easily tappable on small screens",
+        "Exercise name, muscle group, type tag, and MET value are all readable at 375px",
+        "Full-width dropdown with no horizontal overflow",
+        "Clean separation between result rows with subtle dividers",
+        "Consistent dark theme matches rest of app"
+      ],
+      "improvements": [
+        "Visually separate MET value from the Strength tag with more spacing or a separator character to clarify they're distinct data points",
+        "Add a dimming overlay behind the dropdown (same as food tracker recommendation) for consistent UX pattern",
+        "Ensure the floating avatar doesn't appear on top of dropdown results \u2014 check z-index layering"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 8.0,
+      "responsive_issues": [
+        "Two-column layout for kcal/streak cards causes the right card to be narrow and cramped",
+        "BMI 'Overweight' badge text may be tight within the narrow right column",
+        "Weight input field in top bar appears to have insufficient width, placeholder text likely truncated"
+      ],
+      "good": [
+        "Clear calorie ring visualization centered and readable",
+        "Macro progress bars scale well to mobile width",
+        "Water intake buttons (150ml, 250ml, 500ml, 750ml) are well-sized for touch",
+        "Weight progress chart renders cleanly with readable axis labels",
+        "Streak and BMI stats are clearly displayed",
+        "Green brand color used consistently",
+        "Scrollable layout works naturally for mobile"
+      ],
+      "improvements": [
+        "Stack the kcal-consumed and streak/BMI cards vertically instead of side-by-side, or give the right card more proportional width (e.g., 40/60 split)",
+        "Increase weight input field min-width or move it to a separate row in the top bar",
+        "Ensure 'Overweight' badge has enough horizontal padding so it doesn't clip on small screens"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 8.5,
+      "responsive_issues": [
+        "Skeleton placeholder rows inside the dashed ingredient area appear very faint and may confuse users as actual content",
+        "Bottom Cancel/Save buttons may be partially obscured by keyboard when it opens on the Dish Name field"
+      ],
+      "good": [
+        "Modal sheet fills screen appropriately with good padding",
+        "Dish Name input has clear green focus ring",
+        "Diet Type toggle buttons (Veg/Non-Veg/Vegan) are well-spaced and tap-friendly",
+        "Food search field is full-width and readable",
+        "Cancel and Save Dish buttons are large enough for touch targets",
+        "Helper text 'Enter a name to enable saving' is appropriately sized"
+      ],
+      "improvements": [
+        "Use a KeyboardAvoidingView or scroll the modal up when keyboard appears so Cancel/Save remain visible",
+        "Replace skeleton placeholders in the ingredient drop zone with a clearer empty-state illustration or remove them to avoid confusion",
+        "Consider making Save Dish button fully opaque/bright green even before name is entered, to signal it becomes active (currently appears slightly muted)"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 8.5,
+      "responsive_issues": [
+        "Info banner text is long and wraps to multiple lines \u2014 slightly dense but readable",
+        "Edit and delete icon buttons on dish card may be slightly small (~30px estimated)"
+      ],
+      "good": [
+        "Page header with back arrow and New Dish CTA is well laid out",
+        "Green info banner is visually distinct and communicates value clearly",
+        "Search bar is full-width and appropriately sized",
+        "Dish card shows all key info (macros, kcal, servings, log count) in a scannable layout",
+        "Macro color coding (blue/yellow/orange) is consistent with dashboard",
+        "Add another dish dashed-border CTA is clear and inviting"
+      ],
+      "improvements": [
+        "Increase edit (pencil) and delete (trash) icon tap targets to at least 44\u00d744px using padding",
+        "Truncate or summarize the info banner text to reduce visual weight on first load",
+        "Consider adding a subtle divider or spacing between the search bar and dish card for visual hierarchy"
+      ],
+      "touch_targets_pass": false,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.5,
+      "responsive_issues": [
+        "Age and Height fields are in a two-column grid \u2014 on 390px this is fine but inputs may feel slightly narrow for comfortable typing",
+        "Step indicator circles (1-2-3-4) connecting lines may be tightly spaced but functional"
+      ],
+      "good": [
+        "Clear step-progress indicator at top",
+        "FitCoach AI heading in brand green is prominent",
+        "Form labels and placeholder text are readable",
+        "Gender selector buttons are generously sized and well-spaced",
+        "Full-width green Continue button is highly tappable",
+        "Overall card layout fits well within 390px with appropriate padding",
+        "Logical top-to-bottom form flow"
+      ],
+      "improvements": [
+        "Consider making Age and Height full-width stacked inputs for easier numeric keyboard interaction on mobile",
+        "Add 'Next (2/4)' label inside the Continue button to reinforce multi-step context",
+        "Ensure keyboard does not obscure the Continue button by using scroll-to-bottom or KeyboardAvoidingView"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 7.5,
+      "responsive_issues": [
+        "Stats grid shows 3-column then 3-column layout \u2014 on 390px the macro cells (176g, 235g, 78g) are narrow and labels 'Daily Target' are very small",
+        "Dev Mode Active banner at the bottom adds visual noise and may push content upward unexpectedly in production",
+        "Current Weight and Goal Weight inputs are side-by-side, which is fine but inputs are somewhat narrow"
+      ],
+      "good": [
+        "Profile header with avatar, name, and key stats is clean and readable",
+        "BMI highlight in green border stands out effectively",
+        "Dropdown selectors for Activity Level, Diet Type, Timeline are full-width and easy to tap",
+        "Save Changes button is prominent and full-width",
+        "Sign Out button has clear destructive red styling",
+        "Re-do Onboarding option is accessible but not prominent"
+      ],
+      "improvements": [
+        "Increase font size of 'Daily Target' sublabels in the stats grid to at least 11px or restructure to 2-column grid for more breathing room",
+        "Remove or collapse the Dev Mode banner behind a dev-only overlay that doesn't affect layout",
+        "Add subtle section separators between YOUR STATS, UPDATE GOALS, and ACCOUNT for cleaner visual hierarchy"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 8.5,
+      "responsive_issues": [
+        "Quick Add grid (3-column, 2-row) food cards have text that could be tight if food names are longer than shown",
+        "Macro row at bottom of calories card shows three values with target grayed out \u2014 65g fat target vs 78g on profile may indicate a data inconsistency (minor UX concern)",
+        "Floating salad bowl FAB at bottom is partially cut off in screenshot \u2014 positioning needs verification"
+      ],
+      "good": [
+        "Date navigation bar with prev/next arrows and TODAY badge is intuitive and well-sized",
+        "Search bar is prominent and full-width",
+        "Quick Add section with Popular Indian meals is highly relevant and culturally appropriate",
+        "Food cards in 3-column grid have good touch target size",
+        "Calorie summary card is clear with large remaining number in green",
+        "Macro breakdown (Protein/Carbs/Fat) with progress bars is readable",
+        "Overall scroll layout feels native to mobile"
+      ],
+      "improvements": [
+        "Ensure floating action button (salad bowl / + icon) has safe-area-inset-bottom applied so it clears home indicator on iPhone 14",
+        "Verify macro targets are consistent between Food Log and Profile pages (150g/250g/65g vs 176g/235g/78g discrepancy visible)",
+        "Add meal-time grouping (Breakfast/Lunch/Dinner/Snacks) below the calories card for better log organization"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 8.5,
+      "responsive_issues": [
+        "Quick Add grid uses 3 columns at 390px \u2014 each card is ~110px wide, leaving minimal padding between items",
+        "Calorie macro row (Protein/Carbs/Fat) three columns may feel tight at 390px with 0g labels and goal values"
+      ],
+      "good": [
+        "Date navigation bar is full-width and clearly readable",
+        "Search bar has good height and placeholder text is appropriately sized",
+        "Quick Add section title and subtitle are well spaced",
+        "Calorie summary card layout is clear with large remaining number in green",
+        "Empty state illustration and CTA button are well centered",
+        "Log your first meal CTA button appears to be \u226544px tall and full-width \u2014 easy to tap",
+        "Dark theme consistent throughout with good contrast on white text"
+      ],
+      "improvements": [
+        "Increase Quick Add card min-height to ensure food name + kcal label never wraps awkwardly \u2014 add at least 4px more vertical padding",
+        "Consider 2-column Quick Add grid on narrow viewports to give cards more breathing room",
+        "Macro row: increase gap between the three stat columns slightly or use flex with justify-space-between to prevent crowding"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Search dropdown results overlap the Quick Add cards below \u2014 no visual separator or scroll containment, which may confuse the user about what is scrollable",
+        "Calorie summary card is still visible below the dropdown, creating visual noise while searching"
+      ],
+      "good": [
+        "Search field has a bright green focus ring \u2014 clearly indicates active input",
+        "Dropdown result rows have good height (~60px) \u2014 comfortably tappable",
+        "Food name, category, cuisine and kcal per 100g all legible at this size",
+        "Green dot indicators next to kcal values add quick visual scanning aid",
+        "Text sizes across the dropdown are readable (\u226514px apparent)"
+      ],
+      "improvements": [
+        "Add a semi-transparent backdrop or blur behind the dropdown to visually separate search results from underlying content",
+        "Ensure dropdown is absolutely positioned and overlays content rather than pushing layout down to avoid confusion",
+        "Consider adding a 'Close / Clear' X button inside the search field for easy dismissal on mobile",
+        "Limit visible dropdown to 4\u20135 items with internal scroll so it does not grow beyond viewport height"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 7.5,
+      "responsive_issues": [
+        "Large empty space below the empty state illustration \u2014 the bottom half of the screen is completely blank, making the screen feel unfinished",
+        "No quick-add suggestions or popular exercises shown to guide new users unlike the food tracker"
+      ],
+      "good": [
+        "Header with back arrow, title and date subtitle is clean and readable",
+        "Date navigation pill is consistent with the food tracker screen",
+        "Search bar placeholder text gives good examples of what to type",
+        "Empty state icon, heading and subtext are well centered and clearly communicate what to do next",
+        "Overall layout is uncluttered and loads fast visually"
+      ],
+      "improvements": [
+        "Add a 'Popular Exercises' quick-add grid below the empty state (mirrors food tracker pattern) to reduce blank space and aid discoverability",
+        "Consider placing a floating '+' FAB button or a 'Log your first workout' CTA button similar to the food tracker for visual consistency",
+        "Reduce vertical gap between search bar and empty state illustration to bring content closer together and reduce the blank lower half"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "MET value label ('MET 3.5') is in a muted grey that may be low contrast against the dark card background \u2014 risks failing WCAG AA",
+        "All four results show identical MET 3.5 \u2014 while accurate, users may not understand what MET means without a tooltip or label clarification"
+      ],
+      "good": [
+        "Green-outlined search field clearly indicates focus state",
+        "Dropdown rows are generously tall (~70px) \u2014 well above 44px touch target minimum",
+        "Exercise name, muscle group, category tag (Strength in blue) and MET value all fit cleanly on one row without overflow",
+        "Four results visible without scrolling \u2014 appropriate for 390px height",
+        "Consistent dark card style matches overall app theme"
+      ],
+      "improvements": [
+        "Increase contrast of MET value text \u2014 use at least #9ca3af instead of current very dim grey to pass WCAG AA 4.5:1 ratio",
+        "Add a small info icon next to 'MET' with a tooltip explaining what the value means for fitness-novice users",
+        "Consider adding exercise category filter chips (Strength, Cardio, Yoga) above the results for faster filtering without typing"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 6.5,
+      "responsive_issues": [
+        "Content appears constrained to a narrow column (~480px) on a 1280px viewport, leaving large empty space on sides",
+        "Right panel (streak/BMI card) is truncated and not fully visible beside the main calorie card",
+        "Weight Progress chart is narrow and doesn't expand to use available width",
+        "Water Intake section feels cramped with small quick-add buttons that don't scale up for desktop"
+      ],
+      "good": [
+        "Dark theme renders correctly at this viewport",
+        "Navigation bar elements are well-spaced for pointer interaction",
+        "Calorie ring visualization is clear and readable",
+        "Color-coded macro bars are legible"
+      ],
+      "improvements": [
+        "Add a max-width container (e.g. 900\u20131100px) centered with auto margins to better use 1280px width",
+        "Use a two-column grid layout for main dashboard sections (calorie card + stats on left, macros + water on right)",
+        "Expand the Weight Progress chart to fill the full content width",
+        "Increase the streak/BMI card width so it doesn't get clipped"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 7.5,
+      "responsive_issues": [
+        "Modal is reasonably sized but could use more width on a 1280px screen \u2014 currently ~550px wide, leaving significant whitespace",
+        "Ingredient search results area (skeleton placeholder) is underutilized; could show more ingredients at once on desktop"
+      ],
+      "good": [
+        "Modal overlay is well-centered on the viewport",
+        "Diet type toggle buttons are clearly laid out",
+        "Cancel/Save Dish buttons are well-sized and accessible",
+        "Form fields have good spacing and readable labels"
+      ],
+      "improvements": [
+        "Increase modal max-width to ~700\u2013800px on desktop to reduce wasted whitespace and show more ingredient results",
+        "Consider a two-column layout inside the modal for dish name + diet type on desktop",
+        "Ingredient list area could be taller on desktop since there's vertical space available"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 7.0,
+      "responsive_issues": [
+        "Content column is narrow (~700px) on 1280px viewport \u2014 acceptable but could use available space better",
+        "Single dish card and empty state don't leverage desktop width for a richer layout",
+        "Info banner at top spans full column width but feels like wasted real estate on desktop"
+      ],
+      "good": [
+        "Page header with back button and New Dish CTA is well-placed",
+        "Dish card shows all relevant info (calories, macros, ingredient count) clearly",
+        "Search bar is appropriately styled and accessible",
+        "Add another dish dashed-border CTA is visually distinct"
+      ],
+      "improvements": [
+        "Consider a card grid layout (2\u20133 columns) for dishes on desktop viewports to better utilize horizontal space",
+        "Increase max-width of content container to ~900px on desktop",
+        "The info banner could be collapsed or made more compact on desktop since the message is secondary"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.0,
+      "responsive_issues": [
+        "Card-based onboarding modal is ~550px wide \u2014 appropriate for a focused flow but could feel slightly small on 1280px",
+        "Step indicator text labels ('Personal', 'Weight', etc.) may truncate at very narrow modal widths"
+      ],
+      "good": [
+        "Centered card layout is appropriate for an onboarding flow on desktop",
+        "Step progress indicator clearly shows 4-step flow",
+        "Form fields (name, age, height) are well-proportioned",
+        "Gender selector buttons are clearly laid out",
+        "Continue CTA button is prominent and full-width within the card"
+      ],
+      "improvements": [
+        "Slightly increase card width to ~640px on desktop for more breathing room in form fields",
+        "Age and Height fields side-by-side is good; could add more horizontal padding inside card",
+        "Consider adding a subtle illustration or brand visual to the left side for a two-panel desktop layout"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 7.0,
+      "responsive_issues": [
+        "Content is constrained to ~580px centered column on 1280px \u2014 feels narrow for a desktop profile page",
+        "Stats row (BMI, TDEE, Goal, Protein, Carbs, Fat) has 6 items that could overflow or wrap on narrower inner containers",
+        "Update Goals section uses full-width single-column inputs that could be arranged in a more desktop-friendly grid",
+        "Dev Mode banner at bottom is visually intrusive but acceptable for dev environment"
+      ],
+      "good": [
+        "User avatar and basic info header is clean and readable",
+        "Stats cards with highlighted goal calorie are clear and well-designed",
+        "Dropdowns for Activity Level, Diet Type, Timeline are well-sized",
+        "Save Changes CTA is prominent",
+        "Sign Out button is clearly destructive-styled"
+      ],
+      "improvements": [
+        "Increase content max-width to ~800px on desktop and use a two-column layout for the Update Goals section",
+        "Place Current Weight and Goal Weight inputs side-by-side (they already are) \u2014 extend this pattern to dropdowns too",
+        "Consider splitting the page into a sidebar (user info + stats) and main content (update goals) on desktop",
+        "Stats row could use responsive wrapping with min-width on each stat card to prevent overflow"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 7.0,
+      "responsive_issues": [
+        "Content column (~700px) is narrow for a 1280px desktop viewport, leaving large side margins unused",
+        "Quick Add grid (3x2) could show more items or larger cards on desktop",
+        "Date navigation bar is small relative to available width",
+        "Calorie summary section doesn't expand to use full column width effectively"
+      ],
+      "good": [
+        "Date navigator with prev/next arrows and TODAY badge is clear and functional",
+        "Food search bar is prominent and well-styled",
+        "Quick Add cards with emoji and calorie info are scannable",
+        "Macro breakdown (Protein/Carbs/Fat) with progress bars is readable",
+        "Remaining calorie count in green is visually prominent"
+      ],
+      "improvements": [
+        "Expand content max-width to ~900px and consider a two-column layout: food log on left, daily summary/macros on right",
+        "Quick Add section could display as a 4 or 6-column grid on desktop for faster meal selection",
+        "Date navigation could be more prominent with larger click targets on desktop",
+        "Consider sticky positioning for the calorie summary panel on desktop for persistent context while scrolling"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 5.5,
+      "responsive_issues": [
+        "Content is constrained to a narrow centered column (~600px) leaving large dead whitespace on both sides at 1280px",
+        "Quick Add grid is only 3 columns wide in a small card \u2014 could expand to use available horizontal space",
+        "The layout feels like a mobile design rendered on desktop without adaptation",
+        "No max-width container strategy \u2014 content appears left-aligned rather than properly centered",
+        "Search bar and cards do not scale to take advantage of wider viewport"
+      ],
+      "good": [
+        "Dark theme renders cleanly at this resolution",
+        "Typography is legible at desktop size",
+        "Calorie and macro tracking section is readable",
+        "Quick Add food items are well-labeled with clear calorie counts"
+      ],
+      "improvements": [
+        "Wrap content in a max-width container (e.g. max-width: 900px; margin: 0 auto) to center it properly",
+        "Expand Quick Add grid to 6 columns on desktop to use horizontal space",
+        "Consider a two-column layout: food log on left, nutrition summary on right",
+        "Add sidebar navigation or top nav for desktop instead of back-arrow-only navigation",
+        "Increase card sizes proportionally for desktop interaction targets"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 6.0,
+      "responsive_issues": [
+        "Search dropdown results are confined to a narrow column (~700px) with large empty margins at 1280px",
+        "Search results list feels cramped horizontally despite having abundant screen width available",
+        "Dropdown overlay does not take advantage of wider viewport \u2014 could show more metadata columns",
+        "Layout remains essentially a mobile single-column design at desktop width"
+      ],
+      "good": [
+        "Search input has clear active/focus green border indicator",
+        "Search results are well-structured with food name, category, and calorie density",
+        "Green dot indicators for food items are visually clear",
+        "Results list is scannable with good contrast"
+      ],
+      "improvements": [
+        "Expand search results to show additional columns (e.g. protein/carbs/fat breakdown) on desktop",
+        "Consider showing search results in a wider panel or two-column grid on desktop",
+        "Increase row height or add more detail per result row to utilize horizontal space",
+        "Center the entire layout with appropriate max-width (max-width: 900px; margin: 0 auto)",
+        "Add keyboard navigation hints (arrow keys, Enter to select) for desktop users"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 5.0,
+      "responsive_issues": [
+        "Extremely sparse layout \u2014 large empty black area below the search bar on a 1280px screen",
+        "Content confined to a narrow ~700px centered column with no desktop-specific layout adaptation",
+        "No use of the vast horizontal whitespace available at this viewport width",
+        "Empty state illustration and text appear isolated and small in the center of a very large canvas",
+        "Back arrow navigation pattern is mobile-centric and unintuitive for desktop users"
+      ],
+      "good": [
+        "Empty state messaging is clear and actionable",
+        "Search bar is prominently placed",
+        "Clean minimal aesthetic",
+        "Date navigation bar is functional"
+      ],
+      "improvements": [
+        "Add a suggested/popular exercises panel or recent workouts sidebar to fill horizontal space",
+        "Implement a two-column layout: search + results on left, workout summary/stats on right",
+        "Add a proper desktop navigation bar instead of back-arrow only",
+        "Increase the empty state illustration size to better fill the viewport",
+        "Consider showing exercise categories or quick-add workout templates to reduce blank space",
+        "Add max-width constraint with centering: max-width: 960px; margin: 0 auto"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-13",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 6.0,
+      "responsive_issues": [
+        "Search results dropdown is narrow relative to available 1280px width",
+        "MET value and category tags are small and pushed to the right \u2014 could expand with more detail columns",
+        "Large empty area below dropdown results wastes desktop real estate",
+        "Mobile-style single column layout does not adapt for desktop",
+        "No hover states visible \u2014 important for pointer/mouse device interaction feedback"
+      ],
+      "good": [
+        "Search results are well-organized with exercise name, muscle group, type, and MET value",
+        "Green-highlighted 'Strength' tags provide clear visual categorization",
+        "Active search input has clear green focus ring",
+        "Results are easy to scan and differentiate"
+      ],
+      "improvements": [
+        "Expand results rows to show additional info (e.g. calories burned estimate, muscle diagram) on desktop",
+        "Add hover state styling to result rows for mouse interaction clarity",
+        "Show more than 4 results visible simultaneously by increasing list height on desktop",
+        "Consider a split-panel layout: search on left, selected exercise detail preview on right",
+        "Add keyboard shortcut hints for desktop (e.g. \u2191\u2193 to navigate, Enter to select)",
+        "Center layout with max-width: 960px; margin: 0 auto"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 7.5,
+      "responsive_issues": [
+        "Top header row with weight input field appears cramped \u2014 the weight input, Log button, and avatar are squeezed into a single row with the Log Food button",
+        "The two-column layout (kcal card + streak card) has the right card (streak/BMI) appearing narrower and content may feel tight",
+        "Macro section shows duplicate data \u2014 both a compact row (0g/176.4g) and a detailed progress bar row (PROTEIN 0/176g 0%), which is redundant and wastes vertical space"
+      ],
+      "good": [
+        "Dark theme renders well on OLED screen",
+        "Large calorie number is highly readable",
+        "Water intake section with quick-add buttons is well-sized for touch",
+        "Weight progress chart is clear and appropriately sized",
+        "Streak and BMI card provides good at-a-glance info"
+      ],
+      "improvements": [
+        "Remove duplicate macro display \u2014 keep only the detailed progress bar version or consolidate into one section",
+        "Move weight log input to its own row or collapse it behind a dedicated icon to reduce header clutter",
+        "Increase the right stats card (streak/BMI) width slightly or stack the two cards vertically for better readability",
+        "Add bottom navigation bar for easier thumb access to main sections"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 8.0,
+      "responsive_issues": [
+        "The ingredients placeholder area with skeleton rows is decorative but may confuse users into thinking content is loading",
+        "Bottom Cancel/Save Dish buttons are close to the bottom of the modal but may be obscured by iOS home indicator on notched devices without sufficient padding"
+      ],
+      "good": [
+        "Modal sheet design feels native to iOS",
+        "Diet type toggle buttons (Veg/Non-Veg/Vegan) are well-spaced and clearly tappable",
+        "Dish name input is prominently placed with good placeholder text",
+        "Search food input is appropriately sized",
+        "Cancel and Save Dish buttons span full width and are easily tappable"
+      ],
+      "improvements": [
+        "Add safe-area-inset-bottom padding to the modal footer to prevent button overlap with iOS home indicator",
+        "Replace skeleton ingredient rows with an empty state illustration/message since no ingredients have been added yet",
+        "Consider making the modal full-screen or increasing its height so ingredient list area has more room"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 8.5,
+      "responsive_issues": [
+        "Page title says 'empty-list' but there is actually one dish (meal 1) shown \u2014 the state name is misleading but the UI itself shows a dish correctly",
+        "Large empty space below the 'Add another dish' button looks unfinished"
+      ],
+      "good": [
+        "Info banner explaining custom dishes appear in food search is helpful and well-styled",
+        "Dish card shows all relevant info (ingredients count, weight, logged times, kcal, macros) in a compact and readable layout",
+        "Macro colors (blue/yellow/orange) are consistent with the rest of the app",
+        "Edit and delete icons are visible and appropriately sized",
+        "'Add another dish' dashed border button is a clear affordance",
+        "Search bar for dishes is well-placed"
+      ],
+      "improvements": [
+        "Add bottom padding or a subtle empty state graphic below the 'Add another dish' button to avoid the stark empty space",
+        "Ensure edit/delete icon touch targets are at least 44x44px \u2014 they appear small in the screenshot",
+        "Consider adding a swipe-to-delete gesture as an alternative to the trash icon for native feel"
+      ],
+      "touch_targets_pass": false,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.5,
+      "responsive_issues": [
+        "The card floats in the center with large black empty space above and below \u2014 on a tall device this looks unanchored",
+        "Gender buttons (Male/Female/Other) appear slightly smaller than ideal touch targets at this width"
+      ],
+      "good": [
+        "Step progress indicators (1-2-3-4) are clear and well-spaced",
+        "Form fields are full-width and easy to tap",
+        "Continue button is full-width green, very prominent",
+        "Typography hierarchy is clear \u2014 title, subtitle, field labels all distinct",
+        "Two-column layout for Age and Height fields makes good use of space"
+      ],
+      "improvements": [
+        "Extend the card to fill more vertical space or pin it to top with scroll, reducing the dead black space above and below",
+        "Increase Gender button height to at least 44px to meet Apple HIG touch targets",
+        "Consider adding a subtle background pattern or gradient to the black area around the card to make it feel less stark"
+      ],
+      "touch_targets_pass": false,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 7.5,
+      "responsive_issues": [
+        "Dev Mode Active banner at the bottom overlaps content and may obscure the Sign Out button area on shorter devices",
+        "Stats grid uses 3-column layout which makes the numbers and labels quite small, especially the macro targets row",
+        "The Notion-like 'N' widget icon in the bottom-left overlaps the profile content mid-scroll"
+      ],
+      "good": [
+        "Profile header with avatar, name, and key stats is clean and readable",
+        "Save Changes button is full-width and prominent",
+        "Dropdown selectors for Activity Level, Diet Type, and Timeline are appropriately sized",
+        "Weight goal inputs side by side make sense contextually",
+        "BMI warning in yellow/amber is appropriately highlighted"
+      ],
+      "improvements": [
+        "Move the Dev Mode banner to a collapsible/dismissible top banner instead of a fixed bottom overlay",
+        "Increase font size in the stats grid or switch to a 2-column layout for the macro targets to improve readability",
+        "Ensure the floating 'N' icon has a higher z-index guard or repositions to avoid content overlap during scroll",
+        "Add safe-area padding at bottom to account for iOS home indicator above the dev banner"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 8.0,
+      "responsive_issues": [
+        "Quick Add grid uses 3 columns \u2014 on 430px this is workable but the food names and kcal values are slightly cramped",
+        "The calorie/macro summary section shows target values (150g, 250g, 65g) that differ from the dashboard (176g, 235g, 78g), suggesting data inconsistency",
+        "Nothing logged empty state at the bottom is partially cut off, requiring scroll to see the CTA text"
+      ],
+      "good": [
+        "Date navigation bar with prev/next arrows and TODAY badge is clear and touch-friendly",
+        "Search bar is prominently placed at the top",
+        "Quick Add cards for popular Indian meals are a great UX feature and well-sized",
+        "Calorie remaining display with large green number is immediately scannable",
+        "Macro progress bars with current/target values are informative"
+      ],
+      "improvements": [
+        "Standardize macro targets across dashboard and food log \u2014 the discrepancy (176g vs 150g protein) will confuse users",
+        "Consider 2-column Quick Add grid to allow slightly larger cards and more readable text, or reduce to show 4 items with a 'See more' option",
+        "Ensure the empty state illustration and CTA are fully visible without scrolling, or add a floating '+' FAB button that's always accessible",
+        "Add meal-type categorization (Breakfast/Lunch/Dinner/Snacks) to the log for better organization"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "food-log",
+      "state_id": "empty",
+      "score": 8.5,
+      "responsive_issues": [
+        "Quick Add grid uses 3-column layout which makes food item labels slightly cramped at 430px \u2014 text like 'Paneer Sabzi' and 'Curd Rice' may truncate on narrower devices",
+        "Calorie macro row (Protein/Carbs/Fat) with inline goal values (150g, 250g, 65g) feels visually dense and could be hard to parse at a glance"
+      ],
+      "good": [
+        "Dark theme is consistent and visually polished",
+        "Quick Add section with popular Indian meals is culturally relevant and well-organized",
+        "Date navigation bar is clearly tappable and well-sized",
+        "Search bar has good placeholder hint text",
+        "'Log your first meal' CTA button is large, high-contrast green \u2014 excellent touch target",
+        "Remaining calorie counter is prominently displayed in green",
+        "Empty state illustration and copy are friendly and motivating"
+      ],
+      "improvements": [
+        "Consider 2-column Quick Add grid or increase card min-height to give labels more breathing room and prevent truncation",
+        "Macro bars (Protein/Carbs/Fat) could use slightly larger label text (currently appears ~12px) \u2014 increase to 13\u201314px for readability",
+        "Add a meal-type selector (Breakfast/Lunch/Dinner/Snack) before logging to improve categorization UX",
+        "The 'N' avatar bottom-left overlaps content area \u2014 ensure it has a defined z-index and doesn't obscure interactive elements"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "food-log",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Search results dropdown overlaps the Quick Add cards below without a clear visual separator or backdrop \u2014 can feel confusing spatially",
+        "Bottom calorie tracker card and 'Nothing logged yet' section are still visible beneath the dropdown, creating visual clutter",
+        "The kcal/100g suffix in search results is small (~12px) and may be hard to read"
+      ],
+      "good": [
+        "Search field has clear green focus ring \u2014 strong visual affordance",
+        "Search results list items have adequate row height for touch targets (~44px+)",
+        "Category and cuisine sub-labels (e.g. 'curry \u00b7 North Indian') provide helpful context",
+        "Results appear instantly below the search bar \u2014 logical placement",
+        "Green dot indicators next to calorie values add subtle visual hierarchy"
+      ],
+      "improvements": [
+        "Add a semi-transparent backdrop or elevated card shadow behind the dropdown to clearly separate it from background content",
+        "Increase kcal/100g text to at least 13px for legibility",
+        "Consider dismissing/collapsing the Quick Add section when search is active to reduce visual noise",
+        "Add a 'Recently searched' or 'Recent foods' section when the query is short to improve discovery",
+        "Tapping outside the dropdown should dismiss it and clear focus \u2014 ensure this behavior is implemented"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 7.0,
+      "responsive_issues": [
+        "Large amount of empty black space below the empty state message \u2014 the screen feels unfinished and wastes significant vertical real estate on a 932px tall device",
+        "No suggested exercises, quick-add workout options, or recent workouts to guide first-time users",
+        "Empty state icon (dumbbell) is very dark and low-contrast against the near-black background"
+      ],
+      "good": [
+        "Date navigation bar matches the food log design \u2014 consistent UI pattern",
+        "Search bar placeholder text gives clear examples of what to type",
+        "Empty state messaging is clear and actionable ('Search an exercise above to get started')",
+        "Clean, distraction-free layout appropriate for a logging screen"
+      ],
+      "improvements": [
+        "Add a 'Popular exercises' or 'Quick Add' section similar to Food Log to reduce friction for new users",
+        "Increase contrast of the empty state dumbbell icon \u2014 use opacity 0.4\u20130.5 on a slightly lighter gray base",
+        "Add recent workouts section if user has prior history, or suggested workout templates for first-time state",
+        "Consider adding a FAB (floating action button) in the bottom-right corner as an alternative entry point",
+        "The bottom 'N' avatar should be consistently positioned \u2014 ensure safe area inset compliance for iPhone 14 Pro Max home indicator"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "iphone-14-pro-max",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Search results show all exercises as 'Chest' category and 'MET 3.5' \u2014 no visual differentiation between results makes the list feel repetitive",
+        "Large empty space below results \u2014 could be used for suggested categories or recently logged exercises",
+        "MET value label is small and most users won't understand what MET means without explanation"
+      ],
+      "good": [
+        "Search field has matching green focus ring consistent with food log",
+        "Exercise results show name, muscle group, type badge, and MET \u2014 good information density",
+        "'Strength' type badge in blue provides quick visual categorization",
+        "Row height appears sufficient for touch targets (~44px+)",
+        "Clean dropdown list with clear dividers between items"
+      ],
+      "improvements": [
+        "Add a tooltip or info icon explaining MET values, or replace with a more intuitive metric like 'Calories/min est.'",
+        "Differentiate search result rows with muscle group icons or color-coded category tags",
+        "Show exercise count or a 'See all results' footer when there are more than 4 matches",
+        "Consider adding recently logged exercises above search results for faster re-logging",
+        "Add exercise difficulty indicator (Beginner/Intermediate/Advanced) to help users choose appropriate exercises"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 7.5,
+      "responsive_issues": [
+        "Top stats row uses two unequal columns \u2014 left card is significantly wider than right, creating visual imbalance",
+        "Weight log input field in header bar appears narrow and may be difficult to tap accurately",
+        "BMI 'Overweight' badge text may be small on physical device"
+      ],
+      "good": [
+        "Dark theme renders cleanly on OLED display of Pixel 7",
+        "Calorie ring chart scales well to mobile viewport",
+        "Macro progress bars are full-width and readable",
+        "Water intake quick-add buttons (150ml, 250ml, 500ml, 750ml) appear to have adequate touch targets",
+        "Weight progress chart is appropriately sized",
+        "Streak and BMI card layout is compact but readable"
+      ],
+      "improvements": [
+        "Make the two top stat cards equal width (50/50 split) using flex: 1 on both",
+        "Increase weight input field height to at least 44px for easier tapping",
+        "Consider increasing 'Overweight' badge font size to 13px minimum",
+        "Add bottom safe area padding for Android gesture navigation bar"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 7.0,
+      "responsive_issues": [
+        "Modal bottom (Save Dish / Cancel buttons) may be obscured by Android soft keyboard when search field is active",
+        "Skeleton loader placeholder rows inside the dashed ingredients area look too dark and low-contrast to convey loading state clearly",
+        "The modal card does not appear to account for bottom system gesture bar inset"
+      ],
+      "good": [
+        "Modal is well-centered with appropriate horizontal padding",
+        "Diet type toggle buttons (Veg/Non-Veg/Vegan) are pill-shaped with adequate touch targets",
+        "Dish name input is prominently highlighted with green border when focused",
+        "Cancel and Save Dish buttons are full-width and clearly differentiated by color",
+        "Food search input inside modal has appropriate sizing"
+      ],
+      "improvements": [
+        "Use KeyboardAvoidingView (or CSS env(keyboard-inset-height)) so Save Dish button stays visible when keyboard opens",
+        "Add paddingBottom: env(safe-area-inset-bottom) to the modal footer",
+        "Increase skeleton loader contrast slightly so it reads as a loading state rather than empty space",
+        "Consider making the modal scrollable internally so ingredients list doesn't clip"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 8.0,
+      "responsive_issues": [
+        "Page title is labeled 'empty-list' but actually shows a dish ('meal 1') \u2014 possibly mislabeled screenshot state",
+        "Large empty space below the 'Add another dish' button wastes screen real estate"
+      ],
+      "good": [
+        "Info banner at top is well-styled with green accent and readable body text",
+        "Search bar is full-width with appropriate height",
+        "Dish card shows all key info (macros, calories, ingredient count) in a scannable layout",
+        "Edit and delete icon buttons are positioned clearly on the card",
+        "New Dish button in header has good contrast and size",
+        "Macro color coding (blue protein, yellow carbs, orange fat) is consistent with rest of app"
+      ],
+      "improvements": [
+        "Fill the empty space below with an encouraging CTA or tips section",
+        "Ensure delete icon button has at least 44px touch target (currently appears ~40px)",
+        "Add subtle divider or spacing between the dish card and 'Add another dish' dashed button for clarity"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.0,
+      "responsive_issues": [
+        "Age and Height fields in a 2-column layout may feel slightly cramped on 412px \u2014 each field is ~180px wide",
+        "Gender buttons (Male/Female/Other) in a 3-column row are narrow (~120px each) and border-heavy, may be hard to tap precisely on edges"
+      ],
+      "good": [
+        "Step indicator (1-2-3-4) is clear and correctly shows current progress",
+        "Full-width Continue button meets touch target requirements",
+        "Card-based layout feels native and focused",
+        "Field labels with red asterisks clearly indicate required fields",
+        "Placeholder text provides good guidance examples",
+        "Adequate vertical spacing between form sections"
+      ],
+      "improvements": [
+        "Increase Gender button height to at least 52px for more comfortable tapping",
+        "Consider stacking Age and Height fields vertically on mobile for larger input areas",
+        "Add bottom inset padding so Continue button isn't clipped by gesture bar",
+        "Slightly increase font size of step numbers in the progress indicator (currently appear small)"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 7.5,
+      "responsive_issues": [
+        "Stats grid uses 3 columns with relatively small cards \u2014 on physical Pixel 7 the kcal numbers may feel cramped",
+        "Dev Mode banner at bottom is styled with amber background but overlaps the bottom of the page content area, potentially covering Sign Out button on shorter screens",
+        "Current Weight and Goal Weight fields side-by-side may be tight for users with larger fingers"
+      ],
+      "good": [
+        "Profile header with avatar, name, and key stats is clean and well-structured",
+        "YOUR STATS card grid clearly shows BMI, TDEE, and macro targets with color coding",
+        "Save Changes button is full-width green, highly visible",
+        "Dropdown selectors for Activity Level, Diet Type, and Timeline have adequate height",
+        "Re-do Onboarding and Sign Out are clearly separated in ACCOUNT section",
+        "Dev mode banner is informative for development purposes"
+      ],
+      "improvements": [
+        "Move Dev Mode banner to a non-intrusive position (e.g., collapsible top toast) so it doesn't obscure content",
+        "Add env(safe-area-inset-bottom) padding to ensure Sign Out button isn't hidden behind gesture bar",
+        "Increase stats card minimum height slightly to improve readability of numbers",
+        "Make weight input fields full-width stacked rather than 2-column for easier input"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 8.0,
+      "responsive_issues": [
+        "Quick Add grid (3 columns) has moderate card sizes \u2014 food emoji icons and text are readable but cards are compact",
+        "Calorie summary section has three macro columns with small secondary numbers (150g, 250g, 65g) that may be hard to read at small font sizes",
+        "Bottom 'Nothing logged yet' section empty state illustration takes significant vertical space"
+      ],
+      "good": [
+        "Date navigation bar with prev/next arrows and TODAY badge is intuitive and full-width",
+        "Food search bar is prominently placed and full-width",
+        "Quick Add section with Popular Indian meals is culturally relevant and visually appealing",
+        "Calorie progress bar and remaining calories display is clear",
+        "Color-coded macro labels (blue/yellow/orange) are consistent",
+        "Empty state illustration with + FAB is clear and actionable",
+        "Header filter icon provides advanced options without cluttering main UI"
+      ],
+      "improvements": [
+        "Increase font size of macro target numbers (150g, 250g, 65g) to at least 13px",
+        "Consider making Quick Add cards slightly taller for easier tapping on physical device",
+        "Add haptic feedback hint or visual press state to Quick Add food cards",
+        "Ensure the floating + button on the empty state has sufficient contrast against the illustration background"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 8.5,
+      "responsive_issues": [
+        "Quick Add grid uses 3 columns which makes each card relatively narrow (~120px) on 412px \u2014 food names like 'Paneer Sabzi' may truncate",
+        "Calorie tracker section has dense macro row (0g / 150g labels) that could feel cramped at this width"
+      ],
+      "good": [
+        "Dark theme renders cleanly on AMOLED Pixel 7 display",
+        "Search bar spans full width with adequate height (~48px touch target)",
+        "Quick Add cards have sufficient touch targets (~130px wide \u00d7 ~90px tall)",
+        "CTA button 'Log your first meal' is full-width and clearly prominent",
+        "Date navigation bar is well-sized and easy to tap",
+        "Typography hierarchy is clear \u2014 headings, labels, values are well differentiated",
+        "Empty state illustration and messaging is friendly and informative"
+      ],
+      "improvements": [
+        "Consider switching Quick Add to a 2-column grid on \u2264412px to give more breathing room and prevent text truncation",
+        "Add ellipsis overflow handling on Quick Add card labels to prevent layout breakage with long names",
+        "Increase spacing between macro columns (Protein/Carbs/Fat) slightly for better readability",
+        "The 'N' avatar button in bottom-left corner overlaps content \u2014 consider moving to a proper bottom nav bar or top-right"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Search dropdown results list overlaps Quick Add cards partially \u2014 z-index layering creates visual ambiguity with the partially visible 206/140/190 kcal row showing through",
+        "Search result rows show category + cuisine on one line which may be tight on narrow devices"
+      ],
+      "good": [
+        "Search input has green focus ring that clearly indicates active state",
+        "Dropdown results are full-width and well-spaced (~60px+ per row, good touch targets)",
+        "kcal/100g values are right-aligned with green dot indicator \u2014 scannable layout",
+        "Font sizes in results are readable (16px name, ~13px subtitle)",
+        "Results appear immediately below search \u2014 natural UX flow",
+        "Background content still visible providing context without being distracting"
+      ],
+      "improvements": [
+        "Add a semi-transparent scrim or solid background behind the dropdown to prevent the partially visible Quick Add row (206/140/190 kcal) from creating visual noise",
+        "Truncate long food names with ellipsis to prevent potential overflow on items with longer names",
+        "Consider adding a 'Search results for X' header above the dropdown list for clarity",
+        "The 'N' avatar FAB in the bottom-left should be repositioned as it may interfere with tapping lower list items on shorter queries"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 7.5,
+      "responsive_issues": [
+        "Large amount of empty black space below the empty state \u2014 the screen feels very sparse and unfinished",
+        "No quick-add suggestions or popular workout shortcuts unlike the Food Log screen \u2014 missed UX parity"
+      ],
+      "good": [
+        "Clean minimal layout appropriate for empty state",
+        "Search bar is full-width with good touch target height (~48px)",
+        "Date navigation matches Food Log \u2014 consistent UI pattern",
+        "Empty state icon and messaging are clear and instructive",
+        "Title hierarchy (Workout / Friday, 3 July) provides good context",
+        "Dark background is consistent with overall app theme"
+      ],
+      "improvements": [
+        "Add 'Popular exercises' quick-add section below empty state (similar to Food Log) to reduce blank space and improve discoverability",
+        "The empty state illustration could be larger/more prominent to fill the visual void",
+        "Consider adding category filter chips (Strength, Cardio, Yoga, etc.) below the search bar to aid browsing",
+        "Move or remove the 'N' avatar from bottom-left \u2014 it has no clear purpose here and could confuse users",
+        "Add a floating action button or secondary CTA below empty state message to encourage interaction"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "pixel-7",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 8.0,
+      "responsive_issues": [
+        "Large empty space below the 4 search results \u2014 results don't fill the screen which makes the layout feel incomplete",
+        "Exercise type tag 'Strength' in blue may not have sufficient color contrast against dark background for all users"
+      ],
+      "good": [
+        "Search input has consistent green focus ring matching Food Log screen",
+        "Results list is clean and well-structured with name, muscle group, type tag, and MET value",
+        "Each result row has generous height (~65px+) \u2014 easy to tap accurately",
+        "Type tag ('Strength') and MET value are right-aligned \u2014 good information hierarchy",
+        "Subtitle (muscle group) in muted color provides secondary info without visual noise",
+        "Consistent date navigation and header pattern with Food Log screen"
+      ],
+      "improvements": [
+        "Add exercise category color coding \u2014 e.g. Cardio in orange, Yoga in purple \u2014 to help users scan results faster",
+        "MET value label could use a tooltip or info icon since many users won't know what MET means",
+        "Consider showing a small icon or illustration per exercise category to improve scannability",
+        "Dividers between list items could be slightly more visible for better row separation on AMOLED screens",
+        "The bottom half empty space could show 'Recently logged' or 'Suggested' exercises to reduce dead space"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 6.5,
+      "responsive_issues": [
+        "Two-column layout in the top section (calorie ring + BMI card) leaves the right card visually truncated/narrow at 768px",
+        "Macro section duplicates data showing both compact bars and detailed rows \u2014 wasteful use of vertical space",
+        "Stats cards in profile row are cramped horizontally \u2014 6 cards in a row will be tight",
+        "Water intake quick-add buttons (150ml, 250ml, 500ml, 750ml) in a 4-column grid may be too narrow for comfortable tapping on iPad Mini",
+        "Weight progress chart x-axis labels may overlap at this width"
+      ],
+      "good": [
+        "Dark theme renders cleanly at this viewport",
+        "Calorie ring and large number display are legible",
+        "Green CTA buttons are well-sized and visible",
+        "Overall single-column card layout adapts reasonably to tablet width",
+        "Day streak and BMI side card is a nice use of available space"
+      ],
+      "improvements": [
+        "Use CSS Grid with minmax to give the right-side BMI/streak card at least 180px min-width",
+        "Remove duplicate macro display \u2014 keep only the detailed rows with labels, remove the compact bars above them",
+        "Increase water intake button min-height to 56px for better touch targets on tablet",
+        "Add max-width: 720px with margin: 0 auto on the main content container to prevent edge-to-edge stretching",
+        "Consider a 2-column layout for the water quick-add buttons to give each more tap area"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 7.0,
+      "responsive_issues": [
+        "Modal dialog does not use the full available iPad Mini width \u2014 it appears centered but with inconsistent side padding making it feel narrow",
+        "The ingredient placeholder skeleton rows inside the dashed box look like loading states and may confuse users",
+        "Modal height may require internal scrolling for longer ingredient lists without clear scroll affordance",
+        "Diet type toggle buttons (Veg/Non-Veg/Vegan) are small pill-shaped \u2014 border radius and padding could be larger for easier tapping"
+      ],
+      "good": [
+        "Modal is well-structured with clear sections (Dish Name, Diet Type, Ingredients)",
+        "Green active state on Veg button provides clear selection feedback",
+        "Cancel and Save Dish buttons at bottom are full-width and easily tappable",
+        "Food search input is appropriately sized",
+        "Back arrow and close (X) navigation are both present"
+      ],
+      "improvements": [
+        "Set modal width to min(640px, calc(100vw - 32px)) to better utilize iPad Mini screen real estate",
+        "Increase diet type pill button height to at least 44px for Apple HIG compliance",
+        "Add a visible scroll indicator or max-height with overflow-y: auto on the ingredients section",
+        "Replace skeleton placeholder rows with an empty state illustration until ingredients are added",
+        "Add bottom safe-area padding to the modal to account for potential gesture navigation"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 7.5,
+      "responsive_issues": [
+        "Single dish card and 'Add another dish' button leave large empty whitespace below on 1024px tall screen \u2014 layout feels incomplete",
+        "Info banner at top is full-width which looks fine but text line length is very long on 768px \u2014 could strain readability",
+        "Search bar stretches edge-to-edge which feels overly wide for a search input on tablet"
+      ],
+      "good": [
+        "Clean, minimal layout that clearly communicates purpose",
+        "New Dish button in top-right is well-placed and appropriately sized",
+        "Dish card shows all relevant nutrition data (kcal, macros) in a scannable format",
+        "Color-coded macro values (blue P, yellow C, orange F) aid quick scanning",
+        "Dashed 'Add another dish' CTA is a nice secondary action pattern"
+      ],
+      "improvements": [
+        "Add max-width: 680px with margin: 0 auto on the content area to improve readability on tablet",
+        "Limit search input max-width to 600px centered on the page",
+        "When only 1 dish exists, consider showing an encouraging empty-state hint below the single card",
+        "Increase the dashed Add button height to 64px for better tap affordance",
+        "Consider a 2-column dish card grid at 768px+ to better utilize horizontal space"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.0,
+      "responsive_issues": [
+        "Form card does not expand beyond its fixed width \u2014 at 768px it looks centered and fine but the side padding feels a bit large leaving unused space",
+        "Gender selection buttons (Male/Female/Other) could be taller for better tablet touch targets",
+        "Step indicator numbers are small (circle ~36px) and could be slightly larger at this viewport"
+      ],
+      "good": [
+        "4-step progress indicator is clear and well-labeled",
+        "Form fields are well-sized and appropriately spaced",
+        "Side-by-side Age and Height fields make good use of horizontal space",
+        "Continue CTA button is full-width within the card and prominently colored",
+        "Card-based layout with rounded corners looks polished on iPad",
+        "FitCoach AI branding headline is well-sized and readable"
+      ],
+      "improvements": [
+        "Increase Gender button height to 52px (currently appears ~48px, add 4px padding)",
+        "Set card max-width to 560px and ensure it's centered with auto margins for better tablet proportion",
+        "Increase step indicator circle size to 40px for easier reading",
+        "Consider adding subtle entrance animation on card for polished feel",
+        "Ensure input fields have min-height: 52px for comfortable tablet interaction"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 6.5,
+      "responsive_issues": [
+        "6 stats cards in a horizontal scroll row (BMI, TDEE, Goal, Protein, Carbs, Fat) are cramped at 768px \u2014 cards are too narrow to read labels comfortably",
+        "Stats row likely requires horizontal scrolling which is not indicated visually",
+        "Content is full-width with no max-width constraint making form inputs stretch very wide",
+        "Dev Mode warning banner at bottom is visually prominent (orange) and may alarm users in production builds",
+        "Two-column layout for Current Weight / Goal Weight inputs is fine but labels feel cramped"
+      ],
+      "good": [
+        "Profile header with avatar, name, age, gender, height is well-structured",
+        "Save Changes CTA is full-width and clearly visible",
+        "Dropdown selects for Activity Level, Diet Type, Timeline are appropriate for tablet",
+        "Section grouping (Stats, Update Goals, Account) with dividers is clear",
+        "Sign Out button has appropriate destructive red styling"
+      ],
+      "improvements": [
+        "Wrap stats cards in a CSS Grid with repeat(auto-fit, minmax(100px, 1fr)) to better fit 6 items at 768px",
+        "Add max-width: 680px with margin: 0 auto on the profile content container",
+        "Add a horizontal scroll shadow/indicator if stats row scrolls, or reduce to 2-row grid",
+        "Increase stats card min-width so text like 'Daily Target' is not truncated",
+        "Consider making the weight goal inputs full-width stacked on tablet instead of side-by-side to improve input ergonomics"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": true
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 7.5,
+      "responsive_issues": [
+        "Quick Add grid (3 columns) works at 768px but cards feel slightly narrow \u2014 food names like 'Paneer Sabzi' may wrap",
+        "Date navigation bar with calendar icon and TODAY badge is well-sized but arrow buttons could be larger",
+        "Bottom 'Log your first meal' CTA may be partially hidden requiring scroll",
+        "Calorie/macro summary section below Quick Add has good data density but macro labels (Protein/Carbs/Fat) in small text may be hard to read"
+      ],
+      "good": [
+        "Date navigation with prev/next arrows is intuitive",
+        "Quick Add section with emoji food icons is visually engaging and touch-friendly",
+        "Calorie display (large 0 / 2454 kcal) is prominent and readable",
+        "Empty state illustration and message are friendly and informative",
+        "Search input is appropriately sized and positioned",
+        "Remaining calorie count in green is well-highlighted"
+      ],
+      "improvements": [
+        "Increase date nav arrow buttons to 44x44px minimum touch target size",
+        "Use CSS Grid auto-fit for Quick Add cards with minmax(140px, 1fr) to better handle 3-6 items",
+        "Make the macro progress bars slightly thicker (8px \u2192 10px) for better visibility on tablet",
+        "Ensure the Log your first meal button is visible in the initial viewport without scrolling \u2014 reduce empty state illustration size if needed",
+        "Add padding-bottom: 80px to account for any bottom navigation/gesture area on iPad"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "food-log",
+      "state_id": "empty",
+      "score": 7.5,
+      "responsive_issues": [
+        "Quick Add grid uses 3 columns which works but cards feel cramped at 768px \u2014 text and emoji are small relative to available space",
+        "Content is full-width with no max-width constraint, causing cards to stretch edge-to-edge on a tablet canvas",
+        "Macro progress bars (Protein/Carbs/Fat) are very thin and the label/value layout could use more breathing room at this width",
+        "The 'Log your first meal' CTA button stretches nearly full width \u2014 on iPad a max-width cap would look more polished"
+      ],
+      "good": [
+        "Dark theme renders cleanly with no visual artifacts",
+        "Date navigation bar is well-proportioned and clearly readable",
+        "Search bar is appropriately sized and easy to tap",
+        "Quick Add section clearly labels foods with calorie counts",
+        "Empty state illustration and CTA are well-centered"
+      ],
+      "improvements": [
+        "Add a max-width (e.g. 600\u2013680px) to the main content container and center it for tablet layout",
+        "Increase Quick Add card padding and emoji size (1.5x) to better utilize tablet real estate",
+        "Increase macro progress bar height from ~3px to ~6px for better visibility on larger screen",
+        "Cap the 'Log your first meal' button width to ~320px and center it"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "food-log",
+      "state_id": "search-typing",
+      "score": 7.5,
+      "responsive_issues": [
+        "Search dropdown results list spans full width with no max-width, causing very wide tap rows that feel unnatural on iPad",
+        "Result rows have ample horizontal space but no additional information is shown to fill it \u2014 wasted whitespace on each row",
+        "Green active border on search field is subtle against the dark background and may not meet contrast requirements",
+        "Quick Add cards partially visible below dropdown could cause confusion about z-index layering"
+      ],
+      "good": [
+        "Dropdown appears immediately below search bar in a logical position",
+        "Each result row clearly shows food name, category, and kcal/100g",
+        "Green dot indicators on results add a nice visual touch",
+        "Font sizes in results are readable and well-spaced",
+        "Active search field has a visible green border indicating focus state"
+      ],
+      "improvements": [
+        "Apply max-width constraint (~640px) to the dropdown list and center it to match a constrained content column",
+        "Add a secondary detail (e.g. protein/carbs/fat preview) in the extra horizontal space of each result row on tablet",
+        "Increase dropdown item min-height to explicitly 56px to ensure comfortable tap targets",
+        "Add a subtle backdrop blur or dimming overlay behind dropdown to better separate it from underlying content"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 6.0,
+      "responsive_issues": [
+        "Large empty area below the empty state message \u2014 no content, suggestions, or workout categories to fill the tablet's vertical space",
+        "Empty state icon and text are centered in a relatively small area at the top, leaving ~60% of screen blank",
+        "No Quick Add or suggested exercises shown unlike the food log equivalent, missing an opportunity to guide the user",
+        "Search bar stretches full width with no max-width, looks awkward on 768px tablet"
+      ],
+      "good": [
+        "Empty state messaging is clear and concise",
+        "Date navigation is consistent with food log screen",
+        "Search bar placeholder text gives good guidance on what to type",
+        "Header with back button and date subtitle is well structured"
+      ],
+      "improvements": [
+        "Add a 'Popular Exercises' or categorized quick-add grid below the search bar (similar to food log's Quick Add) to fill the empty state productively",
+        "Cap search bar max-width to ~600px and center it",
+        "Move empty state illustration lower or add content sections above it when no workouts are logged",
+        "Consider adding muscle group filter chips below the search bar to help users browse exercises"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-mini",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 7.0,
+      "responsive_issues": [
+        "Search results stretch full width with no max-width, making rows excessively wide on 768px tablet",
+        "MET value and category tag on the right side have large empty gaps between them due to full-width rows",
+        "Large empty area below the results list \u2014 no additional content renders below the dropdown",
+        "Strength category label and MET value could display more details (e.g. muscle groups, estimated calories) in the extra row space"
+      ],
+      "good": [
+        "Search results appear promptly with exercise name, muscle group, type and MET value",
+        "Color-coded 'Strength' tag in blue is visually distinct and clear",
+        "Active green border on search input is consistent with food log",
+        "Row separators between results are clean and easy to parse",
+        "Font size and spacing within results rows are comfortable to read"
+      ],
+      "improvements": [
+        "Constrain the results dropdown to max-width ~640px centered within the screen",
+        "Use the extra row width to show additional data: estimated calories burned, target muscle group icon, or a difficulty badge",
+        "Add a subtle semi-transparent overlay on the background content to reinforce the dropdown focus context",
+        "Increase row tap area explicitly to min-height 60px for comfortable interaction on tablet"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 6.0,
+      "responsive_issues": [
+        "Content is left-aligned and not centered with a max-width container \u2014 on 1440px it hugs the left side leaving large empty right space",
+        "Dashboard cards appear narrow (~500px wide) while the viewport is 1440px, wasting significant horizontal real estate",
+        "Two-column layout for the top stats cards is too narrow relative to available space",
+        "Water intake and weight progress sections don't expand to use available width"
+      ],
+      "good": [
+        "Dark theme renders cleanly at this resolution",
+        "Typography is legible and appropriately sized for desktop",
+        "Color coding for macros (green/yellow/orange) is clear",
+        "Navigation bar elements are well-spaced for pointer interaction"
+      ],
+      "improvements": [
+        "Wrap dashboard in a centered container with max-width: 900px\u20131100px and margin: 0 auto",
+        "Use CSS Grid to create a proper multi-column layout at 1440px (e.g. main content 2/3 + sidebar 1/3)",
+        "Expand the macro cards and water intake section to fill the container width",
+        "Consider a sidebar navigation pattern for desktop instead of top bar"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 7.5,
+      "responsive_issues": [
+        "Modal is appropriately sized but background page is not utilizing desktop width well",
+        "Modal max-width could be slightly wider on 1440px to reduce scrolling within the form"
+      ],
+      "good": [
+        "Modal dialog is well-centered on the screen",
+        "Form fields are clearly labeled and appropriately sized",
+        "Diet type toggle buttons are well-spaced for pointer interaction",
+        "Cancel/Save Dish buttons are clearly distinguished with good contrast",
+        "Ingredient search area has clear placeholder guidance"
+      ],
+      "improvements": [
+        "Increase modal max-width from ~480px to ~600px on desktop for a more spacious form layout",
+        "Consider a two-column layout inside the modal for ingredient list + nutrition preview on desktop",
+        "Backdrop blur could be stronger to better separate modal from background"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 6.5,
+      "responsive_issues": [
+        "Content container is narrow (~620px) and left-aligned on a 1440px viewport \u2014 large empty space on the right",
+        "Single dish card and search bar don't expand to use available horizontal space",
+        "Page feels like a mobile layout rendered on desktop without responsive adaptation"
+      ],
+      "good": [
+        "Dish card shows macro breakdown clearly with color coding",
+        "Info banner explaining custom dishes is helpful and well-styled",
+        "Edit and delete action icons are appropriately placed on the card",
+        "New Dish CTA button is prominent with green brand color"
+      ],
+      "improvements": [
+        "Center the content with max-width: 800px and margin: 0 auto, or use a wider container",
+        "At 1440px, consider a card grid layout (2\u20133 columns) for dish cards instead of single column",
+        "Search bar should stretch to full container width",
+        "Add padding or a sidebar to better utilize the wide viewport"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 8.5,
+      "responsive_issues": [
+        "Card could be slightly wider on 1440px (currently ~480px) \u2014 minor improvement opportunity"
+      ],
+      "good": [
+        "Modal/card is well-centered both horizontally and vertically on the large screen",
+        "Step progress indicator is clear and informative",
+        "Form layout with side-by-side Age/Height fields works well on desktop",
+        "Gender selection buttons are appropriately sized for pointer interaction",
+        "Continue CTA is prominent and well-styled",
+        "Clean separation from dark background with the card container"
+      ],
+      "improvements": [
+        "Slightly increase card max-width to ~560px to make better use of desktop space",
+        "Consider adding subtle animation or visual progress to the step connector lines",
+        "Input fields could have hover states more visible on desktop"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 6.5,
+      "responsive_issues": [
+        "Profile content is in a single narrow column (~600px) on 1440px \u2014 large empty horizontal space unused",
+        "Stats row with 5 metric cards is cramped in the narrow container even though wide viewport is available",
+        "Update Goals form fields could be in a two-column grid at this viewport width",
+        "Page is left-offset rather than centered, creating visual imbalance"
+      ],
+      "good": [
+        "Stats cards with BMI, TDEE, and macro targets are clearly presented",
+        "Color highlighting on active goal (2352 kcal) draws attention effectively",
+        "Dev Mode banner at bottom is clearly distinguishable with amber styling",
+        "Save Changes button is full-width and prominent",
+        "Dropdown selectors are well-styled and readable"
+      ],
+      "improvements": [
+        "Center content with max-width: 800px and margin: 0 auto",
+        "At 1440px, split profile into two columns: user info/stats left, update goals form right",
+        "Current Weight and Goal Weight inputs should be side-by-side (they may be, but container is too narrow to show benefit)",
+        "Consider expanding the stats row to show all 5 metrics without visual crowding by widening the container"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 6.5,
+      "responsive_issues": [
+        "Food log content is in a narrow single column on 1440px \u2014 doesn't utilize wide desktop layout",
+        "Quick Add grid (3 columns of food items) could be wider and show more items per row on desktop",
+        "Calorie/macro summary bar is narrow and doesn't expand to available width",
+        "Content appears left-aligned rather than centered with proper max-width"
+      ],
+      "good": [
+        "Date navigation bar with prev/next arrows is intuitive for desktop pointer use",
+        "TODAY badge is clearly visible and well-styled",
+        "Quick Add section with Indian meal suggestions is a useful UX pattern",
+        "Food search bar is prominent and appropriately placed",
+        "Macro breakdown (Protein/Carbs/Fat) with progress bars is readable"
+      ],
+      "improvements": [
+        "Center content with max-width: 900px and margin: 0 auto",
+        "Expand Quick Add grid to 4\u20136 columns at 1440px to show more meal options without scrolling",
+        "Consider a split-pane layout: food search/log on left, daily summary/macros on right",
+        "Make the calorie progress section sticky or more prominent at desktop size"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 5.5,
+      "responsive_issues": [
+        "Content is constrained to a narrow ~600px centered column on a 1440px canvas, leaving massive dead space on both sides",
+        "Quick Add grid is only 2-3 columns wide \u2014 could expand to 4\u20136 columns at this viewport",
+        "The empty state illustration and CTA button appear small and visually lost in the center of a large dark canvas",
+        "No sidebar, secondary panel, or auxiliary content to leverage the extra horizontal space"
+      ],
+      "good": [
+        "Content is centered with a max-width container \u2014 not stretched edge-to-edge",
+        "Dark theme renders cleanly with good contrast",
+        "Macro progress bars and calorie section are readable",
+        "Quick Add cards are distinct and scannable"
+      ],
+      "improvements": [
+        "Increase max-width of the main container to ~900\u20131000px on 1440px to reduce dead space",
+        "Expand Quick Add grid to 3 columns (currently appears to be 3 but cards could be wider)",
+        "Consider a two-column layout: food log on the left, daily summary/macros panel on the right",
+        "Make the empty state section taller with a larger illustration to fill the vertical space better",
+        "Add a sticky sidebar navigation or left-rail for desktop to better utilize horizontal real estate"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 6.0,
+      "responsive_issues": [
+        "Search dropdown is very narrow (~600px) on a 1440px screen \u2014 lots of unused horizontal space",
+        "Search results list is constrained to the same narrow column, making each row feel cramped horizontally when it could display more metadata",
+        "kcal/100g values are right-aligned but the gap between food name and calorie value is excessive on this width",
+        "No keyboard shortcut hints (e.g. \u2191\u2193 to navigate, Enter to select) visible \u2014 expected on desktop"
+      ],
+      "good": [
+        "Search input has a visible green focus ring \u2014 clear active state",
+        "Dropdown results appear immediately below the search bar in a logical position",
+        "Food category and cuisine sub-labels provide good context",
+        "Color-coded calorie dots add visual hierarchy"
+      ],
+      "improvements": [
+        "Widen the search container to ~800px max-width on desktop to reduce dead horizontal space",
+        "Add keyboard navigation hints in the dropdown footer (e.g. '\u2191\u2193 navigate \u00b7 Enter select \u00b7 Esc close')",
+        "Consider showing additional columns in search results on desktop (e.g. Protein, Carbs, Fat per 100g) since there is horizontal space available",
+        "Add a hover state highlight on dropdown rows to reinforce pointer device interaction"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 4.5,
+      "responsive_issues": [
+        "Extremely narrow single-column layout (~600px) on a 1440px viewport \u2014 severe underuse of space",
+        "Empty state takes up almost the entire page with nothing else to show \u2014 no suggested workouts, no history panel, no stats",
+        "Large blank black canvas below the empty state message feels unfinished and unprofessional on a large screen",
+        "No desktop-specific layout adaptation \u2014 looks like a mobile screen centered on a desktop"
+      ],
+      "good": [
+        "Clean minimal aesthetic is consistent with the app's dark theme",
+        "Date navigation bar is properly centered",
+        "Search placeholder text gives clear affordance"
+      ],
+      "improvements": [
+        "Add a two-column desktop layout: workout log on the left, workout suggestions or weekly summary on the right",
+        "Show 'Popular Exercises' or 'Recent Workouts' quick-add cards similar to the food tracker's Quick Add section",
+        "Increase container max-width to ~900px and add supplementary content panels to fill horizontal space",
+        "Add a weekly workout streak or activity ring widget visible alongside the empty state to encourage engagement"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "macbook-16",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 5.5,
+      "responsive_issues": [
+        "Same narrow column issue \u2014 search results dropdown confined to ~600px on a 1440px screen",
+        "Large empty black area below the dropdown results looks broken on a large desktop display",
+        "MET value and Strength tag are right-aligned but with excessive whitespace between label and value at this width",
+        "No hover states visible in screenshot \u2014 pointer device affordances may be missing"
+      ],
+      "good": [
+        "Search results clearly show exercise name, muscle group, type (Strength), and MET value",
+        "Green border on the focused search input is consistent with brand color",
+        "Results are logically grouped and easy to scan"
+      ],
+      "improvements": [
+        "Expand dropdown width to match a wider container (~800px) on desktop",
+        "Add additional metadata columns in search results for desktop (e.g. calories burned estimate, difficulty level)",
+        "Fill the space below the dropdown with 'Recently logged' or 'Trending exercises' to avoid the large black void",
+        "Add explicit hover highlight styles on result rows for mouse interaction",
+        "Consider showing exercise thumbnails or icons in the search results since space is available"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 6.0,
+      "responsive_issues": [
+        "Single-column layout on 1024px iPad Pro wastes significant horizontal space \u2014 content is narrow and centered like a mobile view",
+        "Calorie ring and stats cards could use a multi-column grid at this width",
+        "Water intake section and weight progress chart are constrained to ~430px effective width despite 1024px available",
+        "Macro bars section appears as a stretched single column rather than a side-by-side layout",
+        "Top header with weight input and log button feels cramped and misaligned for tablet width"
+      ],
+      "good": [
+        "Dark theme renders cleanly with no visual artifacts",
+        "All text is readable at appropriate sizes",
+        "Cards are well-structured with clear hierarchy",
+        "Green accent color is consistent throughout",
+        "Weight progress chart scales reasonably"
+      ],
+      "improvements": [
+        "Implement a 2-column CSS grid layout at \u2265768px: left column for calorie ring + macros, right column for streak/BMI + water intake",
+        "Increase max-width from ~430px to at least 800px or use grid layout to fill tablet canvas",
+        "Use CSS Grid: grid-template-columns: 1fr 1fr for the stats cards row",
+        "Make the top nav bar use full width with proper spacing using justify-content: space-between",
+        "Expand weight progress chart to full container width rather than capping at mobile width"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 5.5,
+      "responsive_issues": [
+        "Modal 'Build a Dish' is constrained to ~470px width on a 1024px canvas \u2014 feels small and centered in a sea of black",
+        "Background page content is barely visible and not properly utilized",
+        "Ingredient search results area appears too small for tablet use",
+        "Modal could be significantly wider (600\u2013700px) on iPad Pro to improve usability",
+        "The blurred/dimmed background wastes the entire tablet canvas with no useful content"
+      ],
+      "good": [
+        "Modal structure is clean and well-organized",
+        "Diet type pill buttons (Veg/Non-Veg/Vegan) are clearly tappable",
+        "Cancel and Save Dish buttons are appropriately sized",
+        "Form field labels are clear and well-spaced",
+        "Green active state on Veg pill is visually clear"
+      ],
+      "improvements": [
+        "Increase modal max-width to min(700px, 90vw) on tablet viewports for better use of space",
+        "Consider a slide-in panel or full right-side sheet instead of a centered modal on iPad",
+        "Add min-height to ingredients area to prevent it feeling cramped",
+        "Use a 2-column layout inside the modal for ingredient list on wider screens",
+        "Add padding to modal sides: padding: 32px at tablet breakpoint"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 6.5,
+      "responsive_issues": [
+        "Page content is narrow (~430px effective width) on a 1024px canvas \u2014 significant whitespace on both sides",
+        "Single dish card and search bar don't scale to use tablet real estate",
+        "Info banner at top could be wider to fill available space",
+        "'Add another dish' CTA feels undersized for tablet context"
+      ],
+      "good": [
+        "Dish card with macros is well-structured and readable",
+        "Color-coded macro values (green protein, yellow carbs, orange fat) are clear",
+        "New Dish button in header is well-positioned",
+        "Search bar is functional and appropriately sized",
+        "Info banner with green icon provides helpful context"
+      ],
+      "improvements": [
+        "Set max-width: 800px and center content, or use a 2-column grid for dish cards on tablet",
+        "Display dish cards in a 2-column CSS grid at \u2265768px: grid-template-columns: repeat(2, 1fr)",
+        "Widen the info banner to match the content max-width",
+        "Increase card padding and font size slightly for tablet reading distance",
+        "Add a sidebar or filter panel on the left for tablet layout"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 7.0,
+      "responsive_issues": [
+        "Onboarding card is centered but narrow (~470px) relative to 1024px canvas \u2014 large black margins on sides",
+        "Step indicator text labels (Personal, Weight, Fitness, Diet) may feel small relative to tablet screen",
+        "Gender selection buttons could be larger/wider on tablet",
+        "Form feels like a mobile form transplanted to tablet without adaptation"
+      ],
+      "good": [
+        "Centered card layout is appropriate for an onboarding flow",
+        "Step progress indicator with numbered circles is clear and intuitive",
+        "Continue button is full-width within the card and prominently green",
+        "Form fields are well-labeled with clear placeholder text",
+        "Overall onboarding card is visually clean and focused"
+      ],
+      "improvements": [
+        "Increase card max-width to 580px on tablet for better proportion",
+        "Use a 2-column layout for Age and Height fields (they already are, good) and consider adding a decorative/info panel beside the card on wider screens",
+        "Increase step indicator size and spacing for tablet touch targets",
+        "Add subtle background pattern or illustration to fill empty canvas space around the card",
+        "Increase input field height to 52px on tablet for better proportions"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 6.0,
+      "responsive_issues": [
+        "Profile page is single-column ~430px wide on 1024px \u2014 misses opportunity for 2-column layout",
+        "Stats cards row (BMI, Maintenance, Goal, Protein, Carbs, Fat) is cramped \u2014 6 cards in a single row may overflow or be too small",
+        "Goal update form and account section stacked vertically wastes horizontal space",
+        "Dev Mode warning banner at bottom is distracting but appropriate for dev context",
+        "Back arrow and Profile heading don't use the full header width effectively"
+      ],
+      "good": [
+        "Stats cards with color-coded values are visually informative",
+        "Goal Weight and Current Weight side-by-side layout is appropriate",
+        "Dropdown selects for Activity Level, Diet Type, Timeline are clean",
+        "Save Changes button is prominent and full-width",
+        "User avatar with edit icon is a nice touch"
+      ],
+      "improvements": [
+        "Use a 2-column layout: left column for user info + stats, right column for goal update form",
+        "Wrap stats cards in a grid: grid-template-columns: repeat(3, 1fr) on tablet instead of all-in-one-row",
+        "Set container max-width: 800px centered on the page",
+        "Move Account section (Re-do Onboarding, Sign Out) to a sidebar or separate card column",
+        "Increase dropdown and input heights to 52px for tablet ergonomics"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 6.5,
+      "responsive_issues": [
+        "Food log content is constrained to ~430px width on 1024px canvas",
+        "Quick Add meal grid shows 3 columns which is good, but cards could be larger on tablet",
+        "Date navigation bar is narrow relative to available width",
+        "Calories and macro stats section doesn't expand to fill available width",
+        "Empty state illustration and text are centered but surrounded by large black margins"
+      ],
+      "good": [
+        "Quick Add 3-column grid for Indian meals is a thoughtful feature and scales reasonably",
+        "Date navigation with prev/next arrows and TODAY badge is clear",
+        "Macro progress bars with targets (150g, 250g, 65g) provide good context",
+        "Search bar is prominent and accessible",
+        "Empty state with 'Log your first meal' CTA is well-designed"
+      ],
+      "improvements": [
+        "Expand content max-width to 800px on tablet and use a 2-column layout: food log on left, nutrition summary on right",
+        "Increase Quick Add card sizes to better fill tablet viewport: min-height 120px",
+        "Add a sticky nutrition summary sidebar panel on the right at \u2265768px",
+        "Make the search bar span full content width with increased padding",
+        "Consider showing 4 columns in Quick Add grid on tablet: grid-template-columns: repeat(4, 1fr)"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 5.5,
+      "responsive_issues": [
+        "Content is rendered in a single narrow column (~600px wide) centered on a 1024px canvas, leaving large dead zones on both sides",
+        "Quick Add grid uses 3 columns which is fine, but cards are undersized relative to available space",
+        "The empty state illustration and CTA button do not scale to use iPad real estate \u2014 feels like a stretched mobile layout",
+        "Calorie/macro tracker bar spans full container width but container itself is too narrow for iPad Pro",
+        "No sidebar or secondary panel to utilize the extra horizontal space typical of iPad layouts"
+      ],
+      "good": [
+        "Dark theme renders cleanly at this resolution",
+        "Quick Add 3-column grid is readable and touch-friendly",
+        "Search bar is clearly visible and adequately sized",
+        "Typography is legible at this viewport",
+        "Date navigation bar is well proportioned"
+      ],
+      "improvements": [
+        "Increase max-width of the content container to ~720\u2013800px or introduce a two-column layout (e.g., log on left, summary/macros on right) for iPad breakpoint",
+        "Scale up Quick Add cards \u2014 increase padding and font size at \u2265768px breakpoint",
+        "Add a min-height or flex-grow to the empty state section so it fills vertical space more gracefully on larger screens",
+        "Consider a sidebar navigation panel at \u2265768px instead of the top back-arrow pattern",
+        "Use CSS Grid with auto-fill columns for Quick Add so cards naturally expand on wider viewports"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 5.5,
+      "responsive_issues": [
+        "Search dropdown results list is confined to the same narrow column as the rest of the content, not utilizing iPad width",
+        "Dropdown overlaps Quick Add cards below but the overlap boundary is visually inconsistent with the card grid",
+        "Result rows are relatively compact \u2014 on a 1024px iPad there is ample room to show more metadata (macros breakdown, serving size) per row",
+        "No maximum dropdown height with scroll defined visually \u2014 could overflow on screens with many results",
+        "Layout remains a single-column mobile-style view with no adaptation for the wider iPad canvas"
+      ],
+      "good": [
+        "Green active border on the search field clearly signals focus state",
+        "Search results appear immediately below the input in a logical position",
+        "Each result row shows food name, category, and kcal/100g \u2014 sufficient information density",
+        "Text sizes are readable without zooming",
+        "Touch targets on result rows appear adequate (\u226544px height per row)"
+      ],
+      "improvements": [
+        "At \u2265768px widen the dropdown to show additional columns: macros (protein/carbs/fat per 100g) alongside kcal",
+        "Increase container max-width to ~800px and center it with auto margins for a more tablet-native feel",
+        "Add a subtle max-height (e.g., 320px) with overflow-y: scroll on the dropdown to prevent runaway height on many results",
+        "Consider a two-panel layout where search results appear in a left panel and a food detail/add form appears on the right on iPad",
+        "Add keyboard shortcut hints (e.g., 'Press Enter to select') since iPad Pro users may use a Magic Keyboard"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 4.5,
+      "responsive_issues": [
+        "Extremely poor use of vertical space \u2014 empty state icon and two lines of text float in the upper third of a 1366px tall canvas leaving ~900px of blank black space",
+        "Single narrow column layout on a 1024px wide device with no secondary panels or content suggestions",
+        "No quick-add exercise suggestions, category browse grid, or recommended workouts to fill the empty state on a large screen",
+        "The page feels unfinished/broken on iPad Pro due to the vast empty area below the empty-state message",
+        "Search bar at full container width but container is too narrow relative to iPad Pro canvas"
+      ],
+      "good": [
+        "Date navigation bar is consistent with the food log screen",
+        "Empty state icon and message are clear and readable",
+        "Search placeholder text gives good guidance on what to type",
+        "Dark background is consistent with the app theme"
+      ],
+      "improvements": [
+        "Add a category browse grid (Strength, Cardio, Yoga, HIIT, etc.) below the search bar to fill space and aid discoverability on larger screens",
+        "Show 'Popular Exercises' quick-add chips similar to the Food Log's 'Popular Indian Meals' section",
+        "Center the empty state vertically within the available content area rather than anchoring it near the top",
+        "Increase content container max-width to ~800px or introduce a sidebar with workout history/stats at \u2265768px",
+        "Consider a two-column layout: left = search + results, right = today's workout summary/stats"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "ipad-pro",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 5.0,
+      "responsive_issues": [
+        "Same single-column narrow layout issue \u2014 large dead zones on left and right of the content on 1024px canvas",
+        "Search results dropdown takes up only ~50% of available width, leaving right half of screen completely empty",
+        "Result rows show exercise name, muscle group, type and MET value but there is ample space to show more (e.g., estimated calories burned, difficulty, illustration)",
+        "Below the dropdown results the page is entirely empty \u2014 no contextual content to fill the iPad canvas",
+        "MET value label styling ('MET 3.5') is very dim/low contrast \u2014 may be hard to read for some users"
+      ],
+      "good": [
+        "Green active border on search field is consistent with food log",
+        "Result rows clearly differentiate exercise name from muscle group",
+        "Type badge ('Strength') uses a colored label for quick scanning",
+        "Search results appear promptly below the input in a logical z-order",
+        "Row touch targets appear adequately sized"
+      ],
+      "improvements": [
+        "Expand the content container to ~800px max-width and use a two-panel layout: search results left, exercise detail/log form right",
+        "Increase contrast on the MET value text \u2014 use at least #9ca3af instead of the current near-invisible dim gray",
+        "Add exercise category filter chips above the results list (All / Strength / Cardio / Flexibility) to aid filtering on a larger screen",
+        "Show a thumbnail or muscle-group diagram in each result row \u2014 there is enough horizontal space on iPad",
+        "Add a 'Recent Exercises' section below when the search is empty to improve discoverability and fill the canvas"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "dashboard",
+      "state_id": "default",
+      "score": 4.5,
+      "responsive_issues": [
+        "Content appears confined to a narrow ~400px centered column, leaving vast empty space on both sides at 2560px width",
+        "Dashboard cards are very small relative to the 4K viewport, making data hard to read from a distance",
+        "The layout does not scale up to use available horizontal space \u2014 no multi-column grid for 4K",
+        "Font sizes appear tiny at 4K resolution, likely rendering at physical pixel sizes that are too small",
+        "Charts and progress widgets are undersized and could leverage the extra real estate"
+      ],
+      "good": [
+        "Content is centered rather than left-aligned or stretched edge-to-edge",
+        "Dark theme renders consistently across the viewport",
+        "Navigation bar elements are visible"
+      ],
+      "improvements": [
+        "Add a max-width of ~1400\u20131600px with auto margins and a responsive grid that expands to 3\u20134 columns at 2560px",
+        "Increase base font-size at 4K breakpoint (e.g. 18\u201320px base) so text is readable on large displays",
+        "Use CSS Grid with named areas to create a two-column dashboard layout at \u22651920px (macros + chart side by side)",
+        "Scale card padding and widget sizes proportionally using clamp() or viewport-relative units",
+        "Add a @media (min-width: 2560px) breakpoint with larger typography and expanded layouts"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "dishes",
+      "state_id": "create-form-open",
+      "score": 4.0,
+      "responsive_issues": [
+        "Modal dialog is very small (~300px wide) centered in a 2560px viewport \u2014 looks like a tiny postage stamp",
+        "Surrounding content (blurred background page) is extremely narrow and doesn't fill the viewport",
+        "Modal max-width is not scaled up for 4K, making form inputs very short and hard to interact with precisely",
+        "Background content behind modal shows the same narrow column issue",
+        "Text within the modal is tiny at 4K resolution"
+      ],
+      "good": [
+        "Modal is correctly centered on screen",
+        "The overlay/backdrop is applied correctly",
+        "Form structure (name, diet type, ingredients) is logically organized"
+      ],
+      "improvements": [
+        "Increase modal max-width to at least 600\u2013700px at 4K, or use a percentage like min(90vw, 700px)",
+        "Scale modal padding and input heights for larger viewports using clamp()",
+        "Increase font size within modal at large breakpoints",
+        "Consider making the modal full-width up to a generous max-width rather than a fixed narrow pixel value",
+        "Add @media (min-width: 1920px) styles to increase modal sizing proportionally"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "dishes",
+      "state_id": "empty-list",
+      "score": 4.5,
+      "responsive_issues": [
+        "Content column is very narrow (~400px) in a 2560px viewport with excessive empty space on both sides",
+        "The single dish card and empty state do not scale to use available width",
+        "No multi-column layout for dishes list at large viewport sizes",
+        "Text and buttons appear very small at 4K",
+        "The 'Add another dish' button spans only the narrow content column"
+      ],
+      "good": [
+        "Content is centered correctly",
+        "The info banner at the top is well-styled",
+        "Search bar is present and accessible",
+        "Dish card shows good information density within its constraints"
+      ],
+      "improvements": [
+        "Expand content max-width to 900\u20131200px at 4K breakpoint",
+        "Implement a grid layout for dish cards (2\u20133 columns at \u22651920px) to make use of horizontal space",
+        "Increase font sizes and button heights at large breakpoints",
+        "Make the search bar wider to match the expanded container",
+        "Use CSS Grid with auto-fill/auto-fit for the dishes list to naturally reflow into columns"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "onboarding",
+      "state_id": "step-1",
+      "score": 5.0,
+      "responsive_issues": [
+        "Onboarding modal/card is very small (~300px wide) centered in a 2560px viewport",
+        "Form inputs are too narrow for comfortable use at 4K",
+        "Progress stepper dots are tiny and hard to distinguish at this resolution",
+        "Text is small and would require leaning toward the screen to read comfortably",
+        "The card does not take advantage of vertical space either \u2014 content is cramped"
+      ],
+      "good": [
+        "Modal is properly centered horizontally and vertically",
+        "Step indicator is present and shows progression",
+        "Form layout (age + height side by side) is sensible",
+        "Gender selection buttons are well grouped"
+      ],
+      "improvements": [
+        "Increase onboarding card max-width to 560\u2013640px at 4K",
+        "Increase input height and font sizes for 4K using clamp() or breakpoint overrides",
+        "Scale the step indicator size up \u2014 larger circles and bolder text at \u22651920px",
+        "Add more padding inside the card at large viewports so content breathes",
+        "Consider a side-by-side layout at large viewports (illustration left, form right)"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "profile",
+      "state_id": "default",
+      "score": 4.5,
+      "responsive_issues": [
+        "Profile page content is confined to a very narrow column at 2560px with large blank areas on both sides",
+        "Stats cards row (BMI, Maintenance, Goal, etc.) is cramped in the narrow column",
+        "Form inputs for weight goals are short relative to screen size",
+        "Dev mode banner at the bottom is confined to the narrow column",
+        "No use of two-column layout for profile info + goal settings at large viewports"
+      ],
+      "good": [
+        "Content is centered on the page",
+        "User stats are clearly presented in a card row",
+        "Save Changes button is prominent with green brand color",
+        "Profile header with avatar is clean"
+      ],
+      "improvements": [
+        "Increase max-width container to 900\u20131100px at 4K",
+        "Split layout into two columns at \u22651280px: user info/stats on left, update goals form on right",
+        "Scale up the stats card font sizes and padding at 4K breakpoint",
+        "Increase dropdown and input heights at large breakpoints",
+        "Add @media (min-width: 2560px) with larger base font-size (18\u201320px) for readability"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "tracker",
+      "state_id": "date-nav-open",
+      "score": 4.5,
+      "responsive_issues": [
+        "Food log content is in a very narrow column at 2560px, wasting the majority of horizontal space",
+        "Quick Add meal grid (3 columns) doesn't expand to show more items per row at 4K",
+        "Date navigation bar is narrow and could span wider",
+        "Macro progress bars are very short in the narrow column",
+        "Empty state illustration and text are small relative to the available viewport",
+        "The 'Log your first meal' CTA button is undersized at this resolution"
+      ],
+      "good": [
+        "Content is centered on the page",
+        "Quick Add section shows a useful 3-column grid of popular meals",
+        "Calorie summary and macro breakdown are clearly organized",
+        "Date navigation with today badge is well implemented"
+      ],
+      "improvements": [
+        "Expand content container to 900\u20131200px at 4K breakpoint",
+        "Increase Quick Add grid to 4\u20136 columns at \u22651920px to show more meal options",
+        "Use a two-column layout at large viewports: food search/log on left, calorie/macro summary sidebar on right",
+        "Scale up font sizes and button sizes at 4K using clamp() values",
+        "Increase macro progress bar height slightly at large viewports for better visibility"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "tracker",
+      "state_id": "empty",
+      "score": 3.5,
+      "responsive_issues": [
+        "Content is not centered or scaled for 2560px wide display \u2014 the card appears as a narrow column (~400px) in the center-left area, leaving massive empty black space on the right",
+        "No max-width container with auto margins applied to center the layout",
+        "Quick Add grid cards are tiny relative to the available viewport width",
+        "Typography appears very small at 4K resolution \u2014 likely not scaled with viewport",
+        "The entire UI looks like a mobile layout rendered at 4K without any responsive breakpoints"
+      ],
+      "good": [
+        "Dark theme renders consistently",
+        "Color hierarchy (green accent, muted labels) is preserved",
+        "Calorie progress section is readable in isolation"
+      ],
+      "improvements": [
+        "Wrap the main content in a max-width container (e.g., max-width: 900px; margin: 0 auto) to center it on large displays",
+        "Add responsive breakpoints so the Quick Add grid expands to more columns on wider screens",
+        "Increase base font size or use clamp() for fluid typography to remain readable at 4K",
+        "Consider a two-column layout on desktop: food log on left, nutrition summary on right"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "tracker",
+      "state_id": "search-typing",
+      "score": 3.5,
+      "responsive_issues": [
+        "Search dropdown and results list are confined to a narrow ~400px column, with no adaptation for wide screens",
+        "Massive unused horizontal whitespace on both sides at 2560px",
+        "Search results list items are very small \u2014 not utilizing available screen real estate",
+        "No max-width or centering strategy applied for 4K viewport",
+        "Dropdown results could display in a richer multi-column grid on desktop but remain single-column mobile style"
+      ],
+      "good": [
+        "Search results are visible and legible in their narrow column",
+        "Green dot calorie indicators are distinguishable",
+        "Category labels (curry, snack, etc.) are present and hierarchically smaller"
+      ],
+      "improvements": [
+        "Apply max-width: 800px; margin: 0 auto to the search container to center it properly",
+        "On viewports >1280px, consider showing search results in a 2-column grid layout",
+        "Increase row height and font size of search result items for better readability at 4K",
+        "Add hover states with visible background highlights for pointer device users"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "workout",
+      "state_id": "empty",
+      "score": 3.5,
+      "responsive_issues": [
+        "Entire workout UI is a narrow column (~400px) floating in a 2560px wide black void",
+        "No centering or max-width container \u2014 layout is not adapted for 4K",
+        "Empty state icon and text appear very small relative to the screen size",
+        "Excessive vertical and horizontal whitespace makes the UI feel broken at this resolution",
+        "No responsive breakpoints to switch to a wider or multi-panel layout"
+      ],
+      "good": [
+        "Empty state message is clear and concise",
+        "Search bar placeholder text is descriptive",
+        "Date navigation bar is visible"
+      ],
+      "improvements": [
+        "Center the content with max-width: 900px; margin: 0 auto",
+        "Scale up the empty state illustration and heading for large displays",
+        "On desktop, consider a split layout: search/results on the left, workout summary/tips on the right",
+        "Increase the search input height and font size for desktop usability"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    },
+    {
+      "viewport_id": "4k",
+      "page_id": "workout",
+      "state_id": "search-typing",
+      "score": 3.5,
+      "responsive_issues": [
+        "Search results list is a narrow single column at ~400px on a 2560px screen \u2014 no layout adaptation",
+        "No centering or max-width wrapper \u2014 content sits in the upper-left area of an otherwise black screen",
+        "Result rows (Push-Up, Wide Push-Up, etc.) are very small and not utilizing available space",
+        "MET and Strength tags are tiny and hard to read at 4K without scaling",
+        "No hover/focus styles visible for pointer-device interaction on desktop"
+      ],
+      "good": [
+        "Search results are logically grouped with exercise name, muscle group, category and MET value",
+        "Color-coded Strength label provides quick visual scanning",
+        "Results appear quickly and are contextually relevant"
+      ],
+      "improvements": [
+        "Apply max-width: 900px; margin: 0 auto to center the panel on large screens",
+        "Increase row padding and font sizes for desktop \u2014 use clamp() for fluid sizing",
+        "On screens >1280px, show results in a 2-3 column card grid instead of a list",
+        "Add visible hover state (background highlight) for mouse users navigating the results"
+      ],
+      "touch_targets_pass": true,
+      "overflow_detected": false
+    }
+  ],
+  "top_issues": [
+    {
+      "issue": "Top header row with greeting + '2352 kcal left' pill is cramped \u2014 pill likely wraps or clips at 375px",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dashboard"
+      ]
+    },
+    {
+      "issue": "The macro section shows duplicate data (both progress bars and a second PROTEIN/CARBS/FAT list), suggesting a layout/render artifact that wastes vertical space",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dashboard"
+      ]
+    },
+    {
+      "issue": "Quick-log toolbar (trophy icon, camera icon, weight input, Log button, D avatar) is very tight in one row at 375px \u2014 weight input field appears truncated",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dashboard"
+      ]
+    },
+    {
+      "issue": "Weight progress chart x-axis labels (27 Jun, 29 Jun, 2 Jul) may be cramped",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dashboard"
+      ]
+    },
+    {
+      "issue": "Diet type buttons (Veg / Non-Veg / Vegan) in a single row may be tight at 375px \u2014 'Non-Veg' and 'Vegan' could clip if font size is not reduced",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dishes"
+      ]
+    },
+    {
+      "issue": "Bottom action bar with 'Cancel' and 'Save Dish' side-by-side is narrow but likely still usable",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dishes"
+      ]
+    },
+    {
+      "issue": "Skeleton loading area inside dashed border takes significant vertical space, pushing content below fold on 667px height",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dishes"
+      ]
+    },
+    {
+      "issue": "Page title 'My Dishes' and subtitle with '+ New Dish' button \u2014 button text may be slightly tight but likely fits",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dishes"
+      ]
+    },
+    {
+      "issue": "Info banner text is long and wraps to 4 lines, consuming a large portion of the 667px viewport height",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "dishes"
+      ]
+    },
+    {
+      "issue": "Step indicator (1-2-3-4 with connecting lines) is wide and may be cramped at 375px \u2014 numbers and lines could overlap",
+      "affected_viewports": [
+        "iphone-se"
+      ],
+      "page_count": 1,
+      "pages": [
+        "onboarding"
+      ]
+    }
+  ],
+  "overflow_pages": [
+    {
+      "viewport": "iphone-se",
+      "page": "dashboard",
+      "state": "default"
+    },
+    {
+      "viewport": "ipad-mini",
+      "page": "profile",
+      "state": "default"
+    }
+  ],
+  "touch_target_failures": [
+    {
+      "viewport": "iphone-se",
+      "page": "dashboard"
+    },
+    {
+      "viewport": "iphone-se",
+      "page": "profile"
+    },
+    {
+      "viewport": "iphone-14",
+      "page": "dishes"
+    }
+  ]
+}

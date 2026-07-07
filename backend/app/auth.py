@@ -57,9 +57,8 @@ def _get_jwks() -> dict:
 
 def _verify_clerk_token(token: str) -> dict:
     """Verify a Clerk JWT and return its payload."""
-    if not settings.CLERK_JWKS_URL or "REPLACE_ME" in settings.CLERK_JWKS_URL:
-        # Dev mode: accept any token whose `sub` is DEV_USER_ID
-        # Remove this branch after Clerk keys are configured
+    # Dev bypass — activated by DEV_MODE=true in .env regardless of JWKS config
+    if settings.DEV_MODE or not settings.CLERK_JWKS_URL or "REPLACE_ME" in settings.CLERK_JWKS_URL:
         return {"sub": settings.DEV_USER_ID, "dev_mode": True}
 
     try:
@@ -90,11 +89,13 @@ def _verify_clerk_token(token: str) -> dict:
         return payload
 
     except jwt.ExpiredSignatureError:
+        logger.warning("AUTH: token expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired.",
         )
     except jwt.InvalidTokenError as e:
+        logger.warning("AUTH: invalid token: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {e}",
@@ -123,8 +124,8 @@ def get_current_user_id(
     Auto-creates a DB User row on first login.
     """
     if credentials is None:
-        # Dev fallback — only active when Clerk keys not configured
-        if not settings.CLERK_JWKS_URL or "REPLACE_ME" in settings.CLERK_JWKS_URL:
+        logger.warning("AUTH: no credentials provided (credentials is None)")
+        if settings.DEV_MODE or not settings.CLERK_JWKS_URL or "REPLACE_ME" in settings.CLERK_JWKS_URL:
             _upsert_user(settings.DEV_USER_ID, db)
             return settings.DEV_USER_ID
         raise HTTPException(
@@ -133,6 +134,7 @@ def get_current_user_id(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    logger.info("AUTH: got token (first 20 chars): %s...", credentials.credentials[:20])
     payload = _verify_clerk_token(credentials.credentials)
     user_id: str = payload.get("sub", "")
     if not user_id:

@@ -1,83 +1,146 @@
 "use client";
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import api from "@/lib/api";
-import Card from "@/components/ui/Card";
-import Spinner from "@/components/ui/Spinner";
 
-interface UserSummary {
-  user_id: string;
-  name: string | null;
-  age: number | null;
-  gender: string | null;
-  current_weight_kg: number | null;
-  goal_weight_kg: number | null;
-  diet_type: string | null;
-  experience_level: string | null;
-}
+import { useState, useRef } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { Users2 } from "lucide-react";
+import PageShell from "@/components/layout/PageShell";
+import AdminSubNav from "@/components/admin/AdminSubNav";
+import UserRow, { UserRowSkeleton } from "@/components/admin/UserRow";
+import UserDetailView from "@/components/admin/UserDetailView";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useDebounce } from "@/hooks/useDebounce";
+import { cn } from "@/lib/utils";
+
+type View = "list" | { userId: string };
+
+const SLIDE_VARIANTS = {
+  enter:   (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
+  center:  { x: 0, opacity: 1, transition: { duration: 0.22 } },
+  exit:    (dir: number) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0, transition: { duration: 0.18 } }),
+};
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  useAdminCheck(); // redirect if not admin
 
-  useEffect(() => {
-    api.get("/api/v1/admin/users")
-      .then((r) => setUsers(r.data))
-      .catch(() => setError("Failed to load users."))
-      .finally(() => setLoading(false));
-  }, []);
+  const { users, isLoading } = useAdminUsers();
+  const [view, setView]     = useState<View>("list");
+  const [search, setSearch] = useState("");
+  const debouncedSearch     = useDebounce(search, 200);
+  const dirRef              = useRef(1);
+
+  const filtered = debouncedSearch.trim().length > 0
+    ? users.filter(u => u.name?.toLowerCase().includes(debouncedSearch.toLowerCase()))
+    : users;
+
+  function goDetail(userId: string) {
+    dirRef.current = 1;
+    setView({ userId });
+  }
+
+  function goList() {
+    dirRef.current = -1;
+    setView("list");
+  }
+
+  const isListView = view === "list";
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
-      <div className="border-b border-gray-800 px-6 py-4 flex items-center gap-3">
-        <Link href="/admin" className="text-gray-500 hover:text-gray-300 transition-colors">
-          <ArrowLeft size={18} />
-        </Link>
-        <h1 className="text-lg font-bold text-gray-100">User Management</h1>
-      </div>
+    <PageShell title="Users">
+      <div className="space-y-6 pt-2 overflow-hidden">
 
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-3">
-        {loading && <div className="flex justify-center py-16"><Spinner className="w-8 h-8" /></div>}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-400 text-sm text-center">
-            {error}
-          </div>
-        )}
+        {/* Header */}
+        <div className="space-y-3">
+          <h1 className="text-xl font-bold text-foreground lg:text-2xl">Admin Panel</h1>
+          <AdminSubNav />
+        </div>
 
-        {!loading && users.length === 0 && (
-          <p className="text-center text-gray-600 py-16 text-sm">No users found.</p>
-        )}
+        {/* Animated content */}
+        <AnimatePresence initial={false} custom={dirRef.current} mode="wait">
+          {isListView ? (
+            <motion.div
+              key="list"
+              custom={dirRef.current}
+              variants={SLIDE_VARIANTS}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="space-y-3"
+            >
+              {/* Search + count */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="search"
+                  placeholder="Filter users…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  aria-label="Filter users"
+                  className={cn(
+                    "flex-1 h-10 rounded-xl bg-[#1A1A1A] border border-[#2A2A2A] text-foreground",
+                    "px-3 text-sm placeholder:text-muted-foreground/50",
+                    "outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-colors",
+                  )}
+                />
+                {!isLoading && (
+                  <span className="text-xs text-muted-foreground shrink-0 px-2">
+                    {filtered.length} user{filtered.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
 
-        {users.map((u) => (
-          <Card key={u.user_id} className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-gray-200">{u.name ?? "—"}</p>
-              <p className="text-xs text-gray-500 mt-0.5 font-mono">{u.user_id}</p>
-            </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap justify-end">
-              {u.age && <span>{u.age}y</span>}
-              {u.gender && <span className="capitalize">{u.gender}</span>}
-              {u.experience_level && <span className="capitalize">{u.experience_level}</span>}
-              {u.diet_type && (
-                <span className={`px-2 py-0.5 rounded-full border text-xs font-medium ${
-                  u.diet_type === "veg"
-                    ? "bg-brand-500/10 border-brand-500/20 text-brand-400"
-                    : u.diet_type === "egg"
-                    ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
-                    : "bg-orange-500/10 border-orange-500/20 text-orange-400"
-                }`}>
-                  {u.diet_type}
-                </span>
+              {/* List */}
+              {isLoading ? (
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => <UserRowSkeleton key={i} />)}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#1A1A1A] flex items-center justify-center">
+                    <Users2 size={22} className="text-muted-foreground/30" aria-hidden="true" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {search ? "No users match your filter." : "No users yet."}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map(user => (
+                    <UserRow key={user.user_id} user={user} onClick={() => goDetail(user.user_id)} />
+                  ))}
+
+                  {/* Summary row — fills empty space and provides context */}
+                  {filtered.length > 0 && (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0A0A0A] border border-[#1A1A1A] mt-2">
+                      <p className="text-xs text-muted-foreground/50">
+                        {filtered.length} registered user{filtered.length !== 1 ? "s" : ""}
+                        {search ? " match your filter" : " in total"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/30 uppercase tracking-wider">
+                        Click a row to view profile
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
-              {u.current_weight_kg && u.goal_weight_kg && (
-                <span>{u.current_weight_kg} → {u.goal_weight_kg} kg</span>
-              )}
-            </div>
-          </Card>
-        ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={typeof view === "object" ? view.userId : "detail"}
+              custom={dirRef.current}
+              variants={SLIDE_VARIANTS}
+              initial="enter"
+              animate="center"
+              exit="exit"
+            >
+              <UserDetailView
+                userId={typeof view === "object" ? view.userId : ""}
+                onBack={goList}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
-    </div>
+    </PageShell>
   );
 }

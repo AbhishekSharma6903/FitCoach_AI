@@ -4,5 +4,8 @@ from app.models.food_item import FoodItem
 from app.models.food_log_entry import FoodLogEntry
 from app.models.weight_log import WeightLog
 from app.models.water_log import WaterLog
+from app.models.custom_dish import CustomDish, CustomDishIngredient
+from app.models.workout_log import ExerciseLibrary, WorkoutLog
 
-__all__ = ["User", "UserProfile", "FoodItem", "FoodLogEntry", "WeightLog", "WaterLog"]
+__all__ = ["User", "UserProfile", "FoodItem", "FoodLogEntry", "WeightLog", "WaterLog",
+           "CustomDish", "CustomDishIngredient", "ExerciseLibrary", "WorkoutLog"]

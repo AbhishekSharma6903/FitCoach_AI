@@ -1,40 +1,56 @@
 "use client";
-import { Trash2 } from "lucide-react";
-import type { FoodLogEntry } from "@/types/nutrition";
-import { cn } from "@/lib/utils";
 
-const MEAL_COLORS: Record<string, string> = {
-  breakfast: "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
-  lunch:     "bg-brand-500/10 text-brand-400 border border-brand-500/20",
-  dinner:    "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
-  snack:     "bg-orange-500/10 text-orange-400 border border-orange-500/20",
-};
+import { X } from "lucide-react";
+import { toast } from "sonner";
+import { motion } from "motion/react";
+import type { FoodLogEntry as FoodLogEntryType } from "@/types/nutrition";
 
-interface Props {
-  entry: FoodLogEntry;
-  onDelete: (id: number) => void;
+interface FoodLogEntryProps {
+  entry: FoodLogEntryType;
+  onDelete: (id: number) => Promise<void>;
 }
 
-export default function FoodLogEntryRow({ entry, onDelete }: Props) {
+export default function FoodLogEntry({ entry, onDelete }: FoodLogEntryProps) {
+  async function handleDelete() {
+    await onDelete(entry.id);
+    toast(`${entry.food_name} removed`, {
+      duration: 4000,
+    });
+  }
+
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-800 last:border-0 gap-3">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.18 }}
+      className="flex items-start gap-3 px-4 py-3 group"
+    >
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium text-gray-200 truncate">{entry.food_name}</p>
-          <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", MEAL_COLORS[entry.meal_type])}>
-            {entry.meal_type}
-          </span>
-        </div>
-        <p className="text-xs text-gray-600 mt-0.5">
-          {entry.quantity_g}g · P:{entry.protein_g.toFixed(1)}g C:{entry.carbs_g.toFixed(1)}g F:{entry.fat_g.toFixed(1)}g
+        <p className="text-sm font-medium text-foreground truncate">{entry.food_name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {entry.quantity_g}g
+          <span className="mx-1.5 text-muted-foreground/30">·</span>
+          <span className="text-blue-400">{Math.round(entry.protein_g)}P</span>
+          <span className="mx-1 text-muted-foreground/30">·</span>
+          <span className="text-amber-400">{Math.round(entry.carbs_g)}C</span>
+          <span className="mx-1 text-muted-foreground/30">·</span>
+          <span className="text-orange-400">{Math.round(entry.fat_g)}F</span>
         </p>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-sm font-semibold text-gray-300">{Math.round(entry.calories_kcal)} kcal</span>
-        <button onClick={() => onDelete(entry.id)} className="text-gray-700 hover:text-red-400 transition-colors">
-          <Trash2 size={15} />
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-sm font-semibold text-white tabular-nums">
+          {Math.round(entry.calories_kcal)} kcal
+        </span>
+        <button
+          onClick={handleDelete}
+          aria-label={`Delete ${entry.food_name}`}
+          className="opacity-0 group-hover:opacity-100 focus:opacity-100 flex h-6 w-6 items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-400 hover:bg-red-500/10 transition-all"
+        >
+          <X size={13} aria-hidden="true" />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

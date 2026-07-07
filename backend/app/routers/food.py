@@ -9,6 +9,7 @@ from app.auth import get_current_user_id
 from app.models.food_item import FoodItem
 from app.models.food_log_entry import FoodLogEntry
 from app.models.user_profile import UserProfile
+from app.models.custom_dish import CustomDish
 from app.schemas.food import (
     FoodItemRead, FoodItemSearchResult, FoodLogCreate,
     FoodLogRead, DailyNutritionRead, MacroTotals
@@ -26,7 +27,44 @@ def search_food(
     db: Session = Depends(get_db),
     user_id: str = Depends(get_current_user_id),
 ):
-    return fuzzy_search_foods(q, db, limit=limit, diet_filter=diet_filter)
+    results = fuzzy_search_foods(q, db, limit=limit, diet_filter=diet_filter)
+
+    # Custom dishes — prepended so they appear at the TOP of results
+    q_lower = q.lower().strip()
+    custom = (
+        db.query(CustomDish)
+        .filter(
+            CustomDish.user_id == user_id,
+            CustomDish.name_normalized.ilike(f"%{q_lower}%"),
+        )
+        .limit(5)
+        .all()
+    )
+    custom_results = []
+    for dish in custom:
+        if diet_filter == "veg" and not (dish.is_veg and not dish.is_egg):
+            continue
+        if diet_filter == "egg" and not dish.is_veg:
+            continue
+        custom_results.append({
+            "id":             dish.id,
+            "name":           dish.name,
+            "category":       "custom dish",
+            "region":         None,
+            "serving_size_g": float(dish.total_weight_g),
+            "calories_kcal":  float(dish.calories_kcal) if dish.calories_kcal else 0.0,
+            "protein_g":      float(dish.protein_g)     if dish.protein_g else 0.0,
+            "carbs_g":        float(dish.carbs_g)        if dish.carbs_g else 0.0,
+            "fat_g":          float(dish.fat_g)          if dish.fat_g else 0.0,
+            "fiber_g":        float(dish.fiber_g)        if dish.fiber_g else 0.0,
+            "sugar_g":        float(dish.sugar_g)        if dish.sugar_g else 0.0,
+            "is_veg":         dish.is_veg,
+            "is_egg":         dish.is_egg,
+            "is_custom":      True,
+        })
+
+    # Custom dishes first, then catalog results
+    return custom_results + results
 
 
 @router.get("/items/{food_item_id}", response_model=FoodItemRead)
@@ -101,7 +139,11 @@ def get_food_log(
         .all()
     )
 
-    food_names = {e.food_item_id: db.get(FoodItem, e.food_item_id).name for e in entries}
+    food_ids = [e.food_item_id for e in entries]
+    food_names = {
+        f.id: f.name
+        for f in db.query(FoodItem).filter(FoodItem.id.in_(food_ids)).all()
+    }
 
     entry_reads = [
         FoodLogRead(

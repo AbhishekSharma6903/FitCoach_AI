@@ -1,149 +1,167 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-/* ── Dark-first CSS variables ─────────────────────────────── */
+/* ── Dark-only app: force dark class variant ─────────────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
+/* ── FitCoach AI Design Tokens ──────────────────────────────────────────────
+   Surface hierarchy (warm-neutral darks — no blue tint):
+   Level 0  Page background   #0A0A0A
+   Level 1  Card surface      #111111
+   Level 2  Elevated          #1A1A1A  (modals, dropdowns)
+   Level 3  Control           #222222  (inputs, toggles)
+   Border                     #2A2A2A
+   ───────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  /* Map shadcn semantic names to our tokens */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         var(--destructive);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
+
+  /* Brand + semantic (used via arbitrary values or as CSS vars) */
+  --color-brand:               var(--brand);
+  --color-brand-dim:           var(--brand-dim);
+  --color-brand-glow:          var(--brand-glow);
+  --color-elevated:            var(--elevated);
+  --color-control:             var(--control);
+  --color-border-subtle:       var(--border-subtle);
+
+  /* Macro / semantic colors */
+  --color-protein:             #3b82f6;
+  --color-carbs:               #f59e0b;
+  --color-fat:                 #f97316;
+  --color-fiber:               #a78bfa;
+  --color-burned:              #fb923c;
+
+  /* Typography */
+  --font-sans:                 var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-mono:                 var(--font-geist-mono), monospace;
+
+  /* Radius scale */
+  --radius-sm:   calc(var(--radius) * 0.5);   /* 4px */
+  --radius-md:   var(--radius);                /* 8px */
+  --radius-lg:   calc(var(--radius) * 1.5);   /* 12px */
+  --radius-xl:   calc(var(--radius) * 2);     /* 16px */
+  --radius-2xl:  calc(var(--radius) * 3);     /* 24px */
+  --radius-3xl:  calc(var(--radius) * 4);     /* 32px */
+}
+
+/* ── Dark mode tokens (app is dark-only — these are the only tokens used) ── */
 :root {
-  --background:        #0d0d0d;
-  --background-card:   #111827;
-  --background-elevated: #1f2937;
-  --foreground:        #f9fafb;
-  --foreground-muted:  #9ca3af;
-  --foreground-subtle: #6b7280;
-  --border:            #374151;
-  --border-subtle:     #1f2937;
-  --accent:            #22c55e;
-  --accent-hover:      #16a34a;
-  --accent-glow:       rgba(34, 197, 94, 0.20);
-  --radius:            0.75rem;
+  /* Base radius: 8px */
+  --radius: 0.5rem;
+
+  /* Surface hierarchy */
+  --background:    #0A0A0A;
+  --card:          #111111;
+  --elevated:      #1A1A1A;
+  --control:       #222222;
+  --border:        #2A2A2A;
+  --border-subtle: #1F1F1F;
+  --input:         #222222;
+  --popover:       #1A1A1A;
+  --muted:         #1A1A1A;
+
+  /* Text */
+  --foreground:          #F5F5F5;
+  --card-foreground:     #F5F5F5;
+  --popover-foreground:  #F5F5F5;
+  --muted-foreground:    #9CA3AF;
+  --accent-foreground:   #F5F5F5;
+  --secondary-foreground: #F5F5F5;
+  --primary-foreground:  #000000;
+
+  /* Brand — FitCoach green */
+  --primary:      #22c55e;
+  --brand:        #22c55e;
+  --brand-dim:    rgba(34, 197, 94, 0.1);
+  --brand-glow:   rgba(34, 197, 94, 0.2);
+
+  /* Secondary / accent surfaces */
+  --secondary:    #1A1A1A;
+  --accent:       #1A1A1A;
+
+  /* Semantic */
+  --destructive:  #ef4444;
+  --ring:         #22c55e;
+
+  /* Charts */
+  --chart-1: #3b82f6;
+  --chart-2: #f59e0b;
+  --chart-3: #f97316;
+  --chart-4: #a78bfa;
+  --chart-5: #fb923c;
 }
 
-/* ── Base reset ───────────────────────────────────────────── */
-* {
-  box-sizing: border-box;
+/* .dark is applied to <html> — all shadcn components respect this */
+.dark {
+  --background:    #0A0A0A;
+  --card:          #111111;
+  --elevated:      #1A1A1A;
+  --control:       #222222;
+  --border:        #2A2A2A;
+  --border-subtle: #1F1F1F;
+  --input:         #222222;
+  --popover:       #1A1A1A;
+  --muted:         #1A1A1A;
+  --foreground:          #F5F5F5;
+  --card-foreground:     #F5F5F5;
+  --popover-foreground:  #F5F5F5;
+  --muted-foreground:    #9CA3AF;
+  --accent-foreground:   #F5F5F5;
+  --secondary-foreground: #F5F5F5;
+  --primary-foreground:  #000000;
+  --primary:      #22c55e;
+  --brand:        #22c55e;
+  --brand-dim:    rgba(34, 197, 94, 0.1);
+  --brand-glow:   rgba(34, 197, 94, 0.2);
+  --secondary:    #1A1A1A;
+  --accent:       #1A1A1A;
+  --destructive:  #ef4444;
+  --ring:         #22c55e;
 }
 
-html {
-  color-scheme: dark;
+/* ── Base layer ──────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+  }
+  html {
+    @apply font-sans;
+    /* iOS safe-area support */
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100dvh;
-}
-
-/* ── Scrollbar styling (webkit) ──────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--background-card);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground-subtle);
-}
-
-/* ── Utility classes ─────────────────────────────────────── */
+/* ── Utility: hide scrollbars visually but keep scroll functionality ─────── */
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-
-  /* Surface classes */
-  .surface {
-    background-color: var(--background-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius);
-  }
-
-  .surface-elevated {
-    background-color: var(--background-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-  }
-
-  /* Text helpers */
-  .text-muted {
-    color: var(--foreground-muted);
-  }
-  .text-subtle {
-    color: var(--foreground-subtle);
-  }
-
-  /* Accent glow effect */
-  .glow-accent {
-    box-shadow: 0 0 20px var(--accent-glow);
-  }
-
-  /* Gradient text */
-  .gradient-text {
-    background: linear-gradient(135deg, #22c55e 0%, #4ade80 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Card hover lift */
-  .card-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-
-  /* Input focus ring */
-  .input-dark {
-    background-color: var(--background-elevated);
-    border: 1px solid var(--border);
-    color: var(--foreground);
-    border-radius: calc(var(--radius) - 2px);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .input-dark:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-  }
-  .input-dark::placeholder {
-    color: var(--foreground-subtle);
-  }
-}
-
-/* ── Component layer ─────────────────────────────────────── */
-@layer components {
-  .btn-primary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm
-           bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm
-           bg-gray-700 text-gray-100 hover:bg-gray-600 active:bg-gray-500
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .btn-ghost {
-    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold text-sm
-           text-gray-400 hover:text-white hover:bg-gray-800
-           transition-all duration-150;
-  }
-
-  .card {
-    @apply surface p-5 shadow-card;
-  }
-
-  .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

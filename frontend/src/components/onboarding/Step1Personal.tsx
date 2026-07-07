@@ -1,82 +1,118 @@
 "use client";
-import Input from "@/components/ui/Input";
-import FormField from "@/components/ui/FormField";
-import type { OnboardingFormData } from "@/types/profile";
-import { cn } from "@/lib/utils";
 
-interface Props {
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import type { OnboardingFormData } from "@/types/profile";
+
+interface StepProps {
   data: OnboardingFormData;
   onChange: (updates: Partial<OnboardingFormData>) => void;
   errors: Partial<Record<keyof OnboardingFormData, string>>;
 }
 
-const genders = [
-  { value: "male", label: "Male" },
+const GENDERS = [
+  { value: "male",   label: "Male"   },
   { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-];
+  { value: "other",  label: "Other"  },
+] as const;
 
-export default function Step1Personal({ data, onChange, errors }: Props) {
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <div className="space-y-5">
+    <label className="text-xs font-medium text-muted-foreground">
+      {children}
+      {required && <span className="text-red-400 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="text-xs text-red-400 mt-1">{msg}</p>;
+}
+
+export default function Step1Personal({ data, onChange, errors }: StepProps) {
+  return (
+    <div className="space-y-5 pt-2">
       <div>
-        <h2 className="text-2xl font-bold text-gray-100">Tell us about yourself</h2>
-        <p className="text-gray-500 mt-1 text-sm">We&apos;ll use this to personalise your fitness plan.</p>
+        <h2 className="text-2xl font-bold text-foreground">Tell us about yourself</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          We'll use this to personalise your fitness plan.
+        </p>
       </div>
 
-      <FormField label="Your Name" error={errors.name} required>
+      {/* Name */}
+      <div className="space-y-1.5">
+        <FieldLabel required>Your name</FieldLabel>
         <Input
+          type="text"
           placeholder="e.g. Arjun Sharma"
+          autoComplete="name"
           value={data.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-          error={errors.name}
+          onChange={e => onChange({ name: e.target.value })}
+          className={cn(
+            "h-11 bg-[#222222] border-[#2A2A2A] focus:border-primary text-sm",
+            errors.name && "border-red-500/50",
+          )}
         />
-      </FormField>
+        <FieldError msg={errors.name} />
+      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Age" error={errors.age} required>
+      {/* Age + Height — side-by-side on sm+, stacked on SE */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <FieldLabel required>Age</FieldLabel>
           <Input
             type="number"
             placeholder="e.g. 28"
             min={10} max={120}
             value={data.age === "" ? "" : data.age}
-            onChange={(e) => onChange({ age: e.target.value === "" ? "" : Number(e.target.value) })}
-            error={errors.age}
+            onChange={e => onChange({ age: e.target.value === "" ? "" : Number(e.target.value) })}
+            className={cn(
+              "h-11 bg-[#222222] border-[#2A2A2A] focus:border-primary text-sm",
+              errors.age && "border-red-500/50",
+            )}
           />
-        </FormField>
-
-        <FormField label="Height (cm)" error={errors.height_cm} required>
+          <FieldError msg={errors.age} />
+        </div>
+        <div className="space-y-1.5">
+          <FieldLabel required>Height (cm)</FieldLabel>
           <Input
             type="number"
             placeholder="e.g. 175"
             min={100} max={250}
             value={data.height_cm === "" ? "" : data.height_cm}
-            onChange={(e) => onChange({ height_cm: e.target.value === "" ? "" : Number(e.target.value) })}
-            error={errors.height_cm}
+            onChange={e => onChange({ height_cm: e.target.value === "" ? "" : Number(e.target.value) })}
+            className={cn(
+              "h-11 bg-[#222222] border-[#2A2A2A] focus:border-primary text-sm",
+              errors.height_cm && "border-red-500/50",
+            )}
           />
-        </FormField>
+          <FieldError msg={errors.height_cm} />
+        </div>
       </div>
 
-      <FormField label="Gender" error={errors.gender} required>
-        <div className="flex gap-3">
-          {genders.map((g) => (
+      {/* Gender pills */}
+      <div className="space-y-1.5">
+        <FieldLabel required>Gender</FieldLabel>
+        <div className="grid grid-cols-3 gap-2">
+          {GENDERS.map(g => (
             <button
               key={g.value}
               type="button"
-              onClick={() => onChange({ gender: g.value as OnboardingFormData["gender"] })}
+              onClick={() => onChange({ gender: g.value })}
               className={cn(
-                "flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all",
+                "h-11 rounded-xl border text-sm font-semibold transition-all",
                 data.gender === g.value
-                  ? "border-brand-500 bg-brand-500/10 text-brand-400"
-                  : "border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-[#2A2A2A] text-muted-foreground hover:border-[#3A3A3A] hover:text-foreground",
               )}
             >
               {g.label}
             </button>
           ))}
         </div>
-        {errors.gender && <p className="text-xs text-red-400 mt-1">{errors.gender}</p>}
-      </FormField>
+        <FieldError msg={errors.gender} />
+      </div>
     </div>
   );
 }

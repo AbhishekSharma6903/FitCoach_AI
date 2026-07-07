@@ -1,12 +1,19 @@
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function Spinner({ className }: { className?: string }) {
+interface SpinnerProps {
+  className?: string;
+  /** Screen-reader label */
+  label?: string;
+}
+
+export default function Spinner({ className, label = "Loading…" }: SpinnerProps) {
   return (
-    <div
-      className={cn(
-        "inline-block h-5 w-5 animate-spin rounded-full border-2 border-gray-700 border-t-brand-500",
-        className
-      )}
-    />
+    <span role="status" aria-label={label} className="inline-flex">
+      <Loader2
+        className={cn("animate-spin text-primary", className ?? "w-6 h-6")}
+        aria-hidden="true"
+      />
+    </span>
   );
 }

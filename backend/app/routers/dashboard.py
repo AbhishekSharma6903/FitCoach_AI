@@ -7,6 +7,7 @@ from app.auth import get_current_user_id
 from app.models.food_log_entry import FoodLogEntry
 from app.models.weight_log import WeightLog
 from app.models.water_log import WaterLog
+from app.models.workout_log import WorkoutLog
 from app.models.user_profile import UserProfile
 from app.schemas.dashboard import DashboardRead, MacroSnapshot, WeightPoint, MilestoneRead, WaterSnapshot
 from app.services.calculation_engine import compute_milestones, get_next_milestone
@@ -91,12 +92,19 @@ def get_dashboard(
         if raw:
             next_milestone = MilestoneRead(**raw)
 
+    # Workout — calories burned today
+    workout_entries = db.query(WorkoutLog).filter_by(user_id=user_id, log_date=today).all()
+    calories_burned_today = round(sum(float(w.calories_burned) for w in workout_entries if w.calories_burned), 2)
+    calories_net = round(calories_consumed - calories_burned_today, 2)
+
     return DashboardRead(
         user_name=profile.name,
         today_date=today,
         calories_consumed=round(calories_consumed, 2),
         calories_target=round(target_cal, 2),
         calories_remaining=round(max(0, target_cal - calories_consumed), 2),
+        calories_burned_today=calories_burned_today,
+        calories_net=calories_net,
         macros_consumed=MacroSnapshot(
             protein_g=round(protein_consumed, 2),
             carbs_g=round(carbs_consumed, 2),

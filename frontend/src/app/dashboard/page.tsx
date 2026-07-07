@@ -1,126 +1,204 @@
 "use client";
-import { useEffect, useState } from "react";
+
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { Plus } from "lucide-react";
+import { motion } from "motion/react";
 import { useDashboard } from "@/hooks/useDashboard";
-import { useWeightLog } from "@/hooks/useWeightLog";
-import Card from "@/components/ui/Card";
-import CalorieRing from "@/components/dashboard/CalorieRing";
-import MacroBarsGroup from "@/components/dashboard/MacroBarsGroup";
-import WeightProgressChart from "@/components/dashboard/WeightProgressChart";
-import StreakCounter from "@/components/dashboard/StreakCounter";
+import PageShell from "@/components/layout/PageShell";
+import CalorieHeroCard from "@/components/dashboard/CalorieHeroCard";
+import MacroBarsCard from "@/components/dashboard/MacroBarsCard";
+import StreakBMICard from "@/components/dashboard/StreakBMICard";
 import MilestoneCard from "@/components/dashboard/MilestoneCard";
-import DailySummaryBanner from "@/components/dashboard/DailySummaryBanner";
-import WaterIntakePanel from "@/components/dashboard/WaterIntakePanel";
-import Spinner from "@/components/ui/Spinner";
-import Button from "@/components/ui/Button";
+import TDEEWidget from "@/components/dashboard/TDEEWidget";
+import WaterIntakeCard from "@/components/dashboard/WaterIntakeCard";
+import WeightChart from "@/components/dashboard/WeightChart";
+import WeightLogWidget from "@/components/dashboard/WeightLogWidget";
+import DayScoreBadge from "@/components/dashboard/DayScoreBadge";
+import { DashboardSkeletons, RightColumnSkeletons } from "@/components/dashboard/DashboardSkeletons";
+import { computeDayScore, getGreeting, formatDisplayDate } from "@/lib/dashboardUtils";
+
+const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
+
+import type { Variants } from "motion/react";
+
+// Stagger animation variants (AG-6: 30ms, NOT 50ms)
+const staggerContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.03 } },
+};
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+};
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { dashboard, isLoading, isValidating, error } = useDashboard();
-  const { logWeight } = useWeightLog();
-  const [weightInput, setWeightInput] = useState("");
-  const [loggingWeight, setLoggingWeight] = useState(false);
+  const { dashboard: d, isLoading, error } = useDashboard();
 
-  // Only redirect to onboarding when we have a confirmed error with no
-  // background revalidation in flight — prevents spurious redirects when SWR
-  // returns a stale cached error immediately after the onboarding wizard
-  // creates the profile and pushes to /dashboard.
   useEffect(() => {
-    if (!isLoading && !isValidating && error) {
+    if (!isLoading && error && !DEV_MODE) {
       router.replace("/onboarding");
     }
-  }, [isLoading, isValidating, error, router]);
+  }, [isLoading, error, router]);
 
-  async function handleLogWeight() {
-    if (!weightInput || isNaN(Number(weightInput))) return;
-    setLoggingWeight(true);
-    try {
-      await logWeight(Number(weightInput));
-      setWeightInput("");
-    } finally {
-      setLoggingWeight(false);
-    }
+  if (isLoading || (!d && !error)) {
+    return (
+      <PageShell noHeader>
+        <div className="pt-4">
+          <DashboardSkeletons />
+        </div>
+      </PageShell>
+    );
   }
 
-  if (isLoading || (isValidating && !dashboard && !error) || (!dashboard && !error)) return (
-    <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center">
-      <Spinner className="w-8 h-8" />
+  if (!d) return null;
+
+  const greeting = getGreeting();
+  const firstName = d.user_name.split(" ")[0];
+  const formattedDate = formatDisplayDate(d.today_date);
+  const dayScore = computeDayScore(d);
+  const hasLoggedFood = d.calories_consumed > 0;
+  const currentWeightKg =
+    d.weight_entries.length > 0
+      ? d.weight_entries[d.weight_entries.length - 1].weight_kg
+      : 0;
+
+  // ── Left column cards (mobile stacks all; desktop shows left col) ──────────
+  const leftColumn = (
+    <motion.div
+      variants={staggerContainer}
+      initial="hidden"
+      animate="show"
+      className="space-y-5"
+    >
+      {/* 1. Calorie Hero */}
+      <motion.div variants={fadeUp}>
+        <CalorieHeroCard
+          consumed={d.calories_consumed}
+          target={d.calories_target}
+          burned={d.calories_burned_today}
+        />
+      </motion.div>
+
+      {/* 2. Macros */}
+      <motion.div variants={fadeUp}>
+        <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
+          Today&apos;s Macros
+        </p>
+        <MacroBarsCard
+          consumed={d.macros_consumed}
+          target={d.macros_target}
+          currentWeightKg={currentWeightKg}
+          hasLoggedFood={hasLoggedFood}
+        />
+      </motion.div>
+
+      {/* 3. Streak + BMI (mobile only — desktop shows in right col) */}
+      <motion.div variants={fadeUp} className="xl:hidden">
+        <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
+          Today&apos;s Stats
+        </p>
+        <StreakBMICard streakDays={d.streak_days} bmi={d.bmi} />
+      </motion.div>
+
+      {/* 4. Milestone (mobile only) */}
+      {d.next_milestone && (
+        <motion.div variants={fadeUp} className="xl:hidden">
+          <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-3">
+            Next Milestone
+          </p>
+          <MilestoneCard
+            milestone={d.next_milestone}
+            weightEntries={d.weight_entries}
+            currentWeightKg={currentWeightKg}
+          />
+        </motion.div>
+      )}
+
+      {/* 5. Water */}
+      <motion.div variants={fadeUp}>
+        <WaterIntakeCard />
+      </motion.div>
+
+      {/* 6. Weight Chart */}
+      {d.weight_entries.length > 0 && (
+        <motion.div variants={fadeUp}>
+          <WeightChart
+            entries={d.weight_entries}
+            goalWeightKg={d.goal_weight_kg}
+            timeToGoalWeeks={d.time_to_goal_weeks}
+          />
+        </motion.div>
+      )}
+    </motion.div>
+  );
+
+  // ── Right column (desktop xl+ only) ───────────────────────────────────────
+  const rightColumn = (
+    <div className="hidden xl:block">
+      <div className="sticky top-20 max-h-[calc(100vh-80px)] overflow-y-auto space-y-4">
+        <StreakBMICard streakDays={d.streak_days} bmi={d.bmi} />
+
+        {d.next_milestone && (
+          <MilestoneCard
+            milestone={d.next_milestone}
+            weightEntries={d.weight_entries}
+            currentWeightKg={currentWeightKg}
+          />
+        )}
+
+        {d.tdee_kcal != null && (
+          <TDEEWidget
+            tdeeKcal={d.tdee_kcal}
+            caloriesTarget={d.calories_target}
+            caloriesNet={d.calories_net}
+          />
+        )}
+
+        <WeightLogWidget />
+      </div>
     </div>
   );
 
-  if (!isValidating && (error || !dashboard)) return null; // redirect in progress
-
   return (
-    <div className="min-h-screen bg-[#0d0d0d]">
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Header */}
-        <DailySummaryBanner
-          name={dashboard.user_name}
-          date={dashboard.today_date}
-          caloriesConsumed={dashboard.calories_consumed}
-          caloriesTarget={dashboard.calories_target}
-        />
+    <PageShell noHeader>
+      <div className="pt-2 pb-6">
 
-        {/* Action bar */}
-        <div className="flex gap-2 items-center">
-          <Link href="/tracker" className="flex-1">
-            <Button className="w-full" size="sm">+ Log Food</Button>
-          </Link>
-          <div className="flex-1 flex gap-2">
-            <input
-              type="number"
-              placeholder="Weight (kg)"
-              className="flex-1 rounded-xl border border-gray-700 bg-gray-800 text-gray-100 placeholder-gray-600 px-3 py-1.5 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-              value={weightInput}
-              onChange={(e) => setWeightInput(e.target.value)}
-              step={0.1}
-            />
-            <Button variant="secondary" size="sm" onClick={handleLogWeight} disabled={loggingWeight}>
-              {loggingWeight ? "..." : "Log"}
-            </Button>
+        {/* ── Greeting row ──────────────────────────────────────────────── */}
+        <div className="flex items-start justify-between pb-5">
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {greeting}, {firstName} 👋
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{formattedDate}</p>
           </div>
-          <UserButton />
+          <div className="flex items-center gap-3 shrink-0">
+            {dayScore !== null && <DayScoreBadge score={dayScore} />}
+            {/* Ghost "Log Food" shortcut — desktop only, dashboard page only */}
+            {/* Not in TopNav (redundant + dead click on /tracker) — see DESIGN_OVERVIEW.md §Log Food CTA */}
+            <Link
+              href="/tracker"
+              className="hidden lg:flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#2A2A2A] text-muted-foreground text-xs font-medium hover:border-[#3A3A3A] hover:text-foreground transition-colors duration-120"
+            >
+              <Plus size={12} aria-hidden="true" />
+              Log Food
+            </Link>
+            {/* Avatar — mobile only, desktop avatar is in TopNav */}
+            <div className="lg:hidden flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm ring-1 ring-primary/20">
+              {firstName[0]?.toUpperCase() ?? "?"}
+            </div>
+          </div>
         </div>
 
-        {/* Calories + Streak */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card className="col-span-2 flex flex-col items-center justify-center py-6">
-            <CalorieRing consumed={dashboard.calories_consumed} target={dashboard.calories_target} />
-          </Card>
-          <Card className="flex flex-col justify-center items-center gap-4">
-            <StreakCounter streak={dashboard.streak_days} />
-            {dashboard.bmi && (
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-100">{dashboard.bmi.toFixed(1)}</p>
-                <p className="text-xs text-gray-500">BMI</p>
-              </div>
-            )}
-          </Card>
+        {/* ── 2-col grid at xl (1280px+), single col below ─────────────── */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
+          {leftColumn}
+          {rightColumn}
         </div>
 
-        {/* Macros */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-400 mb-4">Today&apos;s Macros</h3>
-          <MacroBarsGroup consumed={dashboard.macros_consumed} target={dashboard.macros_target} />
-        </Card>
-
-        {/* Milestone */}
-        {dashboard.next_milestone && <MilestoneCard milestone={dashboard.next_milestone} />}
-
-        {/* Water Intake */}
-        <WaterIntakePanel
-          initialTotal={dashboard.water.total_ml}
-          initialGoal={dashboard.water.goal_ml}
-        />
-
-        {/* Weight Chart */}
-        <Card>
-          <h3 className="text-sm font-semibold text-gray-400 mb-3">Weight Progress</h3>
-          <WeightProgressChart entries={dashboard.weight_entries} goalWeight={dashboard.goal_weight_kg} />
-        </Card>
       </div>
-    </div>
+    </PageShell>
   );
 }

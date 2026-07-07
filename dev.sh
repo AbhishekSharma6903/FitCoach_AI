@@ -39,16 +39,11 @@ wait_for_url() {
 cmd_start() {
   bold "=== Starting FitCoach AI ==="
 
-  # 1. Docker Desktop
+  # 1. Docker (Colima)
   if ! docker info &>/dev/null; then
-    cyan "→ Starting Docker Desktop..."
-    open -a Docker
-    printf "  Waiting for Docker daemon"
-    for i in $(seq 1 24); do
-      docker info &>/dev/null && printf ' ✓\n' && break
-      printf '.'; sleep 5
-    done
-    docker info &>/dev/null || { red "Docker failed to start. Aborting."; exit 1; }
+    cyan "→ Starting Colima..."
+    colima start
+    docker info &>/dev/null || { red "Colima failed to start. Aborting."; exit 1; }
   else
     green "→ Docker already running"
   fi
@@ -64,36 +59,50 @@ cmd_start() {
     printf '.'; sleep 2
   done
 
-  # 3. Backend
-  if lsof -i :8000 -sTCP:LISTEN &>/dev/null; then
-    green "→ Backend already running on :8000"
+  # 3. DB migrations — always run before backend starts (idempotent, ~50ms if already up to date)
+  if [ ! -d "$ROOT/backend/venv" ]; then
+    cyan "→ Creating backend venv..."
+    python3 -m venv "$ROOT/backend/venv"
+    "$ROOT/backend/venv/bin/pip" install -q -r "$ROOT/backend/requirements.txt"
+  fi
+  cyan "→ Running DB migrations (alembic upgrade head)..."
+  (cd "$ROOT/backend" && "$ROOT/backend/venv/bin/alembic" upgrade head) \
+    || { red "Alembic migrations failed. Aborting."; exit 1; }
+  green "  Migrations up to date"
+
+  # 4. Backend
+  if lsof -i :8001 -sTCP:LISTEN &>/dev/null; then
+    green "→ Backend already running on :8001"
   else
     cyan "→ Starting FastAPI backend..."
     (cd "$ROOT/backend" && nohup "$ROOT/backend/venv/bin/uvicorn" \
-      app.main:app --host 0.0.0.0 --port 8000 --reload \
+      app.main:app --host 0.0.0.0 --port 8001 --reload \
       > "$BACKEND_LOG" 2>&1) &
     echo $! > "$BACKEND_PID_FILE"
-    wait_for_url "http://localhost:8000/health" "backend" 30 \
+    wait_for_url "http://localhost:8001/health" "backend" 30 \
       || { red "Backend failed to start. Check $BACKEND_LOG"; exit 1; }
   fi
 
   # 4. Frontend
-  if lsof -i :3000 -sTCP:LISTEN &>/dev/null; then
-    green "→ Frontend already running on :3000"
+  if lsof -i :3001 -sTCP:LISTEN &>/dev/null; then
+    green "→ Frontend already running on :3001"
   else
     cyan "→ Starting Next.js frontend..."
-    NPM_BIN="$(command -v npm 2>/dev/null || ls "$HOME/.nvm/versions/node"/*/bin/npm 2>/dev/null | tail -1)"
-    (cd "$ROOT/frontend" && nohup "$NPM_BIN" run dev \
+    if [ ! -f "$ROOT/frontend/node_modules/.bin/next" ]; then
+      cyan "  Installing frontend dependencies..."
+      (cd "$ROOT/frontend" && npm install) || { red "npm install failed"; exit 1; }
+    fi
+    (cd "$ROOT/frontend" && nohup node_modules/.bin/next dev --port 3001 \
       > "$FRONTEND_LOG" 2>&1) &
     echo $! > "$FRONTEND_PID_FILE"
-    wait_for_url "http://localhost:3000/sign-in" "frontend" 60 \
+    wait_for_url "http://localhost:3001" "frontend" 60 \
       || { red "Frontend failed to start. Check $FRONTEND_LOG"; exit 1; }
   fi
 
   echo ""
   bold "=== All services up ==="
-  green "  Frontend  →  http://localhost:3000"
-  green "  Backend   →  http://localhost:8000"
+  green "  Frontend  →  http://localhost:3001"
+  green "  Backend   →  http://localhost:8001"
   green "  Postgres  →  localhost:5433"
   echo ""
   echo "  Logs:  tail -f $BACKEND_LOG"
@@ -159,15 +168,15 @@ cmd_status() {
   fi
 
   # Backend
-  if curl -sf --max-time 2 http://localhost:8000/health -o /dev/null 2>/dev/null; then
-    green "  Backend    ✓  http://localhost:8000"
+  if curl -sf --max-time 2 http://localhost:8001/health -o /dev/null 2>/dev/null; then
+    green "  Backend    ✓  http://localhost:8001"
   else
     red   "  Backend    ✗  not responding"
   fi
 
   # Frontend
-  if curl -sf --max-time 3 http://localhost:3000/sign-in -o /dev/null 2>/dev/null; then
-    green "  Frontend   ✓  http://localhost:3000"
+  if curl -sf --max-time 3 http://localhost:3001 -o /dev/null 2>/dev/null; then
+    green "  Frontend   ✓  http://localhost:3001"
   else
     red   "  Frontend   ✗  not responding"
   fi
