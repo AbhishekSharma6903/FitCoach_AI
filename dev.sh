@@ -39,6 +39,13 @@ wait_for_url() {
 cmd_start() {
   bold "=== Starting FitCoach AI ==="
 
+  # --hard flag: wipe Next.js build cache before starting (fixes stale module errors)
+  if [ "${2:-}" = "--hard" ] || [ "${1:-}" = "--hard" ]; then
+    cyan "→ Hard start: clearing Next.js cache..."
+    rm -rf "$ROOT/frontend/.next" "$ROOT/frontend/node_modules/.cache"
+    green "  Cache cleared"
+  fi
+
   # 1. Docker (Colima)
   if ! docker info &>/dev/null; then
     cyan "→ Starting Colima..."
@@ -187,11 +194,11 @@ cmd_status() {
 # ── dispatch ──────────────────────────────────────────────────────────────────
 
 case "${1:-}" in
-  start)  cmd_start  ;;
-  stop)   cmd_stop   ;;
-  status) cmd_status ;;
+  start)  cmd_start "$@"  ;;
+  stop)   cmd_stop        ;;
+  status) cmd_status      ;;
   *)
-    echo "Usage: $0 {start|stop|status}"
+    echo "Usage: $0 {start|stop|status} [--hard]"
     exit 1
     ;;
 esac
