@@ -40,19 +40,21 @@ export interface CustomDishListItem {
 }
 
 import type { FoodItem } from "@/types/nutrition";
+import type { UnitOption } from "@/lib/dishUtils";
 
 export interface DishIngredientInput {
-  food_item_id: number;
-  food_name: string;
-  quantity_g: number;
-  display_amount?: number;
-  display_unit?: "g" | "ml" | "qty";
-  item_ref?: FoodItem;        // kept in memory for unit conversion, not sent to API
-  // nutrition per 100g from food_items (for live preview)
-  calories_kcal: number;
-  protein_g: number;
-  carbs_g: number;
-  fat_g: number;
-  fiber_g: number;
+  food_item_id:   number;
+  food_name:      string;
+  quantity_g:     number;            // always in grams → sent to API
+  display_amount: number;            // the "2" in "2 tablespoons"
+  unit_options:   UnitOption[];      // all available units for this food
+  selected_unit:  UnitOption;        // currently selected unit
+  item_ref?:      FoodItem;          // kept in memory, not sent to API
+  // nutrition per 100g — used for live preview
+  calories_kcal:  number;
+  protein_g:      number;
+  carbs_g:        number;
+  fat_g:          number;
+  fiber_g:        number;
   serving_size_g: number;
 }

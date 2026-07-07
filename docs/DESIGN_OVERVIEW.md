@@ -1931,6 +1931,639 @@ None.
 
 ---
 
+## Page 4: Dishes (`/dishes`)
+
+> Goal: let users build and manage custom dishes from ingredients, so home-cooked meals (Indian or otherwise) can be logged in the Tracker exactly like any food item.
+> Inspiration: MyFitnessPal recipe builder (ingredient list + live nutrition preview), Bevel (clean cards, big numbers), Strong (minimal form friction).
+> Single column, no right panel (AG-2). The builder is inline on the same page — not a modal.
+>
+> **Phase 5D COMPLETE (2026-07-07). P0: 8.0/10 PASS. See `UI_REFACTOR_PLAN_V2.md §5D` for full build log.**
+
+---
+
+### Implementation Corrections (vs pre-build spec)
+
+**Unit system replaced entirely:** The original spec's `detectUnit() → "g"|"ml"|"qty"` was replaced by `getUnitOptions() → UnitOption[]` mid-build. See `★ UNIT SYSTEM ARCHITECTURAL DECISION` section below, and `UI_REFACTOR_PLAN_V2.md §5D Decision A`. The `DishIngredientInput` type now carries `unit_options[]` and `selected_unit` instead of `display_unit`.
+
+**`IngredientRow` has a `<select>` dropdown for units:** Not a plain text label. Shows 3–5 options (tablespoon, teaspoon, katori, etc.). Changing the unit auto-recomputes `quantity_g = display_amount × selected_unit.weight_g`.
+
+**`toBuilderIngredients` reconstructs units best-effort:** Saved dishes have no stored unit info. On edit, we generate a synthetic `FoodItem` from the food name, run `getUnitOptions()`, then pick the option whose `weight_g` is closest to the saved `quantity_g`. Practical and correct for most cases.
+
+---
+
+## ★ UNIT SYSTEM ARCHITECTURAL DECISION (2026-07-07)
+
+> This section is critical and supersedes the original single-unit `detectUnit()` approach.
+> **Read before building or touching `dishUtils.ts`.**
+
+---
+
+### The Problem
+
+The original `detectUnit()` returns one unit per food item (`g | ml | qty`). This is wrong because:
+
+- Users don't think in grams. They think "2 eggs", "1 tablespoon oil", "1 cup milk", "1 bowl curry".
+- Oil could be: `15g` OR `1 tablespoon (13g)` OR `1 teaspoon (4g)` — all valid, user's choice.
+- Pizza could be: `100g` OR `1 slice (80g)` OR `1/4 pizza (200g)`.
+- Indian serving culture uses: ladles, bowls, katoris, tablespoons — not grams.
+
+A single auto-detected unit solves nothing. It just shows `15 g` for oil when the user wants to say "1 tbsp".
+
+---
+
+### The Solution: Multi-Unit Option Set Per Food
+
+Every food item offers **multiple unit options** derived from its category + name. The user selects the unit that matches how they naturally think about that food. The selected unit converts to grams for the API.
+
+This is what MFP, Healthify Me, and Cronometer all do — not one unit, but a **picker of 3-6 sensible options**.
+
+**Key insight:** Our DB stores nutrition per 100g. Every unit option is just a `{ label, weight_g }` pair. Conversion is always `quantity × weight_g_per_unit = total_grams`. No new backend work needed.
+
+---
+
+### Unit Option Sets (per food category/type)
+
+```ts
+interface UnitOption {
+  label: string;         // shown in picker: "tablespoon", "cup", "piece"
+  weight_g: number;      // grams per 1 unit
+  default?: boolean;     // which option is pre-selected
+}
+```
+
+| Food Category | Options offered |
+|---|---|
+| **Solid default (g)** | 100g · serving (item.serving_size_g) · 50g · 200g |
+| **Liquids / beverages** | 100ml · 1 cup (240ml) · 1 glass (250ml) · 1 tablespoon (15ml) · 200ml |
+| **Oils / fats** | 1 teaspoon (5g) · 1 tablespoon (13g) · 10g · 50g |
+| **Eggs** | 1 whole (50g) · 2 whole (100g) · 100g |
+| **Bread / chapati / roti** | 1 piece (40g) · 2 pieces (80g) · 100g |
+| **Rice / dal cooked** | 1 katori (150g) · 1 cup (200g) · 100g · 50g |
+| **Curry / sabzi cooked** | 1 katori (150g) · 1 bowl (250g) · 1 ladle (80g) · 100g |
+| **Idli / dosa / vada** | 1 piece (idli=50g, dosa=80g, vada=75g) · 2 pieces · 100g |
+| **Fruits (whole)** | 1 small · 1 medium · 1 large · 100g |
+| **Nuts / seeds** | 1 handful (30g) · 10g · 25g · 100g |
+| **Dairy solids (paneer etc.)** | 100g · 50g · 1 cup (200g) · 25g |
+
+**Default selection rule:** pick the option closest to `item.serving_size_g`.
+
+---
+
+### Implementation: `getUnitOptions(item: FoodItem): UnitOption[]`
+
+```ts
+// src/lib/dishUtils.ts — replaces detectUnit()
+
+export function getUnitOptions(item: FoodItem): UnitOption[] {
+  const name = item.name.toLowerCase();
+  const cat  = (item.category ?? "").toLowerCase();
+  const srv  = item.serving_size_g ?? 100;
+
+  // 1. Oils and fats
+  if (isOil(name))
+    return [
+      { label: "teaspoon",   weight_g: 5,   default: srv <= 8 },
+      { label: "tablespoon", weight_g: 13,  default: srv > 8 && srv <= 20 },
+      { label: "10g",        weight_g: 10 },
+      { label: "50g",        weight_g: 50 },
+    ];
+
+  // 2. Eggs
+  if (isEgg(name))
+    return [
+      { label: "1 whole (50g)",  weight_g: 50,  default: true },
+      { label: "2 whole (100g)", weight_g: 100 },
+      { label: "100g",           weight_g: 100 },
+    ];
+
+  // 3. Liquids
+  if (isLiquid(name, cat) && !isSolidDairy(name))
+    return [
+      { label: "100ml",       weight_g: 100, default: srv === 100 },
+      { label: "glass (250ml)", weight_g: 250 },
+      { label: "cup (240ml)", weight_g: 240, default: srv >= 200 },
+      { label: "tablespoon",  weight_g: 15 },
+      { label: `${srv}ml`,    weight_g: srv, default: srv !== 100 && srv < 200 },
+    ].filter((v, i, arr) => arr.findIndex(x => x.weight_g === v.weight_g) === i);
+
+  // 4. Bread / chapati / roti / naan
+  if (isBread(name))
+    return [
+      { label: "1 piece",  weight_g: getBreadWeight(name), default: true },
+      { label: "2 pieces", weight_g: getBreadWeight(name) * 2 },
+      { label: "100g",     weight_g: 100 },
+    ];
+
+  // 5. Idli / dosa / vada / idly
+  if (isIdli(name))
+    return [
+      { label: "1 piece",  weight_g: getIdliWeight(name), default: true },
+      { label: "2 pieces", weight_g: getIdliWeight(name) * 2 },
+      { label: "100g",     weight_g: 100 },
+    ];
+
+  // 6. Cooked rice / cooked dal / cooked beans
+  if (isCookedGrain(name))
+    return [
+      { label: "1 katori (150g)", weight_g: 150, default: srv <= 160 },
+      { label: "1 cup (200g)",    weight_g: 200, default: srv > 160 },
+      { label: "100g",            weight_g: 100 },
+      { label: "50g",             weight_g: 50  },
+    ];
+
+  // 7. Curry / sabzi / cooked vegetables
+  if (isCurry(name, cat))
+    return [
+      { label: "1 katori (150g)", weight_g: 150, default: true },
+      { label: "1 bowl (250g)",   weight_g: 250 },
+      { label: "1 ladle (80g)",   weight_g: 80  },
+      { label: "100g",            weight_g: 100 },
+    ];
+
+  // 8. Fruits (whole)
+  if (isWholeFruit(name))
+    return [
+      { label: `1 small (${getFruitWeight(name,"small")}g)`,  weight_g: getFruitWeight(name,"small") },
+      { label: `1 medium (${getFruitWeight(name,"medium")}g)`, weight_g: getFruitWeight(name,"medium"), default: true },
+      { label: `1 large (${getFruitWeight(name,"large")}g)`,  weight_g: getFruitWeight(name,"large") },
+      { label: "100g", weight_g: 100 },
+    ];
+
+  // 9. Nuts / seeds
+  if (isNut(name))
+    return [
+      { label: "1 handful (30g)", weight_g: 30, default: srv <= 35 },
+      { label: "10g",  weight_g: 10 },
+      { label: "25g",  weight_g: 25 },
+      { label: "100g", weight_g: 100 },
+    ];
+
+  // 10. Default — solid food with gram options
+  const options: UnitOption[] = [
+    { label: "100g",  weight_g: 100 },
+    { label: "50g",   weight_g: 50  },
+    { label: "200g",  weight_g: 200 },
+  ];
+  if (srv !== 100 && srv !== 50 && srv !== 200) {
+    options.unshift({ label: `serving (${srv}g)`, weight_g: srv, default: true });
+  } else {
+    options[0].default = true;
+  }
+  return options;
+}
+
+export function defaultOption(options: UnitOption[]): UnitOption {
+  return options.find(o => o.default) ?? options[0];
+}
+```
+
+---
+
+### IngredientRow — Unit Selector UI
+
+Replace the plain unit label text with a **dropdown selector** showing the available unit options for that ingredient.
+
+```
+● Mustard Oil   [  1  ] [tablespoon ▼]  [×]
+                          ↓ opens:
+                          teaspoon (5g)
+                        ✓ tablespoon (13g)
+                          10g
+                          50g
+
+● Whole Egg     [  2  ] [whole (50g) ▼] [×]
+                          ↓ opens:
+                        ✓ 1 whole (50g)
+                          2 whole (100g)
+                          100g
+
+● Toor Dal      [ 150 ] [katori (150g)▼] [×]
+                          ↓ opens:
+                        ✓ 1 katori (150g)
+                          1 cup (200g)
+                          100g
+                          50g
+```
+
+**UX contract:**
+- When user changes the unit dropdown: `weight_g` updates → `quantity_g = display_amount × new_weight_g` → nutrition preview re-calculates
+- When user changes the number input: `quantity_g = display_amount × selected_unit.weight_g`
+- The two are independent: "2 tablespoons" = `2 × 13 = 26g`
+
+**State per ingredient:**
+```ts
+interface DishIngredientInput {
+  // ... existing fields ...
+  unit_options:    UnitOption[];     // computed once on add
+  selected_unit:   UnitOption;       // current selection (drives quantity_g)
+  display_amount:  number;           // the "2" in "2 tablespoons"
+}
+
+// quantity_g is always derived: display_amount × selected_unit.weight_g
+```
+
+---
+
+### What Changes in Code
+
+| File | Change |
+|---|---|
+| `src/lib/dishUtils.ts` | Replace `detectUnit/defaultQty/toGrams/unitLabel` with `getUnitOptions/defaultOption`. Add all category detectors. |
+| `src/components/dishes/IngredientRow.tsx` | Replace plain `<span>` unit label with a native `<select>` (or custom `Select`) showing `unit_options`. On change: update `selected_unit` + recompute `quantity_g`. |
+| `src/components/dishes/DishBuilder.tsx` | On ingredient select: call `getUnitOptions(item)` + `defaultOption(options)` + set `display_amount = 1`. |
+| `src/types/dish.ts` | Add `unit_options: UnitOption[]` + `selected_unit: UnitOption` to `DishIngredientInput`. |
+
+No backend changes needed. The API only receives `{ food_item_id, quantity_g }` — grams are always the wire format.
+
+---
+
+### What We Are NOT Doing
+
+- No per-item DB serving options — too much data work for Phase 5D. Category rules cover 95% of cases.
+- No cups/oz/lbs — metric only (this is an Indian fitness app).
+- No custom unit creation — fixed predefined options per category.
+- No "last used unit memory" — always default on add, user changes if needed.
+> **Phase 5D — build only after this spec is reviewed.**
+
+---
+
+### Why Dishes Exists (architect note)
+
+The food catalog covers packaged and restaurant food well. It has zero coverage of home-cooked Indian meals: Dal Tadka, Poha, Rajma, Aloo Gobi. The Quick Add grid has 6 hardcoded tiles that are cosmetic, not logged with real nutrition.
+
+Dishes solves this permanently: the user builds "My Dal Tadka" once from its actual ingredients (daal, oil, onion, spices), saves it, and it appears in food search forever. One time effort, infinite reuse.
+
+---
+
+### Data — What the Backend Provides
+
+**Endpoints:**
+
+| Method | Path | Description |
+|---|---|---|
+| `GET /api/v1/dishes` | list dishes | Returns `CustomDishListItem[]` — lightweight, no ingredients array |
+| `GET /api/v1/dishes/{id}` | get full dish | Returns `DishRead` — includes `ingredients[]` |
+| `POST /api/v1/dishes` | create dish | Body: `{ name, ingredients: [{food_item_id, quantity_g}] }` |
+| `PUT /api/v1/dishes/{id}` | update dish | Same body as POST — replaces ingredients entirely |
+| `DELETE /api/v1/dishes/{id}` | delete dish | |
+
+**Key backend behaviour:**
+- Nutrition is stored **per 100g** (`compute_dish_nutrition` divides by total weight). `DishRead` and `DishListItem` return per-100g values.
+- `total_weight_g` = sum of all ingredient `quantity_g` values.
+- Frontend total dish kcal = `calories_kcal_per100g × total_weight_g / 100`.
+- Diet flags (`is_veg`, `is_egg`, `is_vegan`) are auto-computed from ingredients — not user-set.
+- `DishCreate` only needs `name` + `ingredients`. All nutrition is backend-computed.
+
+**Hooks already exist:** `useCustomDishes()` in `src/hooks/useCustomDishes.ts`.
+
+**Types already exist:** `src/types/dish.ts` — `CustomDish`, `CustomDishListItem`, `DishIngredientInput`.
+
+---
+
+> ⚠️ **SUPERSEDED — Pre-build component spec below. Phase 5D is complete. See Implementation Corrections above.**
+> The unit system spec, `dishUtils.ts` functions, and `IngredientRow` JSX below are the *original pre-build* versions.
+> **Actual implementation** uses `getUnitOptions()`/`defaultOption()` and a `<select>` unit dropdown — see `★ UNIT SYSTEM ARCHITECTURAL DECISION` and `UI_REFACTOR_PLAN_V2.md §5D`.
+
+### Smart Units — the most important non-obvious feature
+
+Ingredients have different natural units. A user thinks "1 egg" not "50g egg", "200ml milk" not "200g milk". The legacy `DishBuilder` already solved this with a `detectUnit()` function that classifies every food item:
+
+| Unit | When | Examples | API value |
+|---|---|---|---|
+| `g` | Default for solid foods | Rice, paneer, dal, oil | direct |
+| `ml` | Liquid-category foods; name contains milk/juice/tea etc. | Milk, juice, lassi | direct (ml ≈ g) |
+| `qty` | Eggs, chapati, roti, banana, idli, dosa | 1 egg, 2 rotis | `amount × unitWeightG()` |
+
+**This logic lives in `dishUtils.ts`** — pure functions, no React, no API.
+
+**`unitWeightG` lookup:** egg=50g, chapati=40g, roti=40g, naan=80g, puri=40g, idli=50g, dosa=80g, banana=120g, apple=182g, orange=131g, biscuit=10g.
+
+**Live preview formula (frontend, no API call):**
+```ts
+// For each ingredient:
+const ratio = quantity_g / item.serving_size_g
+const kcal_contribution = ratio * item.calories_kcal
+
+// Total dish (NOT per-100g — this is what users care about):
+totalKcal   = Σ kcal_contributions
+totalWeight = Σ quantity_g
+
+// Per-100g reference (for logging context):
+per100gKcal = totalKcal / totalWeight * 100
+```
+
+The live preview shows **total dish values** — "my dal has 380 kcal total" — not per-100g. The per-100g is shown smaller as a reference.
+
+---
+
+### Architecture: Two-view pattern (List ↔ Builder), NOT a modal
+
+```ts
+type View = "list" | { mode: "create" } | { mode: "edit"; dishId: number }
+```
+
+- `"list"` — shows DishList + InfoBanner + client-side search
+- `{ mode: "create" }` — shows DishBuilder with empty form, slides in from right
+- `{ mode: "edit", dishId }` — DishBuilder pre-filled, fetches full dish via `GET /api/v1/dishes/{id}`
+
+**Why not a modal?** The builder has `SearchCommand`, quantity inputs, a live preview panel — too much content for a modal. It needs full page width. `AnimatePresence` horizontal slide replaces nav-level routing.
+
+**Back button:** `←` in builder header returns to list. No router push needed.
+
+---
+
+### AG Checklist
+
+- [x] AG-1: `w-full px-4 pb-24` mobile, `lg:max-w-6xl` desktop — single column
+- [x] AG-2: No right panel. Builder content fills the full column.
+- [x] AG-3: List first (primary content), Builder accessed on demand
+- [x] AG-4: Dish cards + builder form fill full column width
+- [x] AG-7: `SearchCommand`, `Input`, `Button`, `Badge`, `Card`, `Skeleton`, `DeleteConfirmDialog`, `sonner`
+- [x] AG-8: SWR via `useCustomDishes()`, local `useState` for view/search/builder form
+
+---
+
+### Layout — List View
+
+```
+┌────────────────────────────────────────────────┐
+│  DISHES                   (mobile shell title) │
+├────────────────────────────────────────────────┤
+│  [🍳 Custom dishes appear in food search…]     │  ← InfoBanner
+│                                                │
+│  [🔍 Search my dishes…]        [+ New Dish]   │
+│                                                │
+│  MY DISHES (3)                                 │
+│  ┌────────────────────────────────────────┐   │
+│  │ Dal Tadka    [veg]           [✏] [🗑]  │   │
+│  │ 4 ingredients · 320g total             │   │
+│  │ 380 kcal · 18g P · 52g C · 8g F       │   │
+│  └────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────┐   │
+│  │ Poha         [veg]           [✏] [🗑]  │   │
+│  │ 6 ingredients · 280g total             │   │
+│  │ 310 kcal · 9g P · 55g C · 6g F        │   │
+│  └────────────────────────────────────────┘   │
+└────────────────────────────────────────────────┘
+```
+
+**Client-side search:** filters `dishes` array by `name.toLowerCase().includes(query)`. No API call.
+
+**Empty state:** 64px `ChefHat` icon + "No custom dishes yet" + full-width `[+ Create your first dish]` green button.
+
+---
+
+### Layout — Builder View
+
+```
+┌────────────────────────────────────────────────┐
+│  [←]  Create Dish                              │
+├────────────────────────────────────────────────┤
+│  Dish name  [ My Dal Tadka              ]      │
+│                                                │
+│  INGREDIENTS                                   │
+│  [🔍 Search rice, dal, paneer…]                │
+│                                                │
+│  ● Toor Dal     [ 150 ] g          [×]        │
+│  ● Onion        [  80 ] g          [×]        │
+│  ● Mustard Oil  [  15 ] ml         [×]        │
+│  ● Egg          [   2 ] unit(≈50g) [×]        │
+│                                                │
+│  NUTRITION PREVIEW                             │
+│  ┌──────────────────────────────────────────┐ │
+│  │  380  kcal total · 305g dish             │ │
+│  │  ─────────────────────────────────────   │ │
+│  │  P [████░░░] 18g   C [████████░] 52g    │ │
+│  │  F [██░░░░░]  8g   Fi [█░░░░░░]  6g    │ │
+│  │  Kcal/100g: 124                          │ │
+│  └──────────────────────────────────────────┘ │
+│                                                │
+│  [Save Dish]                                   │
+└────────────────────────────────────────────────┘
+```
+
+---
+
+### Component Breakdown
+
+---
+
+#### `InfoBanner`
+
+```tsx
+<div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/20">
+  <ChefHat size={16} className="text-primary shrink-0 mt-0.5" aria-hidden="true" />
+  <p className="text-sm text-muted-foreground">
+    Custom dishes appear in food search when you log meals in the Tracker.
+    Build once, log forever.
+  </p>
+</div>
+```
+
+---
+
+#### `DishCard`
+
+```tsx
+<Card padding="md" className="space-y-2">
+  {/* Header row */}
+  <div className="flex items-start justify-between gap-2">
+    <div className="flex items-center gap-2 min-w-0 flex-wrap">
+      <p className="text-sm font-bold text-foreground truncate">{dish.name}</p>
+      <DietBadge dish={dish} />
+    </div>
+    <div className="flex items-center gap-0.5 shrink-0">
+      <button onClick={onEdit}   aria-label="Edit"   className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-blue-400 transition-colors"><Pencil size={14} /></button>
+      <button onClick={onDelete} aria-label="Delete" className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground/40 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+    </div>
+  </div>
+  {/* Meta */}
+  <p className="text-xs text-muted-foreground">
+    {dish.ingredient_count} ingredient{dish.ingredient_count !== 1 ? "s" : ""} · {Math.round(dish.total_weight_g)}g total
+  </p>
+  {/* Nutrition — convert from per-100g to total dish */}
+  {dish.calories_kcal != null && (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="text-sm font-bold text-white tabular-nums">
+        {Math.round(dish.calories_kcal * dish.total_weight_g / 100)} kcal
+      </span>
+      <span className="text-xs text-blue-400 tabular-nums">
+        {Math.round((dish.protein_g ?? 0) * dish.total_weight_g / 100)}g P
+      </span>
+      <span className="text-xs text-amber-400 tabular-nums">
+        {Math.round((dish.carbs_g ?? 0) * dish.total_weight_g / 100)}g C
+      </span>
+      <span className="text-xs text-orange-400 tabular-nums">
+        {Math.round((dish.fat_g ?? 0) * dish.total_weight_g / 100)}g F
+      </span>
+    </div>
+  )}
+</Card>
+```
+
+**`DietBadge`:** `is_veg && !is_egg` → `text-green-400 border-green-500/30` "Veg". `is_egg` → `text-amber-400 border-amber-500/30` "Egg". `!is_veg` → `text-red-400 border-red-500/30` "Non-veg".
+
+---
+
+#### `IngredientRow`
+
+Single ingredient in the builder. Shows name, quantity input (in natural unit), unit label, remove button.
+
+```tsx
+<motion.div layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.15 }}
+  className="flex items-center gap-3 py-2 border-b border-[#2A2A2A] last:border-0"
+>
+  <span className={cn("w-2 h-2 rounded-full shrink-0", ing.is_veg ? "bg-green-500" : "bg-red-500")} />
+  <span className="text-sm text-foreground flex-1 min-w-0 truncate">{ing.food_name}</span>
+  <div className="flex items-center gap-1.5 shrink-0">
+    <Input
+      type="number" min={0.1} step={ing.display_unit === "qty" ? 1 : 0.1}
+      value={ing.display_amount}
+      onChange={e => updateAmount(index, Number(e.target.value))}
+      className="w-20 h-8 bg-[#222222] border-[#2A2A2A] text-sm text-right tabular-nums"
+    />
+    <span className="text-[10px] text-muted-foreground/50 min-w-[32px] text-left">
+      {unitLabel(ing.display_unit!, ing.item_ref!)}
+    </span>
+  </div>
+  <button onClick={() => removeIngredient(index)} aria-label="Remove ingredient"
+    className="text-muted-foreground/30 hover:text-red-400 transition-colors shrink-0">
+    <X size={14} />
+  </button>
+</motion.div>
+```
+
+---
+
+#### `DishNutritionPreview`
+
+Pure display component. No state — receives `ingredients: DishIngredientInput[]` and computes totals inline.
+
+Shows:
+1. Large total kcal number (`text-3xl font-black`)
+2. Total weight label
+3. P / C / F / Fi values with motion progress bars (filled relative to highest macro)
+4. Small "Kcal/100g: N" reference line
+5. Placeholder when `ingredients.length === 0`
+
+```tsx
+// Bar fill: same max-macro-relative technique as ProfilePage MacrosCard
+const maxG = Math.max(totals.protein, totals.carbs, 1)
+```
+
+---
+
+#### `DishBuilder`
+
+**Props:**
+```ts
+interface DishBuilderProps {
+  initialName?: string
+  initialIngredients?: DishIngredientInput[]
+  onSave: (name: string, ingredients: { food_item_id: number; quantity_g: number }[]) => Promise<void>
+  onCancel: () => void
+}
+```
+
+**Ingredient search:** `SearchCommand<FoodItem>` using `useFoodSearch`. On item selected:
+1. `const unit = detectUnit(item)` from `dishUtils.ts`
+2. `const amount = defaultQty(item, unit)`
+3. `const grams = toGrams(amount, unit, item)`
+4. Push to ingredients: `{ food_item_id: item.id, food_name: item.name, quantity_g: grams, display_amount: amount, display_unit: unit, item_ref: item, calories_kcal: item.calories_kcal, ... }`
+
+**`updateAmount(index, newDisplayAmount)`:**
+```ts
+const grams = toGrams(newDisplayAmount, ingredient.display_unit, ingredient.item_ref)
+setIngredients(prev => prev.map((ing, i) =>
+  i === index ? { ...ing, display_amount: newDisplayAmount, quantity_g: grams } : ing
+))
+```
+
+**Validation + save:**
+```ts
+if (!name.trim())            { setNameError("Dish name is required"); return }
+if (!ingredients.length)     { toast.error("Add at least one ingredient"); return }
+if (ingredients.some(i => i.quantity_g <= 0)) { toast.error("All quantities must be > 0"); return }
+```
+
+---
+
+### `dishUtils.ts` — pure functions, zero React
+
+```ts
+// src/lib/dishUtils.ts
+import type { FoodItem } from "@/types/nutrition"
+import type { DishIngredientInput } from "@/types/dish"
+
+export type DishUnit = "g" | "ml" | "qty"
+
+export function detectUnit(item: FoodItem): DishUnit { ... }
+export function unitWeightG(item: FoodItem): number  { ... }
+export function defaultQty(item: FoodItem, unit: DishUnit): number { ... }
+export function toGrams(amount: number, unit: DishUnit, item: FoodItem): number { ... }
+export function unitLabel(unit: DishUnit, item: FoodItem): string { ... }
+
+export interface DishNutritionTotals {
+  kcal: number; protein: number; carbs: number; fat: number; fiber: number;
+  totalWeight: number; per100gKcal: number;
+}
+export function computeDishNutrition(ingredients: DishIngredientInput[]): DishNutritionTotals { ... }
+```
+
+---
+
+### Animation Summary
+
+| Element | Animation |
+|---|---|
+| List → Builder | `AnimatePresence`: list exits left (`x: -20`), builder enters right (`x: 20`) |
+| Builder → List | reverse direction |
+| Ingredient added | `AnimatePresence y: 4 → 0`, `duration: 0.15` |
+| Ingredient removed | `exit: { opacity: 0, x: -16 }`, `duration: 0.15` |
+| Nutrition numbers | No animation (update too frequently while typing) |
+
+---
+
+### What We Are NOT Doing
+
+- No diet type toggle — diet flags auto-computed by backend from ingredients
+- No per-ingredient nutrition expand — just total preview
+- No serving-size input — total dish weight IS the serving
+- No pagination on list — all dishes fetched at once, client-side filter
+- No duplicate name check — no uniqueness constraint needed
+- No "log from dishes page" button — user logs from Tracker food search
+
+---
+
+### Files to Create
+
+```
+src/lib/dishUtils.ts                ← detectUnit, unitWeightG, defaultQty, toGrams,
+                                       unitLabel, computeDishNutrition (pure, no React)
+
+src/components/dishes/
+  InfoBanner.tsx                    ← explanatory top banner
+  DishCard.tsx                      ← list item card: name, diet badge, nutrition, edit/delete
+  DishList.tsx                      ← search input + "New Dish" CTA + card grid + empty state
+  IngredientRow.tsx                 ← single ingredient: name, qty input, unit label, remove
+  DishNutritionPreview.tsx          ← live preview: total kcal, macro bars, per-100g reference
+  DishBuilder.tsx                   ← full builder: name + ingredient search + rows + preview + save
+
+src/app/dishes/page.tsx             ← page: view state machine, useCustomDishes,
+                                       AnimatePresence view transitions, delete confirm dialog
+```
+
+Reuse: `SearchCommand` (ingredient search), `Input`, `Button`, `Badge`, `Card`, `Skeleton`, `DeleteConfirmDialog`, `Spinner`, `sonner`, `AnimatePresence`, `motion`.
+
+---
+
+### Open Questions Before Building
+
+None. Backend fully built. `useCustomDishes()` hook exists. Types in `src/types/dish.ts` complete. `SearchCommand` and `useFoodSearch` reusable. `DeleteConfirmDialog` reusable. Unit detection logic in legacy `DishBuilder.tsx` (reference only — do NOT copy UI).
+
+---
+
 ## Page 6: Onboarding (`/onboarding`)
 
 > Goal: collect the 11 required profile fields across 4 focused steps, submit once, redirect to dashboard.

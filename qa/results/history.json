@@ -331,6 +331,33 @@
       "avg_score": 8.2,
       "p0_pass": true,
       "timestamp": "2026-07-07T00:19:57.466003"
+    },
+    {
+      "run_id": "20260707-094841",
+      "page": "/dishes",
+      "state": "default",
+      "p0_score": 7.33,
+      "avg_score": 7.3,
+      "p0_pass": false,
+      "timestamp": "2026-07-07T09:49:28.557187"
+    },
+    {
+      "run_id": "20260707-095043",
+      "page": "/dishes",
+      "state": "default",
+      "p0_score": 8.0,
+      "avg_score": 8.0,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T09:51:32.779018"
+    },
+    {
+      "run_id": "20260707-104624",
+      "page": "/dishes",
+      "state": "default",
+      "p0_score": 8.0,
+      "avg_score": 8.0,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T10:47:14.348338"
     }
   ]
 }
