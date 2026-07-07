@@ -457,6 +457,33 @@
       "avg_score": 8.1,
       "p0_pass": true,
       "timestamp": "2026-07-07T16:32:33.799415"
+    },
+    {
+      "run_id": "20260707-204712",
+      "page": "/progress",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.2,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T20:48:16.923263"
+    },
+    {
+      "run_id": "20260707-204941",
+      "page": "/progress",
+      "state": "default",
+      "p0_score": 8.17,
+      "avg_score": 8.2,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T20:50:37.899430"
+    },
+    {
+      "run_id": "20260707-205337",
+      "page": "/progress",
+      "state": "default",
+      "p0_score": 8.33,
+      "avg_score": 8.3,
+      "p0_pass": true,
+      "timestamp": "2026-07-07T20:54:34.747520"
     }
   ]
 }

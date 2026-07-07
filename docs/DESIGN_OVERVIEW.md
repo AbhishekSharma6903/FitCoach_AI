@@ -3907,19 +3907,26 @@ The Dashboard shows today's calories and a 30-day weight chart. That's snapshot 
 
 ### Navigation
 
-`/progress` becomes the **6th nav item** — added to both BottomNav (replacing nothing — BottomNav goes from 5 to 6 tabs) and TopNav centre links.
+`/progress` becomes the **6th nav item** — added to both BottomNav and TopNav.
 
 **Decision: 6 tabs, not a sub-page of dashboard or profile.**
-- Profile = goals and identity. Dashboard = today. Progress = history. These are meaningfully distinct.
-- A sub-route like `/dashboard/progress` or `/profile/progress` would bury it — users need one tap to reach their progress data.
-- BottomNav at 6 tabs is tight on 375px but each icon is still ≥44px wide (`flex-1`). Verified: 375 ÷ 6 = 62.5px per tab — acceptable.
+Profile = goals and identity. Dashboard = today. Progress = history. These are meaningfully distinct — burying it under `/dashboard/progress` would mean two taps to reach the most motivating screen.
 
+**BottomNav (mobile) — 6 tabs:**
 ```
-BottomNav (mobile):  Home · Tracker · Workout · Dishes · Progress · Profile
-TopNav (desktop):    Home · Tracker · Workout · Dishes · Progress   [Avatar → Profile]
+Home · Tracker · Workout · Dishes · Progress · Profile
 ```
+Icon: `TrendingUp`. Label: `"Progress"` (8 chars).
 
-Icon: `TrendingUp` from lucide-react. Label: "Progress".
+_Label truncation check:_ 375px ÷ 6 tabs = 62.5px per tab. `text-[10px] font-semibold` "Progress" renders ≈ 54px wide — fits at 62.5px. Tight but passing. At 320px (older SE): 53.3px per tab — borderline. Acceptable; 320px is below our P0 viewport floor (375px = iPhone SE). If visual testing shows clip, shorten to `"Stats"`.
+
+**TopNav (desktop) — text-only link in centre nav:**
+```
+Home · Tracker · Workout · Dishes · Progress   [Avatar → Profile]
+```
+`TrendingUp` icon is **NOT added to TopNav** — existing centre links are text-only (`NavLinks` array). Adding an icon to only Progress breaks the uniform text-only row. TopNav renders Progress as a plain text link with the same style as the other four.
+
+_Note: `TrendingUp` icon is used only in BottomNav (where all tabs show icon + label)._
 
 ---
 
@@ -3929,12 +3936,18 @@ Two existing backend endpoints — zero new backend work required:
 
 | Endpoint | Returns | Used for |
 |---|---|---|
-| `GET /api/v1/weight/log?days=90` | `WeightHistoryRead` — `entries[]` (id, log_date, weight_kg), start/current/change_kg | Weight trend chart, weight summary cards |
-| `GET /api/v1/workout/history?days=30` | `WorkoutLogRead[]` — per-set entries with log_date, category, calories_burned, exercise_name, reps, weight_kg | Workout volume chart, weekly calorie summary, category breakdown |
+| `GET /api/v1/weight/log?days=90` | `WeightHistoryRead` — `entries[]` (id, log_date, weight_kg, note, created_at), start/current/change_kg | Weight trend chart, weight summary cards |
+| `GET /api/v1/workout/history?days=30` | `WorkoutLogRead[]` (flat list) — per-set entries with log_date, category, calories_burned, exercise_name, reps, weight_kg | Workout volume chart, weekly calorie summary, category breakdown |
 
-**Why no new backend?** The existing `/weight/log` and `/workout/history` endpoints return everything needed. Aggregation (weekly totals, category breakdown, volume sums) is done client-side — the datasets are small (weight: typically <100 entries; workout: <500 entries/month) so there is no performance concern.
+**Why no new backend?** The existing endpoints return everything needed. Aggregation (weekly totals, category breakdown, volume sums) is done client-side — the datasets are small (weight: typically <100 entries; workout: <500 entries/month) so there is no performance concern.
 
 **Time range selector:** `?days=30` vs `?days=90`. Toggle shown in page header. Both endpoints already support the `days` query param.
+
+**Hook naming clarification:**
+- `useWeightHistory(days)` — new hook. Note: `useWeightLog` exists in `src/hooks/useWeightLog.ts` but it hits a different backend path and has different return typing. Do NOT reuse — create a dedicated hook for the full `WeightHistoryRead` shape.
+- `useWorkoutHistory(days)` — new hook. The `/workout/history` endpoint returns a raw `WorkoutLogRead[]` with no `response_model` type annotation on the backend. Frontend must define this type in `src/types/workout.ts` — check if `WorkoutLogEntry` already covers the shape (it likely does after Phase 6 additions) before adding a duplicate type.
+
+**Type mapping note:** `WeightHistoryRead.entries` returns `WeightLogRead[]` with ISO date strings. `WeightChart` consumes `WeightPoint[]` typed as `{ log_date: string; weight_kg: number }`. Use `progressUtils.weightEntriesToPoints()` to map: `entries.map(e => ({ log_date: e.log_date, weight_kg: e.weight_kg }))`.
 
 ---
 
@@ -3986,29 +3999,42 @@ No right sidebar — all content is equally time-sensitive. The page scrolls top
 
 ### Section 1: Overview (Stat Cards)
 
-3 stat tiles in `grid-cols-3` (all viewports — values are short):
+3 stat tiles in `grid-cols-3`. These use a **new `ProgressStatCard` component** (not `AdminStatCard` — `AdminStatCard` only accepts `number`, but weight change requires a signed formatted string like `−1.8 kg`):
 
-| Tile | Value | Computation |
-|---|---|---|
-| Weight change | `change_kg` from `/weight/log` response | `current - start` over selected range. Shown as `−1.8 kg` (green) or `+1.2 kg` (amber). `—` if < 2 entries. |
-| Workouts logged | Count of unique `log_date` values in history | "Days worked out" — more meaningful than total sets |
-| Calories burned | Sum of all `calories_burned` in history | Rounded to nearest integer |
+```tsx
+interface ProgressStatCardProps {
+  icon: React.ReactNode;
+  value: string;   // pre-formatted: "−1.8 kg", "12 days", "1,744 kcal"
+  label: string;
+  valueColor?: string;  // Tailwind text class — green for loss, amber for gain, default white
+}
+```
 
-Each tile: same `AdminStatCard` visual structure — icon + value + label. Icons: `Weight` (scale), `Dumbbell`, `Flame`.
+| Tile | Value | Computation | Icon |
+|---|---|---|---|
+| Weight change | `change_kg` from `/weight/log` response | `current - start`. `< 0` → `"−1.8 kg"` green. `> 0` → `"+1.2 kg"` amber. `< 2 entries` → `"—"` | `Scale` |
+| Workout days | Count of unique `log_date` values | Days with at least one workout logged | `Dumbbell` |
+| Calories burned | Sum of `calories_burned` | Rounded, formatted with `toLocaleString()` | `Flame` |
 
 ---
 
 ### Section 2: Weight Trend Chart
 
-**Reuses `WeightChart` component from dashboard** — but with a larger height and the full `/weight/log` data instead of the dashboard's 30-day subset from `/dashboard`.
+**Reuses `WeightChart` component from dashboard** with a new `variant="full"` prop.
 
-Key differences from the dashboard version:
-- Height: `h-56` (vs `h-44` on dashboard) — more room to see the arc
-- No `pace` text — that's a dashboard concern. Here just show the line + goal + trend direction.
-- X-axis: if `days=90`, shows month labels (`Jan`, `Feb`) not day labels. If `days=30`, shows day+month (`1 Jun`).
-- Empty state: "No weight entries yet. Log your weight from the Dashboard." with a link.
-
-**The component is extended**, not duplicated. Add a `variant="full"` prop to `WeightChart` that enables the larger height and suppresses the pace text.
+Key differences from the dashboard version (controlled by `variant="full"`):
+- Height: `h-56` (vs `h-44` on dashboard)
+- Pace text suppressed (dashboard concern, not progress page concern)
+- **Empty state overridden**: `variant="full"` renders a text prompt instead of `null`:
+  ```tsx
+  if (entries.length < 2 && variant === "full") {
+    return <Card><p>Log your weight from the Dashboard to see your trend.</p></Card>;
+  }
+  if (entries.length === 0) return null;  // dashboard behaviour unchanged
+  ```
+- **Type mapping**: `WeightHistoryRead.entries` returns `WeightLogRead[]` (includes `id`, `note`, `created_at`, `log_date` as ISO string). Must map to `WeightPoint[]` before passing to chart: `entries.map(e => ({ log_date: e.log_date, weight_kg: e.weight_kg }))`. This mapping lives in `progressUtils.ts → weightEntriesToPoints()`.
+- `goalWeightKg` and `timeToGoalWeeks` come from `useProfile()` — the progress page mounts `useProfile` alongside the two history hooks.
+- X-axis: if `days=90`, show month labels; if `days=30`, show day+month. Passed as `compact` prop or computed from entry count.
 
 ---
 
@@ -4023,7 +4049,7 @@ src/components/progress/WorkoutVolumeChart.tsx
 Bar chart — one bar per day, height = total kcal burned that day. Multiple categories stack in the same bar (Recharts `BarChart` with `stackId="a"` and one `Bar` per category).
 
 ```tsx
-// Data shape (computed from WorkoutLogRead[]):
+// Data shape (computed from WorkoutLogRead[] via progressUtils.aggregateByDay):
 type DayVolume = {
   date: string;        // "1 Jul"
   strength: number;    // kcal from strength exercises
@@ -4032,10 +4058,15 @@ type DayVolume = {
 }
 ```
 
-Colours:
-- Strength: `#22c55e` (brand green)
-- Cardio: `#3b82f6` (blue)
-- Other: `#a855f7` (purple)
+**Category normalisation** — `progressUtils.groupByCategory()` maps the free-string `category` field from the DB to one of three display buckets:
+
+| DB values → | Display bucket | Chart colour |
+|---|---|---|
+| `"strength"`, `"Strength"` | Strength | `#22c55e` (brand green) |
+| `"cardio"`, `"Cardio"` | Cardio | `#3b82f6` (blue) |
+| everything else (`"yoga"`, `"stretching"`, `"plyometrics"`, `"Yoga"`, etc.) | Other | `#a855f7` (purple) |
+
+Case-insensitive match. Unknown values fall into Other.
 
 Below the chart: category breakdown as coloured pills showing percentage of total kcal:
 ```
@@ -4043,6 +4074,8 @@ Below the chart: category breakdown as coloured pills showing percentage of tota
 ```
 
 Empty state: "No workouts logged yet." with a button → `/workout`.
+
+**WorkoutLogRead type** — the `/workout/history` endpoint returns an untyped list. Define in `src/types/workout.ts` (already has `WorkoutLogEntry` — add `WorkoutLogRead` alias or confirm the existing type covers the response shape).
 
 ---
 
@@ -4146,9 +4179,45 @@ Both hooks re-fetch when range changes. Zustand is NOT used — range is local `
 
 ---
 
-### Architectural Decisions
+### `progressUtils.ts` — Required Functions
 
-**Decision A · No new backend endpoints**
+```
+src/lib/progressUtils.ts
+```
+
+All pure functions. Mirrors `dashboardUtils.ts` pattern.
+
+```ts
+// Map WeightLogRead[] → WeightPoint[] (for WeightChart compatibility)
+weightEntriesToPoints(entries: WeightLogRead[]): WeightPoint[]
+
+// Aggregate flat WorkoutLogRead[] → DayVolume[] for bar chart
+aggregateByDay(entries: WorkoutLogRead[], days: number): DayVolume[]
+// DayVolume = { date: string; strength: number; cardio: number; other: number }
+
+// Map category string → display bucket (case-insensitive)
+// "strength" | "Strength" → "strength"
+// "cardio" | "Cardio" → "cardio"
+// all others → "other"
+normalisedCategory(raw: string): "strength" | "cardio" | "other"
+
+// Compute category % breakdown for pills
+categoryBreakdown(entries: WorkoutLogRead[]): { strength: number; cardio: number; other: number }
+// returns percentage of total kcal for each bucket
+
+// Count unique log_date values → "days with workouts"
+uniqueWorkoutDays(entries: WorkoutLogRead[]): number
+
+// Top N exercises by log entry count
+topExercises(entries: WorkoutLogRead[], n?: number): TopExercise[]
+// TopExercise = { exercise_name: string; category: string; count: number; image_url_thumb: string | null }
+
+// Build week grid for ConsistencyStrip
+buildWeekGrid(entries: WorkoutLogRead[], weeks?: number): WeekRow[]
+// WeekRow = { weekLabel: string; days: DayCell[] }
+// DayCell = { date: string; hasWorkout: boolean; isToday: boolean }
+// weeks defaults to 4, week starts Monday (ISO)
+```
 Both `/weight/log` and `/workout/history` already return everything needed. Client-side aggregation for weekly totals and category breakdown is trivial at this data volume. Adding a `/progress/summary` endpoint would be premature optimisation — add it in Phase 10 if performance becomes an issue.
 
 **Decision B · `WeightChart` extended with `variant` prop, not duplicated**
@@ -4192,30 +4261,39 @@ ISO week standard (Monday start) matches how most users think about workout week
 ### Files to Create
 
 ```
-src/app/progress/page.tsx              ← /progress page — wires all sections
+src/app/progress/page.tsx              ← /progress page — wires all sections, mounts useProfile
 
-src/hooks/useWeightHistory.ts          ← SWR GET /weight/log?days={range}
-src/hooks/useWorkoutHistory.ts         ← SWR GET /workout/history?days={range}
+src/hooks/useWeightHistory.ts          ← SWR GET /weight/log?days={range} → WeightHistoryRead
+src/hooks/useWorkoutHistory.ts         ← SWR GET /workout/history?days={range} → WorkoutLogRead[]
 
-src/lib/progressUtils.ts               ← pure fns: aggregateByDay, groupByCategory,
-                                           topExercises, buildWeekGrid
+src/lib/progressUtils.ts               ← pure fns: weightEntriesToPoints, aggregateByDay,
+                                           normalisedCategory, categoryBreakdown,
+                                           uniqueWorkoutDays, topExercises, buildWeekGrid
 
-src/components/progress/WorkoutVolumeChart.tsx  ← stacked bar chart (kcal/day by category)
-src/components/progress/ConsistencyStrip.tsx    ← week-by-week workout dot grid
-src/components/progress/TopExercisesList.tsx    ← top 5 exercises by frequency
+src/components/progress/ProgressStatCard.tsx   ← stat tile (icon + string value + label)
+src/components/progress/WorkoutVolumeChart.tsx ← stacked bar chart (kcal/day by category)
+src/components/progress/ConsistencyStrip.tsx   ← week-by-week workout dot grid (Mon–Sun)
+src/components/progress/TopExercisesList.tsx   ← top 5 exercises by frequency
+                                                   Reuses ExerciseImage from:
+                                                   src/components/workout/ExerciseImage.tsx
 ```
 
 ### Files to Modify
 
 ```
 src/components/dashboard/WeightChart.tsx
-  ← add variant="full" prop: h-56, suppress pace text
+  ← add variant?: "full" prop:
+    · h-56 (vs h-44)
+    · pace text suppressed
+    · empty state: if variant="full" && entries < 2 → show prompt card (not null)
 
 src/components/layout/BottomNav.tsx
-  ← add Progress tab (TrendingUp icon) — 6th item, before Profile
+  ← add Progress tab: TrendingUp icon, label "Progress", href "/progress"
+  ← insert before Profile (5th position → Progress 5th, Profile 6th)
 
 src/components/layout/TopNav.tsx
-  ← add Progress link in centre nav (TrendingUp icon)
+  ← add "Progress" to NAV_LINKS array: { href: "/progress", label: "Progress" }
+  ← text-only link (NO icon — TopNav centre links are text-only per existing pattern)
 ```
 
 ---

@@ -13,10 +13,11 @@ import { cn } from "@/lib/utils";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const NAV_LINKS = [
-  { href: "/dashboard", label: "Home",    icon: LayoutDashboard },
-  { href: "/tracker",   label: "Tracker", icon: Utensils },
-  { href: "/workout",   label: "Workout", icon: Dumbbell },
-  { href: "/dishes",    label: "Dishes",  icon: ChefHat },
+  { href: "/dashboard", label: "Home",     icon: LayoutDashboard },
+  { href: "/tracker",   label: "Tracker",  icon: Utensils },
+  { href: "/workout",   label: "Workout",  icon: Dumbbell },
+  { href: "/dishes",    label: "Dishes",   icon: ChefHat },
+  { href: "/progress",  label: "Progress", icon: ChefHat },  // icon unused — text-only nav
 ] as const;
 
 const HIDDEN_ON_ROUTES = ["/onboarding", "/sign-in", "/sign-up"];
