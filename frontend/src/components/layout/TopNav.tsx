@@ -7,8 +7,10 @@ import {
   Utensils,
   Dumbbell,
   ChefHat,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Home",    icon: LayoutDashboard },
@@ -21,6 +23,7 @@ const HIDDEN_ON_ROUTES = ["/onboarding", "/sign-in", "/sign-up"];
 
 export default function TopNav() {
   const pathname = usePathname();
+  const { isAdmin } = useAdminCheck();
 
   if (HIDDEN_ON_ROUTES.some((r) => pathname.startsWith(r))) return null;
 
@@ -33,10 +36,8 @@ export default function TopNav() {
         "bg-[#0A0A0A]/80 backdrop-blur-md",
       )}
     >
-      {/* Inner container — max-w-6xl MUST match PageShell exactly */}
       <div className="max-w-6xl mx-auto px-8 w-full flex items-center justify-between h-full">
 
-        {/* Left: logo + wordmark */}
         <Link
           href="/dashboard"
           className="flex items-center gap-2.5 shrink-0"
@@ -50,13 +51,11 @@ export default function TopNav() {
           </span>
         </Link>
 
-        {/* Centre: nav links */}
         <nav aria-label="Main navigation" className="flex items-center gap-1">
           {NAV_LINKS.map(({ href, label }) => {
             const isActive =
               pathname === href ||
               (href !== "/dashboard" && pathname.startsWith(href));
-
             return (
               <Link
                 key={href}
@@ -79,9 +78,30 @@ export default function TopNav() {
               </Link>
             );
           })}
+
+          {isAdmin && (
+            <Link
+              href="/admin"
+              aria-current={pathname.startsWith("/admin") ? "page" : undefined}
+              className={cn(
+                "relative flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors duration-120",
+                pathname.startsWith("/admin")
+                  ? "text-orange-400"
+                  : "text-muted-foreground hover:text-orange-400 hover:bg-[#1A1A1A]",
+              )}
+            >
+              <ShieldAlert size={13} aria-hidden="true" />
+              Admin
+              {pathname.startsWith("/admin") && (
+                <span
+                  className="absolute -bottom-[11px] left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full bg-orange-400"
+                  aria-hidden="true"
+                />
+              )}
+            </Link>
+          )}
         </nav>
 
-        {/* Right: avatar only — no Log Food button (see DESIGN_OVERVIEW.md §Log Food CTA) */}
         <Link
           href="/profile"
           aria-label="Profile"
@@ -100,4 +120,3 @@ export default function TopNav() {
     </header>
   );
 }
-

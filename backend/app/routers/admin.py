@@ -22,6 +22,7 @@ from app.auth import require_admin
 from app.models.user import User
 from app.models.user_profile import UserProfile
 from app.models.food_item import FoodItem
+from app.models.workout_log import ExerciseLibrary
 
 router = APIRouter()
 
@@ -109,6 +110,8 @@ class FoodItemRead(BaseModel):
 class AdminStats(BaseModel):
     total_users: int
     total_food_items: int
+    total_exercises: int
+    exercises_with_images: int
 
 
 # ── User management endpoints ───────────────────────────────────────────────
@@ -245,4 +248,8 @@ def get_stats(
     return AdminStats(
         total_users=db.query(User).count(),
         total_food_items=db.query(FoodItem).count(),
+        total_exercises=db.query(ExerciseLibrary).count(),
+        exercises_with_images=db.query(ExerciseLibrary).filter(
+            ExerciseLibrary.image_url_thumb.isnot(None)
+        ).count(),
     )

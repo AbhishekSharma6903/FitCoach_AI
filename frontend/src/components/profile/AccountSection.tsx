@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, LogOut, RotateCcw } from "lucide-react";
+import { ChevronRight, LogOut, RotateCcw, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const DEV_MODE = process.env.NEXT_PUBLIC_DEV_MODE === "true";
 
@@ -16,10 +17,8 @@ function SignOutButton() {
       return;
     }
     try {
-      // Dynamically import to avoid crash when ClerkProvider not mounted (dev mode)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { useClerk } = require("@clerk/nextjs");
-      // This is called from ClerkSignOutInner — safe here
     } catch {
       router.push("/sign-in");
     }
@@ -37,7 +36,7 @@ function SignOutButton() {
       )}
     >
       <span className="text-sm text-red-400">Sign Out</span>
-      <LogOut size={15} className="text-red-400/50" />
+      <LogOut size={15} className="text-red-400/50" aria-hidden="true" />
     </button>
   );
 }
@@ -58,19 +57,37 @@ function ClerkSignOutInner() {
       )}
     >
       <span className="text-sm text-red-400">Sign Out</span>
-      <LogOut size={15} className="text-red-400/50" />
+      <LogOut size={15} className="text-red-400/50" aria-hidden="true" />
     </button>
   );
 }
 
 export default function AccountSection() {
+  const { isAdmin } = useAdminCheck();
+
   return (
     <div className="space-y-1.5">
       <p className="text-[11px] font-semibold tracking-[0.12em] uppercase text-muted-foreground mb-2">
         Account
       </p>
 
-      {/* Re-do Onboarding */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className={cn(
+            "flex items-center justify-between h-11 px-4 rounded-xl",
+            "bg-[#111111] border border-orange-500/20",
+            "hover:bg-orange-500/5 transition-colors",
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert size={14} className="text-orange-400 shrink-0" aria-hidden="true" />
+            <span className="text-sm text-orange-400">Admin Panel</span>
+          </div>
+          <ChevronRight size={15} className="text-orange-400/40 shrink-0" aria-hidden="true" />
+        </Link>
+      )}
+
       <Link
         href="/onboarding"
         className={cn(
@@ -80,7 +97,7 @@ export default function AccountSection() {
         )}
       >
         <div className="flex items-center gap-2.5">
-          <RotateCcw size={14} className="text-muted-foreground/50 shrink-0" />
+          <RotateCcw size={14} className="text-muted-foreground/50 shrink-0" aria-hidden="true" />
           <div>
             <span className="text-sm text-foreground">Re-do Onboarding</span>
             <p className="text-[10px] text-muted-foreground/50">
@@ -88,7 +105,7 @@ export default function AccountSection() {
             </p>
           </div>
         </div>
-        <ChevronRight size={15} className="text-muted-foreground/30 shrink-0" />
+        <ChevronRight size={15} className="text-muted-foreground/30 shrink-0" aria-hidden="true" />
       </Link>
 
       <SignOutButton />
