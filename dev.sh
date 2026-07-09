@@ -25,7 +25,8 @@ wait_for_url() {
   local url=$1 label=$2 max=${3:-30}
   printf "  Waiting for %s " "$label"
   for i in $(seq 1 "$max"); do
-    if curl -sf --max-time 2 "$url" -o /dev/null 2>/dev/null; then
+    # Accept any HTTP response (including 3xx redirects) — -L follows, -o /dev/null discards body
+    if curl -s --max-time 2 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null | grep -qE "^[1-9]"; then
       printf ' ✓\n'; return 0
     fi
     printf '.'
@@ -99,11 +100,21 @@ cmd_start() {
       cyan "  Installing frontend dependencies..."
       (cd "$ROOT/frontend" && npm install) || { red "npm install failed"; exit 1; }
     fi
-    (cd "$ROOT/frontend" && nohup node_modules/.bin/next dev --port 3001 \
-      > "$FRONTEND_LOG" 2>&1) &
+    cd "$ROOT/frontend"
+    nohup node_modules/.bin/next dev --port 3001 \
+      > "$FRONTEND_LOG" 2>&1 &
     echo $! > "$FRONTEND_PID_FILE"
+    cd "$ROOT"
     wait_for_url "http://localhost:3001" "frontend" 60 \
       || { red "Frontend failed to start. Check $FRONTEND_LOG"; exit 1; }
+
+    # Pre-warm key routes in the background so first browser visit is fast.
+    # Turbopack compiles each route on first request (cold = 60-120s).
+    # These curl calls trigger compilation while dev.sh reports "All services up".
+    cyan "→ Pre-warming routes (background)..."
+    (sleep 2 && for route in /dashboard /tracker /workout /dishes /progress /profile /admin; do
+      curl -s -o /dev/null --max-time 180 "http://localhost:3001$route" 2>/dev/null &
+    done) &
   fi
 
   echo ""
@@ -130,8 +141,9 @@ cmd_stop() {
       rm -f "$FRONTEND_PID_FILE"
     fi
   fi
-  # Kill any stray next dev processes
+  # Kill any stray next dev processes and anything on :3001
   pkill -f "next dev" 2>/dev/null || true
+  lsof -ti :3001 | xargs kill -9 2>/dev/null || true
   green "  Frontend stopped"
 
   # Backend
