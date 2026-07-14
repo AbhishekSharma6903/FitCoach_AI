@@ -14,6 +14,7 @@ export function useFoodLog(date?: string) {
     log_date: string;
     meal_type: string;
     quantity_g: number;
+    is_custom_dish?: boolean;
   }) {
     await api.post("/api/v1/food/log", payload);
     mutate();

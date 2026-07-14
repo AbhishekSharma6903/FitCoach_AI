@@ -85,6 +85,44 @@ def log_food(
     user_id: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
+    # Custom dish: look up from custom_dishes, use its per-100g nutrition
+    if body.is_custom_dish:
+        dish = db.get(CustomDish, body.food_item_id)
+        if not dish or dish.user_id != user_id:
+            raise HTTPException(status_code=404, detail="Custom dish not found")
+        ratio = float(body.quantity_g) / 100.0  # dish nutrition is per 100g
+        entry = FoodLogEntry(
+            user_id=user_id,
+            food_item_id=None,      # no food_items row
+            log_date=body.log_date,
+            meal_type=body.meal_type,
+            quantity_g=body.quantity_g,
+            calories_kcal=round((float(dish.calories_kcal) if dish.calories_kcal else 0) * ratio, 2),
+            protein_g=round((float(dish.protein_g) if dish.protein_g else 0) * ratio, 2),
+            carbs_g=round((float(dish.carbs_g) if dish.carbs_g else 0) * ratio, 2),
+            fat_g=round((float(dish.fat_g) if dish.fat_g else 0) * ratio, 2),
+            fiber_g=round((float(dish.fiber_g) if dish.fiber_g else 0) * ratio, 2),
+        )
+        db.add(entry)
+        db.commit()
+        db.refresh(entry)
+        return FoodLogRead(
+            id=entry.id,
+            user_id=entry.user_id,
+            food_item_id=body.food_item_id,
+            food_name=dish.name,
+            log_date=entry.log_date,
+            meal_type=entry.meal_type,
+            quantity_g=float(entry.quantity_g),
+            calories_kcal=float(entry.calories_kcal),
+            protein_g=float(entry.protein_g),
+            carbs_g=float(entry.carbs_g),
+            fat_g=float(entry.fat_g),
+            fiber_g=float(entry.fiber_g),
+            created_at=entry.created_at,
+        )
+
+    # Regular food item
     item = db.get(FoodItem, body.food_item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Food item not found")

@@ -40,11 +40,12 @@ wait_for_url() {
 cmd_start() {
   bold "=== Starting FitCoach AI ==="
 
-  # --hard flag: wipe Next.js build cache before starting (fixes stale module errors)
+  # --hard flag: wipe Next.js build cache + node_modules before starting
+  # Use when: after git pull, after branch switch, or when you hit MODULE_NOT_FOUND errors
   if [ "${2:-}" = "--hard" ] || [ "${1:-}" = "--hard" ]; then
-    cyan "→ Hard start: clearing Next.js cache..."
-    rm -rf "$ROOT/frontend/.next" "$ROOT/frontend/node_modules/.cache"
-    green "  Cache cleared"
+    cyan "→ Hard start: clearing Next.js cache and node_modules..."
+    rm -rf "$ROOT/frontend/.next" "$ROOT/frontend/node_modules"
+    green "  Cache and node_modules cleared (will reinstall)"
   fi
 
   # 1. Docker (Colima)
@@ -96,8 +97,13 @@ cmd_start() {
     green "→ Frontend already running on :3001"
   else
     cyan "→ Starting Next.js frontend..."
-    if [ ! -f "$ROOT/frontend/node_modules/.bin/next" ]; then
-      cyan "  Installing frontend dependencies..."
+
+    # Reinstall if: node_modules missing, OR package.json is newer than node_modules
+    # This catches git pulls, branch switches, and interrupted installs automatically.
+    PKG="$ROOT/frontend/package.json"
+    NM="$ROOT/frontend/node_modules"
+    if [ ! -d "$NM" ] || [ "$PKG" -nt "$NM" ]; then
+      cyan "  Installing/updating frontend dependencies..."
       (cd "$ROOT/frontend" && npm install) || { red "npm install failed"; exit 1; }
     fi
     cd "$ROOT/frontend"

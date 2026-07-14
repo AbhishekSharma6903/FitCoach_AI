@@ -30,6 +30,7 @@ class FoodLogCreate(BaseModel):
     log_date: date
     meal_type: str
     quantity_g: float
+    is_custom_dish: bool = False  # True when food_item_id refers to custom_dishes.id
 
 
 class FoodLogRead(BaseModel):

@@ -122,6 +122,11 @@ export default function DashboardPage() {
         <WaterIntakeCard />
       </motion.div>
 
+      {/* 5b. Log Weight — mobile only (desktop has it in right col) */}
+      <motion.div variants={fadeUp} className="xl:hidden">
+        <WeightLogWidget />
+      </motion.div>
+
       {/* 6. Weight Chart */}
       {d.weight_entries.length > 0 && (
         <motion.div variants={fadeUp}>

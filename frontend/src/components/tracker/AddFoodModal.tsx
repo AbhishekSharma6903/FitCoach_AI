@@ -24,6 +24,7 @@ interface AddFoodModalProps {
     log_date: string;
     meal_type: string;
     quantity_g: number;
+    is_custom_dish?: boolean;
   }) => Promise<void>;
 }
 
@@ -92,6 +93,7 @@ export default function AddFoodModal({
         log_date: logDate,
         meal_type: mealSlot,
         quantity_g: Number(quantity),
+        is_custom_dish: selected.is_custom === true,
       });
       handleClose();
     } finally {
